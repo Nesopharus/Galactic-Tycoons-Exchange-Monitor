@@ -376,12 +376,16 @@
   }
 
   .td-deviation.alert {
-    color: var(--danger);
-    background: var(--danger-bg);
+    color: var(--success);
+    background: var(--success-dim);
   }
 
   .td-deviation.ok {
     color: var(--success);
+  }
+
+  .td-deviation.warn {
+    color: var(--danger);
   }
 
   .td-deviation.neutral {
@@ -1105,7 +1109,7 @@ function renderTable() {
 
     const devStr = (p.deviation >= 0 ? '+' : '') + p.deviation.toFixed(2) + '%';
     const isAlert = p.deviation <= threshold;
-    const devClass = isAlert ? 'alert' : (p.deviation >= 0 ? 'ok' : 'neutral');
+    const devClass = isAlert ? 'alert' : (p.deviation >= 0 ? 'warn' : 'ok');
 
     // fire alarm toast once per material per alert state
     if (isAlert && !STATE.alerted.has(p.matId)) {

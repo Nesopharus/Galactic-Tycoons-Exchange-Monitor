@@ -1,0 +1,9 @@
+# Everything in here is local-only and never committed
+_local/
+
+# Claude Code config (must stay at root so Claude loads it, but not committed)
+CLAUDE.md
+
+# OS
+Thumbs.db
+.DS_Store
