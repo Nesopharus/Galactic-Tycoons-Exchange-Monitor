@@ -1109,7 +1109,7 @@ function renderTable() {
 
     const devStr = (p.deviation >= 0 ? '+' : '') + p.deviation.toFixed(2) + '%';
     const isAlert = p.deviation <= threshold;
-    const devClass = isAlert ? 'alert' : (p.deviation > 0 ? 'warn' : 'ok');
+    const devClass = isAlert ? 'alert' : (p.deviation >= 0 ? 'warn' : 'ok');
 
     // fire alarm toast once per material per alert state
     if (isAlert && !STATE.alerted.has(p.matId)) {
