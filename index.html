@@ -1219,6 +1219,10 @@ function saveHistory() {
   } catch(e) {
     if (e.name === 'QuotaExceededError') {
       toast('Lokaler Speicher voll – Preishistorie konnte nicht gespeichert werden.', 'warn');
+    } else if (e.name === 'NS_ERROR_FILE_CORRUPTED') {
+      toast('Firefox: Zugriff auf lokalen Speicher fehlgeschlagen – Preishistorie konnte nicht gespeichert werden.', 'warn');
+    } else {
+      toast('Preishistorie konnte nicht gespeichert werden: ' + (e.message || e.name || 'Unbekannter Fehler'), 'warn');
     }
   }
 }
@@ -1325,16 +1329,25 @@ async function loadApiHistory() {
 
     pruneHistory();
     saveHistory();
-    STATE.apiHistoryLoaded = true;
-    localStorage.setItem('gt_api_hist_loaded', '1');
+
+    if (STATE.rateLimited) {
+      toast(`Abruf unterbrochen – Rate-Limit erreicht. Bitte erneut versuchen. (${newEntries} Tagespunkte gespeichert)`, 'warn');
+      if (btn) btn.disabled = false;
+    } else {
+      STATE.apiHistoryLoaded = true;
+      localStorage.setItem('gt_api_hist_loaded', '1');
+      toast(`API-Historiedaten geladen (${newEntries} Tagespunkte hinzugefügt).`, 'info');
+    }
+
     updateRecIndicator();
     updateApiHistCost();
     renderTable();
-    toast(`API-Historiedaten geladen (${newEntries} Tagespunkte hinzugefügt).`, 'info');
 
   } catch(e) {
     if (e.message !== 'RATE_LIMITED') {
-      toast('API-Historie-Abruf fehlgeschlagen: ' + e.message, 'warn');
+      const detail = e.message || e.toString() || 'Unbekannter Fehler';
+      console.error('[GT Monitor] loadApiHistory error:', e);
+      toast('API-Historie-Abruf fehlgeschlagen: ' + detail, 'warn');
     }
     if (btn) btn.disabled = false;
   }
