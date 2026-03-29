@@ -463,6 +463,19 @@
   body.mode-hist .col-hist { display: table-cell; }
   .reserve-urgent { color: var(--danger); font-weight: 600; }
   .reserve-ok { color: var(--ok); }
+  .sell-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 1px 5px;
+    margin-right: 6px;
+    vertical-align: middle;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+  }
+  .sell-toggle:hover, .sell-toggle.sell-active { opacity: 1; }
 
   .no-data {
     text-align: center;
@@ -902,6 +915,7 @@ const STATE = {
   selectedWishlistName: '',
   wishlistMatIds: new Set(),
   wishlistAmounts: {},     // { matId: am } — Mengen aus der Wishlist
+  wishlistSellFlags: {},   // { 'wlId:matId': true } — true = Sell-Modus
   reserveData: {},         // { matId: { days: number, urgent: boolean } }
   showReserve: false,      // Reserve-Zeit-Spalte ein-/ausgeblendet
   gameData: null,          // gecachte gamedata.json (Rezepte, Buildings)
@@ -1089,6 +1103,25 @@ function loadSettings() {
       document.getElementById('btnMute').textContent = STATE.muted ? '🔇' : '🔊';
     }
   } catch(e) {}
+}
+
+function loadSellFlags() {
+  try { STATE.wishlistSellFlags = JSON.parse(localStorage.getItem('gt_monitor_sell_flags') || '{}'); } catch(e) {}
+}
+function saveSellFlags() {
+  try { localStorage.setItem('gt_monitor_sell_flags', JSON.stringify(STATE.wishlistSellFlags)); } catch(e) {}
+}
+function sellKey(matId) {
+  return (STATE.selectedWishlistId ?? 'all') + ':' + matId;
+}
+function toggleSellFlag(matId) {
+  const key = sellKey(matId);
+  STATE.wishlistSellFlags[key] = !STATE.wishlistSellFlags[key];
+  saveSellFlags();
+  renderTable();
+}
+function isSell(matId) {
+  return !!STATE.wishlistSellFlags[sellKey(matId)];
 }
 
 function saveSettings() {
@@ -1711,12 +1744,15 @@ function renderTable() {
   const newAlarms = [];
   for (const p of items) {
     if (p.deviation === null) continue;
-    const isAlert = p.deviation <= threshold;
+    const sell = isSell(p.matId);
+    // Buy: Alarm wenn Preis TIEF (Abweichung <= -Schwellenwert)
+    // Sell: Alarm wenn Preis HOCH (Abweichung >= +Schwellenwert)
+    const isAlert = sell ? p.deviation >= STATE.deviationThreshold : p.deviation <= threshold;
     const refPrice = (STATE.alarmMode === 'hist' && p.histAvg !== null) ? p.histAvg : p.avgPrice;
     const refLabel = STATE.alarmMode === 'hist' ? 'Hist. Ø' : 'Ø';
     if (isAlert && !STATE.alerted.has(p.matId)) {
       STATE.alerted.add(p.matId);
-      newAlarms.push({ name: p.matName, deviation: p.deviation, current: p.currentPrice, ref: refPrice, refLabel });
+      newAlarms.push({ name: p.matName, deviation: p.deviation, current: p.currentPrice, ref: refPrice, refLabel, sell });
     }
     if (!isAlert && STATE.alerted.has(p.matId)) STATE.alerted.delete(p.matId);
   }
@@ -1778,14 +1814,16 @@ function renderTable() {
   const tfoot = document.getElementById('priceTableFoot');
 
   tbody.innerHTML = items.map(p => {
+    const sell = isSell(p.matId);
     const histCell = p.histAvg !== null ? formatNum(p.histAvg) : '—';
     const amCell = `<td class="col-wishlist">${p.am ?? '—'}</td>`;
     const totalCell = `<td class="col-wishlist">${p.total != null ? formatNum(p.total) : '—'}</td>`;
     const reserveCell = renderReserveCell(p.reserve);
+    const toggleBtn = `<button class="sell-toggle${sell ? ' sell-active' : ''}" onclick="toggleSellFlag(${p.matId})" title="${sell ? 'Verkaufen – zu Kaufen wechseln' : 'Kaufen – zu Verkaufen wechseln'}">${sell ? '💰' : '🛒'}</button>`;
 
     if (p.deviation === null) {
       return `<tr>
-        <td class="td-name">${esc(p.matName)}</td>
+        <td class="td-name">${toggleBtn}${esc(p.matName)}</td>
         <td>${p.currentPrice === -1 ? '—' : formatNum(p.currentPrice)}</td>
         ${amCell}${totalCell}${reserveCell}
         <td>${p.avgPrice === -1 ? '—' : formatNum(p.avgPrice)}</td>
@@ -1796,11 +1834,14 @@ function renderTable() {
     }
 
     const devStr = (p.deviation >= 0 ? '+' : '') + p.deviation.toFixed(2) + '%';
-    const isAlert = p.deviation <= threshold;
-    const devClass = isAlert ? 'alert' : (p.deviation >= 0 ? 'warn' : 'ok');
+    const isAlert = sell ? p.deviation >= STATE.deviationThreshold : p.deviation <= threshold;
+    // Buy: grün wenn niedrig (ok), rot wenn hoch (warn) — Sell: invertiert
+    const devClass = isAlert ? 'alert'
+      : sell ? (p.deviation >= 0 ? 'ok' : 'warn')
+             : (p.deviation >= 0 ? 'warn' : 'ok');
 
     return `<tr class="${isAlert ? 'alarm-row' : ''}">
-      <td class="td-name">${esc(p.matName)}</td>
+      <td class="td-name">${toggleBtn}${esc(p.matName)}</td>
       <td>${formatNum(p.currentPrice)}</td>
       ${amCell}${totalCell}${reserveCell}
       <td>${formatNum(p.avgPrice)}</td>
@@ -1830,7 +1871,8 @@ function renderTable() {
   if (newAlarms.length > 0 && newAlarms.length <= 4) {
     playAlarmSound();
     newAlarms.forEach(a => {
-      toast(`🔔 ${a.name}: ${a.deviation.toFixed(2)}% unter ${a.refLabel} (${formatNum(a.current)} vs ${formatNum(Math.round(a.ref))})`, 'alarm');
+      const rel = a.sell ? 'über' : 'unter';
+      toast(`🔔 ${a.name}: ${a.deviation.toFixed(2)}% ${rel} ${a.refLabel} (${formatNum(a.current)} vs ${formatNum(Math.round(a.ref))})`, 'alarm');
     });
   } else if (newAlarms.length > 4) {
     newAlarms.sort((a, b) => a.deviation - b.deviation);
@@ -1915,6 +1957,7 @@ function updateLastFetchLabel() {
 // ─── INIT ───
 loadHistory();
 loadSettings();
+loadSellFlags();
 // ─── KEYBOARD SHORTCUTS ───
 document.addEventListener('keydown', e => {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -1993,6 +2036,11 @@ function closeAllOverlays() {
       <tr><td><kbd>B</kbd></td><td>Reserve-Zeit (Wishlist)</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>Overlay schließen</td></tr>
       <tr><td><kbd>?</kbd></td><td>Diese Übersicht</td></tr>
+    </table>
+    <div class="cheat-sheet-title" style="margin-top:16px;">Symbole</div>
+    <table class="cheat-table">
+      <tr><td>🛒</td><td>Kaufen — Alarm bei niedrigem Preis</td></tr>
+      <tr><td>💰</td><td>Verkaufen — Alarm bei hohem Preis</td></tr>
     </table>
     <button class="btn-sm" onclick="toggleCheatSheet()" style="margin-top:14px;">Schließen</button>
   </div>
