@@ -900,7 +900,6 @@ const STATE = {
   showReserve: false,      // Reserve-Zeit-Spalte ein-/ausgeblendet
   gameData: null,          // gecachte gamedata.json (Rezepte, Buildings)
   baseTimer: null,
-  baseInterval: 300,       // Base-Daten alle 5 Minuten abrufen
   prices: [],
   running: false,
   priceTimer: null,
@@ -1233,7 +1232,7 @@ async function startWishlistMonitoring() {
   fetchPrices();
   schedulePriceFetch();
   scheduleWishlistFetch();
-  if (STATE.showReserve) { fetchBaseData(); scheduleBaseData(); }
+  if (STATE.showReserve) fetchBaseData();
 }
 
 function stopMonitoring() {
@@ -1412,15 +1411,6 @@ async function fetchBaseData() {
   }
 }
 
-function scheduleBaseData() {
-  clearTimeout(STATE.baseTimer);
-  STATE.baseTimer = setTimeout(() => {
-    if (!STATE.running || !STATE.showReserve) return;
-    fetchBaseData();
-    scheduleBaseData();
-  }, STATE.baseInterval * 1000);
-}
-
 function toggleReserve() {
   STATE.showReserve = !STATE.showReserve;
   document.body.classList.toggle('mode-reserve', STATE.showReserve);
@@ -1431,7 +1421,6 @@ function toggleReserve() {
   }
   if (STATE.showReserve) {
     fetchBaseData();
-    scheduleBaseData();
   } else {
     clearTimeout(STATE.baseTimer);
     STATE.reserveData = {};
