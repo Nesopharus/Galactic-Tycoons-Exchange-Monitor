@@ -328,6 +328,19 @@
     color: var(--text-dim);
   }
 
+  .search-input {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-bright);
+    font-size: 13px;
+    padding: 5px 12px;
+    width: 200px;
+    outline: none;
+    margin: 0 auto;
+  }
+  .search-input:focus { border-color: var(--accent); }
+
   .fetch-ring { flex-shrink: 0; transform: rotate(-90deg); }
   .fetch-ring-track { fill: none; stroke: var(--border); stroke-width: 1.5; }
   .fetch-ring-progress {
@@ -741,6 +754,7 @@
 
     <div class="monitor-toolbar">
       <div class="monitor-title" id="monitorTitle">Marktübersicht</div>
+      <input type="search" id="materialSearch" class="search-input" placeholder="Filter…" oninput="renderTable()">
       <div class="monitor-meta">
         <svg class="fetch-ring" width="16" height="16" viewBox="0 0 16 16">
           <circle class="fetch-ring-track" cx="8" cy="8" r="6"/>
@@ -1465,6 +1479,12 @@ function renderTable() {
     console.log('[GT Monitor] Available matIds in prices:', items.map(i => i.matId));
     items = items.filter(p => STATE.wishlistMatIds.has(p.matId));
     console.log('[GT Monitor] After filter:', items.length, 'items');
+  }
+
+  // search filter
+  const query = (document.getElementById('materialSearch')?.value || '').toLowerCase().trim();
+  if (query) {
+    items = items.filter(p => p.matName.toLowerCase().includes(query));
   }
 
   // sort: ascending by deviation (most negative first), nulls at end
