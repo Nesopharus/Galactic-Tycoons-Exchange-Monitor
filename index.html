@@ -1050,6 +1050,10 @@ function loadSettings() {
     if (saved.mode) selectMode(saved.mode);
     if (saved.alarmMode) STATE.alarmMode = saved.alarmMode;
     if (saved.histRange) STATE.histRange = saved.histRange;
+    if (saved.muted != null) {
+      STATE.muted = saved.muted;
+      document.getElementById('btnMute').textContent = STATE.muted ? '🔇' : '🔊';
+    }
   } catch(e) {}
 }
 
@@ -1062,6 +1066,7 @@ function saveSettings() {
     mode: STATE.mode,
     alarmMode: STATE.alarmMode,
     histRange: STATE.histRange,
+    muted: STATE.muted,
   };
   try { localStorage.setItem('gt_monitor_settings', JSON.stringify(settings)); } catch(e) {}
 }
@@ -1155,9 +1160,19 @@ async function loadWishlists() {
 }
 
 // ─── MONITORING ───
+function syncSortHeaders() {
+  ['name', 'price', 'avgPrice', 'deviation', 'histAvg'].forEach(c => {
+    const el = document.getElementById('sort-' + c);
+    if (el) el.textContent = STATE.sortColumn === c ? (STATE.sortDir === 'asc' ? '↑' : '↓') : '';
+  });
+}
+
 function startAllMonitoring() {
   STATE.running = true;
   STATE.alerted.clear();
+  STATE.sortColumn = 'deviation';
+  STATE.sortDir = 'asc';
+  syncSortHeaders();
   showView('monitor');
   document.getElementById('monitorTitle').textContent = '📊 Alle Materialien';
   document.getElementById('statusDot').classList.add('active');
@@ -1172,6 +1187,9 @@ function startAllMonitoring() {
 async function startWishlistMonitoring() {
   STATE.running = true;
   STATE.alerted.clear();
+  STATE.sortColumn = 'deviation';
+  STATE.sortDir = 'asc';
+  syncSortHeaders();
   showView('monitor');
   document.getElementById('monitorTitle').textContent = '⭐ Wishlist: ' + STATE.selectedWishlistName;
   document.getElementById('statusDot').classList.add('active');
@@ -1509,11 +1527,7 @@ function toggleSort(col) {
     STATE.sortColumn = col;
     STATE.sortDir = 'asc';
   }
-  ['name', 'price', 'avgPrice', 'deviation', 'histAvg'].forEach(c => {
-    const el = document.getElementById('sort-' + c);
-    if (!el) return;
-    el.textContent = STATE.sortColumn === c ? (STATE.sortDir === 'asc' ? '↑' : '↓') : '';
-  });
+  syncSortHeaders();
   renderTable();
 }
 
@@ -1654,6 +1668,7 @@ function alarmToast(name, deviation, current, ref, refLabel = 'Ø') {
 }
 
 function playAlarmSound() {
+  if (STATE.muted) return;
   try {
     const ac = new (window.AudioContext || window.webkitAudioContext)();
     const osc = ac.createOscillator();
@@ -1719,9 +1734,12 @@ document.addEventListener('keydown', e => {
   // Escape immer verarbeiten, auch wenn ein Input fokussiert ist
   if (e.key === 'Escape') {
     closeAllOverlays();
-    // Vom Einstellungsfenster zurück zum letzten Monitor-Zustand
+    // Vom Setup- oder Wishlist-Fenster zurück zum laufenden Monitor
     const onSetup = document.getElementById('view-setup')?.classList.contains('active');
-    if (onSetup && STATE.prices.length > 0) {
+    const onWishlist = document.getElementById('view-wishlist-select')?.classList.contains('active');
+    if ((onSetup || onWishlist) && STATE.running) {
+      showView('monitor');
+    } else if (onSetup && STATE.prices.length > 0 && !STATE.running) {
       if (STATE.mode === 'all') startAllMonitoring();
       else if (STATE.mode === 'wishlist' && STATE.selectedWishlistId) startWishlistMonitoring();
     }
@@ -1757,8 +1775,8 @@ document.addEventListener('keydown', e => {
 
 function toggleMute() {
   STATE.muted = !STATE.muted;
-  // TODO #27: playAlarmSound() soll STATE.muted respektieren (eigenes Issue)
   document.getElementById('btnMute').textContent = STATE.muted ? '🔇' : '🔊';
+  saveSettings();
 }
 
 function toggleCheatSheet() {
