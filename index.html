@@ -342,6 +342,10 @@
 
   .fetch-ring { flex-shrink: 0; transform: rotate(-90deg); }
   .fetch-ring-track { fill: none; stroke: var(--border); stroke-width: 1.5; }
+  @keyframes ring-fill {
+    from { stroke-dashoffset: 37.7; }
+    to   { stroke-dashoffset: 0; }
+  }
   .fetch-ring-progress {
     fill: none;
     stroke: var(--accent);
@@ -349,12 +353,14 @@
     stroke-linecap: round;
     stroke-dasharray: 37.7;
     stroke-dashoffset: 37.7;
-    transition: stroke-dashoffset 1s linear, stroke 0.3s;
+    transition: stroke 0.3s;
+  }
+  .fetch-ring-progress.running {
+    animation: ring-fill var(--fetch-dur, 15s) linear forwards;
   }
   .fetch-ring-progress.rate-limited {
     stroke: var(--warn);
-    stroke-dashoffset: 0;
-    transition: stroke 0.3s;
+    animation-play-state: paused;
   }
 
   table {
@@ -1218,26 +1224,17 @@ function stopMonitoring() {
 function schedulePriceFetch() {
   clearTimeout(STATE.priceTimer);
   clearInterval(STATE.countdownTimer);
-  STATE.nextFetchTime = Date.now() + STATE.fetchInterval * 1000;
 
-  // Snap ring to empty instantly (no transition) so it always starts at 0%
-  const ringReset = document.getElementById('fetchRingProgress');
-  if (ringReset) {
-    ringReset.style.transition = 'none';
-    ringReset.style.strokeDashoffset = '37.7';
-    ringReset.getBoundingClientRect(); // force reflow before re-enabling transition
-    ringReset.style.transition = '';
+  // Restart CSS animation from 0%
+  const ring = document.getElementById('fetchRingProgress');
+  if (ring) {
+    ring.style.setProperty('--fetch-dur', STATE.fetchInterval + 's');
+    ring.classList.remove('running');
+    void ring.getBoundingClientRect(); // force reflow to restart animation
+    ring.classList.add('running');
   }
 
-  STATE.countdownTimer = setInterval(() => {
-    updateLastFetchLabel();
-    if (STATE.rateLimited) return;
-    const total = STATE.fetchInterval * 1000;
-    const elapsed = Date.now() - (STATE.nextFetchTime - total);
-    const pct = Math.min(100, (elapsed / total) * 100);
-    const ring = document.getElementById('fetchRingProgress');
-    if (ring) ring.style.strokeDashoffset = (37.7 * (1 - pct / 100)).toFixed(2);
-  }, 250);
+  STATE.countdownTimer = setInterval(updateLastFetchLabel, 1000);
 
   STATE.priceTimer = setTimeout(() => {
     if (!STATE.running) return;
