@@ -963,6 +963,8 @@ function showRateLimitBanner(seconds) {
       STATE.rateLimited = false;
       banner.classList.remove('visible');
       clearInterval(STATE.rateLimitTimer);
+      const ring = document.getElementById('fetchRingProgress');
+      if (ring) ring.classList.remove('rate-limited');
     }
   }, 1000);
 }
@@ -1151,14 +1153,12 @@ function schedulePriceFetch() {
   }
 
   STATE.countdownTimer = setInterval(() => {
+    if (STATE.rateLimited) return;
     const total = STATE.fetchInterval * 1000;
     const elapsed = Date.now() - (STATE.nextFetchTime - total);
     const pct = Math.min(100, (elapsed / total) * 100);
     const ring = document.getElementById('fetchRingProgress');
-    if (ring) {
-      ring.classList.remove('rate-limited');
-      ring.style.strokeDashoffset = (37.7 * (1 - pct / 100)).toFixed(2);
-    }
+    if (ring) ring.style.strokeDashoffset = (37.7 * (1 - pct / 100)).toFixed(2);
   }, 250);
 
   STATE.priceTimer = setTimeout(() => {
