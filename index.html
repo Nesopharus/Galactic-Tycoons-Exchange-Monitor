@@ -328,6 +328,23 @@
     color: var(--text-dim);
   }
 
+  .fetch-ring { flex-shrink: 0; transform: rotate(-90deg); }
+  .fetch-ring-track { fill: none; stroke: var(--border); stroke-width: 1.5; }
+  .fetch-ring-progress {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-dasharray: 37.7;
+    stroke-dashoffset: 37.7;
+    transition: stroke-dashoffset 1s linear, stroke 0.3s;
+  }
+  .fetch-ring-progress.rate-limited {
+    stroke: var(--warn);
+    stroke-dashoffset: 0;
+    transition: stroke 0.3s;
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;
@@ -725,8 +742,11 @@
     <div class="monitor-toolbar">
       <div class="monitor-title" id="monitorTitle">Marktübersicht</div>
       <div class="monitor-meta">
-        <span>Letzter Abruf: <span id="lastFetch">--</span></span>
-        <span>Nächster: <span id="nextFetch">--</span></span>
+        <svg class="fetch-ring" width="16" height="16" viewBox="0 0 16 16">
+          <circle class="fetch-ring-track" cx="8" cy="8" r="6"/>
+          <circle class="fetch-ring-progress" id="fetchRingProgress" cx="8" cy="8" r="6"/>
+        </svg>
+        <span>Zuletzt aktualisiert: <span id="lastFetch">--</span></span>
       </div>
     </div>
 
@@ -917,6 +937,8 @@ function enterRateLimit(seconds) {
   STATE.rateLimitResumeAt = Date.now() + seconds * 1000;
   showRateLimitBanner(seconds);
   toast('Rate Limit erreicht! Pause für ' + seconds + 's.', 'warn');
+  const ring = document.getElementById('fetchRingProgress');
+  if (ring) ring.classList.add('rate-limited');
 }
 
 function enterRateProtection(msg) {
@@ -926,6 +948,8 @@ function enterRateProtection(msg) {
   STATE.rateLimitResumeAt = Date.now() + waitSec * 1000;
   showRateLimitBanner(waitSec);
   toast(msg, 'warn');
+  const ring = document.getElementById('fetchRingProgress');
+  if (ring) ring.classList.add('rate-limited');
 }
 
 function showRateLimitBanner(seconds) {
@@ -939,6 +963,8 @@ function showRateLimitBanner(seconds) {
       STATE.rateLimited = false;
       banner.classList.remove('visible');
       clearInterval(STATE.rateLimitTimer);
+      const ring = document.getElementById('fetchRingProgress');
+      if (ring) ring.classList.remove('rate-limited');
     }
   }, 1000);
 }
@@ -1117,11 +1143,23 @@ function schedulePriceFetch() {
   clearInterval(STATE.countdownTimer);
   STATE.nextFetchTime = Date.now() + STATE.fetchInterval * 1000;
 
+  // Snap ring to empty instantly (no transition) so it always starts at 0%
+  const ringReset = document.getElementById('fetchRingProgress');
+  if (ringReset) {
+    ringReset.style.transition = 'none';
+    ringReset.style.strokeDashoffset = '37.7';
+    ringReset.getBoundingClientRect(); // force reflow before re-enabling transition
+    ringReset.style.transition = '';
+  }
+
   STATE.countdownTimer = setInterval(() => {
-    const remaining = Math.max(0, Math.ceil((STATE.nextFetchTime - Date.now()) / 1000));
-    document.getElementById('nextFetch').textContent = remaining + 's';
-    if (remaining <= 0) clearInterval(STATE.countdownTimer);
-  }, 1000);
+    if (STATE.rateLimited) return;
+    const total = STATE.fetchInterval * 1000;
+    const elapsed = Date.now() - (STATE.nextFetchTime - total);
+    const pct = Math.min(100, (elapsed / total) * 100);
+    const ring = document.getElementById('fetchRingProgress');
+    if (ring) ring.style.strokeDashoffset = (37.7 * (1 - pct / 100)).toFixed(2);
+  }, 250);
 
   STATE.priceTimer = setTimeout(() => {
     if (!STATE.running) return;
