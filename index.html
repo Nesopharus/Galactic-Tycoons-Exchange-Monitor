@@ -541,6 +541,77 @@
     main { padding: 16px; }
     .cost-bar-track { width: 120px; }
   }
+
+  /* ─── HIST CONTROLS ─── */
+  .hist-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .hist-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .toggle-group {
+    display: flex;
+    gap: 3px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .toggle-btn {
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+  }
+
+  .toggle-btn:hover { background: var(--bg-hover); color: var(--text); border-color: transparent; }
+
+  .toggle-btn.selected {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .hist-cost-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--success);
+    background: var(--success-dim);
+    border-radius: 4px;
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
+
+  .rec-indicator {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  #histRangeGroup {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
 </style>
 </head>
 <body>
@@ -648,6 +719,27 @@
       </div>
     </div>
 
+    <!-- HIST CONTROLS -->
+    <div class="hist-controls">
+      <span class="hist-label">Alarm-Basis:</span>
+      <div class="toggle-group" id="alarmModeGroup">
+        <button class="toggle-btn" data-mode="avg"  onclick="setAlarmMode('avg')">API-Ø</button>
+        <button class="toggle-btn" data-mode="hist" onclick="setAlarmMode('hist')">Hist. Ø</button>
+      </div>
+      <div id="histRangeGroup" style="display:none">
+        <div class="toggle-group">
+          <button class="toggle-btn" data-range="1h"  onclick="setHistRange('1h')">1h</button>
+          <button class="toggle-btn" data-range="6h"  onclick="setHistRange('6h')">6h</button>
+          <button class="toggle-btn" data-range="1d"  onclick="setHistRange('1d')">1d</button>
+          <button class="toggle-btn" data-range="7d"  onclick="setHistRange('7d')">7d</button>
+          <button class="toggle-btn" data-range="rec" onclick="setHistRange('rec')">Aufzeichnung</button>
+        </div>
+        <span class="hist-cost-badge">+0 API-Pts</span>
+        <span id="recIndicator" class="rec-indicator">Aufz.: –</span>
+        <button class="btn-sm" id="loadApiHistBtn" onclick="loadApiHistory()">API-Historie laden <span id="apiHistCost"></span></button>
+      </div>
+    </div>
+
     <div class="card" style="padding:0; overflow-x:auto;">
       <table>
         <thead>
@@ -655,6 +747,7 @@
             <th>Material</th>
             <th>Aktueller Preis</th>
             <th>Durchschnitt</th>
+            <th>Historischer Ø</th>
             <th>Abweichung</th>
             <th>Status</th>
           </tr>
@@ -707,6 +800,12 @@ const STATE = {
   rateLimitResumeAt: null,
   rateLimitTimer: null,
   alerted: new Set(), // matIds that already fired alarm this cycle
+  alarmMode: 'avg',   // 'avg' | 'hist'
+  histRange: '1h',    // '1h' | '6h' | '1d' | '7d' | 'rec'
+  priceHistory: {},   // matId → [[timestamp_ms, price], ...]
+  lastSnapshotTime: 0,
+  apiHistoryLoaded: false,
+  localTrackingStart: 0,  // timestamp of first local snapshot
 };
 
 // ─── COST TRACKER ───
@@ -714,6 +813,8 @@ const COSTS = {
   '/public/wishlists': 7,
   '/public/wishlist': 3,
   '/public/exchange/mat-prices': 5,
+  '/public/exchange/mat-details':  60,  // alle Materialien, 7 Tage Historie
+  '/public/exchange/mat-details/':  5,  // einzelnes Material, 30 Tage Historie
 };
 
 let costLog = []; // { time: Date, points: number }
@@ -769,7 +870,9 @@ async function apiFetch(path) {
 
   const endpointKey = path.startsWith('/public/wishlist/') ? '/public/wishlist' :
                       path.startsWith('/public/wishlists') ? '/public/wishlists' :
-                      path.startsWith('/public/exchange/mat-prices') ? '/public/exchange/mat-prices' : path;
+                      path.startsWith('/public/exchange/mat-prices') ? '/public/exchange/mat-prices' :
+                      path.startsWith('/public/exchange/mat-details/') ? '/public/exchange/mat-details/' :
+                      path === '/public/exchange/mat-details' ? '/public/exchange/mat-details' : path;
 
   if (wouldExceedLimit(endpointKey)) {
     enterRateProtection('Eigenes Limit erreicht – pausiere Abrufe um Rate-Limit zu vermeiden.');
@@ -852,6 +955,8 @@ function loadSettings() {
     if (saved.wishlistInterval) document.getElementById('wishlistInterval').value = saved.wishlistInterval;
     if (saved.deviationThreshold) document.getElementById('deviationThreshold').value = saved.deviationThreshold;
     if (saved.mode) selectMode(saved.mode);
+    if (saved.alarmMode) STATE.alarmMode = saved.alarmMode;
+    if (saved.histRange) STATE.histRange = saved.histRange;
   } catch(e) {}
 }
 
@@ -862,6 +967,8 @@ function saveSettings() {
     wishlistInterval: STATE.wishlistInterval,
     deviationThreshold: STATE.deviationThreshold,
     mode: STATE.mode,
+    alarmMode: STATE.alarmMode,
+    histRange: STATE.histRange,
   };
   try { localStorage.setItem('gt_monitor_settings', JSON.stringify(settings)); } catch(e) {}
 }
@@ -956,6 +1063,7 @@ function startAllMonitoring() {
   document.getElementById('statusText').textContent = 'Aktiv – Alle';
   document.getElementById('noData').style.display = '';
   document.getElementById('priceTableBody').innerHTML = '';
+  syncHistControls();
   fetchPrices();
   schedulePriceFetch();
 }
@@ -969,6 +1077,7 @@ function startWishlistMonitoring() {
   document.getElementById('statusText').textContent = 'Aktiv – Wishlist';
   document.getElementById('noData').style.display = '';
   document.getElementById('priceTableBody').innerHTML = '';
+  syncHistControls();
   fetchWishlistDetails();
   fetchPrices();
   schedulePriceFetch();
@@ -1017,6 +1126,7 @@ async function fetchPrices() {
     const data = await apiFetch('/public/exchange/mat-prices');
     STATE.prices = data.prices || [];
     document.getElementById('lastFetch').textContent = timeStr();
+    storeSnapshot();
     renderTable();
   } catch(e) {
     if (e.message !== 'RATE_LIMITED') {
@@ -1047,6 +1157,7 @@ async function fetchWishlistDetails() {
 
     console.log('[GT Monitor] Extracted matIds for wishlist filter:', matIds);
     STATE.wishlistMatIds = new Set(matIds);
+    updateApiHistCost();
   } catch(e) {
     if (e.message !== 'RATE_LIMITED') {
       toast('Wishlist-Abruf fehlgeschlagen: ' + e.message, 'warn');
@@ -1054,17 +1165,228 @@ async function fetchWishlistDetails() {
   }
 }
 
+// ─── PRICE HISTORY ───
+const HIST_RANGES = {
+  '1h':  60 * 60 * 1000,
+  '6h':   6 * 60 * 60 * 1000,
+  '1d':  24 * 60 * 60 * 1000,
+  '7d': 7 * 24 * 60 * 60 * 1000,
+  'rec': null,   // gesamter Aufzeichnungszeitraum
+};
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem('gt_price_history');
+    STATE.priceHistory = raw ? JSON.parse(raw) : {};
+    STATE.apiHistoryLoaded = localStorage.getItem('gt_api_hist_loaded') === '1';
+    const lts = localStorage.getItem('gt_local_tracking_start');
+    STATE.localTrackingStart = lts ? parseInt(lts, 10) : 0;
+  } catch(e) {
+    STATE.priceHistory = {};
+    STATE.localTrackingStart = 0;
+  }
+}
+
+function storeSnapshot() {
+  const now = Date.now();
+  if (now - STATE.lastSnapshotTime < 30000) return; // max 1 Snapshot alle 30s
+  STATE.lastSnapshotTime = now;
+  if (!STATE.localTrackingStart) {
+    STATE.localTrackingStart = now;
+    try { localStorage.setItem('gt_local_tracking_start', String(now)); } catch(e) {}
+  }
+  for (const p of STATE.prices) {
+    if (p.currentPrice <= 0) continue;
+    if (!STATE.priceHistory[p.matId]) STATE.priceHistory[p.matId] = [];
+    STATE.priceHistory[p.matId].push([now, p.currentPrice]);
+  }
+  pruneHistory();
+  saveHistory();
+  updateRecIndicator();
+}
+
+function pruneHistory() {
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  for (const matId of Object.keys(STATE.priceHistory)) {
+    STATE.priceHistory[matId] = STATE.priceHistory[matId].filter(e => e[0] >= cutoff);
+    if (STATE.priceHistory[matId].length === 0) delete STATE.priceHistory[matId];
+  }
+}
+
+function saveHistory() {
+  try {
+    localStorage.setItem('gt_price_history', JSON.stringify(STATE.priceHistory));
+  } catch(e) {
+    if (e.name === 'QuotaExceededError') {
+      toast('Lokaler Speicher voll – Preishistorie konnte nicht gespeichert werden.', 'warn');
+    }
+  }
+}
+
+function getHistoricalAvg(matId, rangeMs) {
+  const entries = STATE.priceHistory[matId];
+  if (!entries || entries.length === 0) return null;
+  // rangeMs === null means 'rec' mode: only data since local tracking started
+  const cutoff = rangeMs !== null ? Date.now() - rangeMs : (STATE.localTrackingStart || Date.now());
+  const inWindow = entries.filter(e => e[0] >= cutoff);
+  if (inWindow.length === 0) return null;
+  const sum = inWindow.reduce((s, e) => s + e[1], 0);
+  return sum / inWindow.length;
+}
+
+function updateRecIndicator() {
+  const el = document.getElementById('recIndicator');
+  const recBtn = document.querySelector('#histRangeGroup .toggle-btn[data-range="rec"]');
+  const label = recDurationLabel();
+  if (el) el.textContent = label ? `Aufz.: ${label}` : 'Aufz.: –';
+  if (recBtn) recBtn.textContent = label || 'Lokal: –';
+}
+
+function recDurationLabel() {
+  if (!STATE.localTrackingStart) return null;
+  const diffSec = Math.floor((Date.now() - STATE.localTrackingStart) / 1000);
+  const h = Math.floor(diffSec / 3600);
+  const m = Math.floor((diffSec % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+function updateApiHistCost() {
+  const el = document.getElementById('apiHistCost');
+  const btn = document.getElementById('loadApiHistBtn');
+  if (!el || !btn) return;
+  if (STATE.apiHistoryLoaded) {
+    el.textContent = '✓';
+    btn.disabled = true;
+    btn.title = 'Historiedaten bereits geladen';
+    return;
+  }
+  if (STATE.mode === 'wishlist') {
+    const n = STATE.wishlistMatIds.size;
+    el.textContent = n > 0 ? `(${n} × 5 Pts. = ${n * 5} Pts.)` : '(? × 5 Pts.)';
+  } else {
+    el.textContent = '(60 Pts., 7 Tage)';
+  }
+}
+
+async function loadApiHistory() {
+  if (STATE.apiHistoryLoaded) {
+    toast('API-Historiedaten bereits geladen.', 'info');
+    return;
+  }
+  const btn = document.getElementById('loadApiHistBtn');
+  if (btn) btn.disabled = true;
+
+  try {
+    let newEntries = 0;
+
+    if (STATE.mode === 'wishlist' && STATE.wishlistMatIds.size > 0) {
+      for (const matId of STATE.wishlistMatIds) {
+        if (STATE.rateLimited) break;
+        const data = await apiFetch(`/public/exchange/mat-details/${matId}`);
+        const history = data.priceHistory || [];
+        if (!STATE.priceHistory[matId]) STATE.priceHistory[matId] = [];
+        const existing = new Set(STATE.priceHistory[matId].map(e => e[0]));
+        for (const day of history) {
+          if (day.avgPrice > 0) {
+            const ts = new Date(day.date + 'T12:00:00Z').getTime();
+            if (!existing.has(ts)) {
+              STATE.priceHistory[matId].push([ts, day.avgPrice]);
+              newEntries++;
+            }
+          }
+        }
+        STATE.priceHistory[matId].sort((a, b) => a[0] - b[0]);
+      }
+    } else {
+      const raw = await apiFetch('/public/exchange/mat-details');
+      const materials = Array.isArray(raw) ? raw :
+                        Array.isArray(raw.materials) ? raw.materials :
+                        Array.isArray(raw.mats) ? raw.mats : [];
+      for (const mat of materials) {
+        const matId = mat.matId;
+        if (!matId) continue;
+        const history = mat.priceHistory || [];
+        if (!STATE.priceHistory[matId]) STATE.priceHistory[matId] = [];
+        const existing = new Set(STATE.priceHistory[matId].map(e => e[0]));
+        for (const day of history) {
+          if (day.avgPrice > 0) {
+            const ts = new Date(day.date + 'T12:00:00Z').getTime();
+            if (!existing.has(ts)) {
+              STATE.priceHistory[matId].push([ts, day.avgPrice]);
+              newEntries++;
+            }
+          }
+        }
+        if (STATE.priceHistory[matId].length > 0) {
+          STATE.priceHistory[matId].sort((a, b) => a[0] - b[0]);
+        }
+      }
+    }
+
+    pruneHistory();
+    saveHistory();
+    STATE.apiHistoryLoaded = true;
+    localStorage.setItem('gt_api_hist_loaded', '1');
+    updateRecIndicator();
+    updateApiHistCost();
+    renderTable();
+    toast(`API-Historiedaten geladen (${newEntries} Tagespunkte hinzugefügt).`, 'info');
+
+  } catch(e) {
+    if (e.message !== 'RATE_LIMITED') {
+      toast('API-Historie-Abruf fehlgeschlagen: ' + e.message, 'warn');
+    }
+    if (btn) btn.disabled = false;
+  }
+}
+
+function setAlarmMode(mode) {
+  STATE.alarmMode = mode;
+  document.querySelectorAll('#alarmModeGroup .toggle-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.mode === mode);
+  });
+  const rg = document.getElementById('histRangeGroup');
+  if (rg) rg.style.display = mode === 'hist' ? 'flex' : 'none';
+  saveSettings();
+  renderTable();
+}
+
+function setHistRange(range) {
+  STATE.histRange = range;
+  document.querySelectorAll('#histRangeGroup .toggle-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.range === range);
+  });
+  saveSettings();
+  renderTable();
+}
+
+function syncHistControls() {
+  document.querySelectorAll('#alarmModeGroup .toggle-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.mode === STATE.alarmMode);
+  });
+  const rg = document.getElementById('histRangeGroup');
+  if (rg) rg.style.display = STATE.alarmMode === 'hist' ? 'flex' : 'none';
+  document.querySelectorAll('#histRangeGroup .toggle-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.range === STATE.histRange);
+  });
+  updateRecIndicator();
+  updateApiHistCost();
+}
+
 // ─── RENDER TABLE ───
 function renderTable() {
   const tbody = document.getElementById('priceTableBody');
   const noData = document.getElementById('noData');
 
+  const rangeMs = HIST_RANGES[STATE.histRange];
+
   let items = STATE.prices.map(p => {
-    // avgPrice -1 means no history, currentPrice -1 means no orders: skip these for deviation calc
-    const hasAvg = p.avgPrice > 0;
     const hasCur = p.currentPrice > 0;
-    const dev = (hasAvg && hasCur) ? ((p.currentPrice - p.avgPrice) / p.avgPrice) * 100 : null;
-    return { ...p, deviation: dev };
+    const histAvg = getHistoricalAvg(p.matId, rangeMs);
+    const refPrice = (STATE.alarmMode === 'hist' && histAvg !== null) ? histAvg : p.avgPrice;
+    const hasRef = refPrice > 0;
+    const dev = (hasRef && hasCur) ? ((p.currentPrice - refPrice) / refPrice) * 100 : null;
+    return { ...p, deviation: dev, histAvg };
   });
 
   // filter wishlist
@@ -1097,11 +1419,14 @@ function renderTable() {
   const threshold = -STATE.deviationThreshold;
 
   tbody.innerHTML = items.map(p => {
+    const histCell = p.histAvg !== null ? formatNum(Math.round(p.histAvg)) : '—';
+
     if (p.deviation === null) {
       return `<tr>
         <td class="td-name">${esc(p.matName)}</td>
         <td>${p.currentPrice === -1 ? '—' : formatNum(p.currentPrice)}</td>
         <td>${p.avgPrice === -1 ? '—' : formatNum(p.avgPrice)}</td>
+        <td>${histCell}</td>
         <td><span class="td-deviation neutral">n/a</span></td>
         <td>—</td>
       </tr>`;
@@ -1111,10 +1436,13 @@ function renderTable() {
     const isAlert = p.deviation <= threshold;
     const devClass = isAlert ? 'alert' : (p.deviation >= 0 ? 'warn' : 'ok');
 
+    const refPrice = (STATE.alarmMode === 'hist' && p.histAvg !== null) ? p.histAvg : p.avgPrice;
+    const refLabel = STATE.alarmMode === 'hist' ? 'Hist. Ø' : 'Ø';
+
     // fire alarm toast once per material per alert state
     if (isAlert && !STATE.alerted.has(p.matId)) {
       STATE.alerted.add(p.matId);
-      alarmToast(p.matName, p.deviation, p.currentPrice, p.avgPrice);
+      alarmToast(p.matName, p.deviation, p.currentPrice, refPrice, refLabel);
     }
     // reset alarm if back above threshold
     if (!isAlert && STATE.alerted.has(p.matId)) {
@@ -1125,6 +1453,7 @@ function renderTable() {
       <td class="td-name">${esc(p.matName)}</td>
       <td>${formatNum(p.currentPrice)}</td>
       <td>${formatNum(p.avgPrice)}</td>
+      <td>${histCell}</td>
       <td><span class="td-deviation ${devClass}">${devStr}</span></td>
       <td>${isAlert ? '<span class="alarm-badge">🔔 ALARM</span>' : '—'}</td>
     </tr>`;
@@ -1132,8 +1461,8 @@ function renderTable() {
 }
 
 // ─── ALARM ───
-function alarmToast(name, deviation, current, avg) {
-  toast(`🔔 ${name}: ${deviation.toFixed(2)}% unter Ø (${formatNum(current)} vs ${formatNum(avg)})`, 'alarm');
+function alarmToast(name, deviation, current, ref, refLabel = 'Ø') {
+  toast(`🔔 ${name}: ${deviation.toFixed(2)}% unter ${refLabel} (${formatNum(current)} vs ${formatNum(Math.round(ref))})`, 'alarm');
   playAlarmSound();
 }
 
@@ -1185,6 +1514,7 @@ function timeStr() {
 }
 
 // ─── INIT ───
+loadHistory();
 loadSettings();
 </script>
 </body>
