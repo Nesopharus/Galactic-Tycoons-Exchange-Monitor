@@ -363,6 +363,9 @@
     font-size: 14px;
   }
 
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--accent); }
+
   thead th {
     text-align: left;
     padding: 10px 14px;
@@ -788,11 +791,11 @@
       <table>
         <thead>
           <tr>
-            <th>Material</th>
-            <th>Aktueller Preis</th>
-            <th>Durchschnitt</th>
-            <th>Historischer Ø</th>
-            <th>Abweichung</th>
+            <th class="sortable" onclick="toggleSort('name')">Material <span id="sort-name"></span></th>
+            <th class="sortable" onclick="toggleSort('price')">Aktueller Preis <span id="sort-price"></span></th>
+            <th class="sortable" onclick="toggleSort('avgPrice')">Durchschnitt <span id="sort-avgPrice"></span></th>
+            <th class="sortable" onclick="toggleSort('histAvg')">Historischer Ø <span id="sort-histAvg"></span></th>
+            <th class="sortable" onclick="toggleSort('deviation')">Abweichung <span id="sort-deviation">↑</span></th>
             <th>Status</th>
           </tr>
         </thead>
@@ -844,8 +847,10 @@ const STATE = {
   rateLimitResumeAt: null,
   rateLimitTimer: null,
   alerted: new Set(), // matIds that already fired alarm this cycle
-  alarmMode: 'avg',   // 'avg' | 'hist'
-  histRange: '1h',    // '1h' | '6h' | '1d' | '7d' | 'rec'
+  sortColumn: 'deviation', // 'name' | 'price' | 'avgPrice' | 'deviation'
+  sortDir: 'asc',          // 'asc' | 'desc'
+  alarmMode: 'avg',        // 'avg' | 'hist'
+  histRange: '1h',         // '1h' | '6h' | '1d' | '7d' | 'rec'
   priceHistory: {},   // matId → [[timestamp_ms, price], ...]
   lastSnapshotTime: 0,
   apiHistoryLoaded: false,
@@ -1457,6 +1462,21 @@ function syncHistControls() {
 }
 
 // ─── RENDER TABLE ───
+function toggleSort(col) {
+  if (STATE.sortColumn === col) {
+    STATE.sortDir = STATE.sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    STATE.sortColumn = col;
+    STATE.sortDir = 'asc';
+  }
+  ['name', 'price', 'avgPrice', 'deviation', 'histAvg'].forEach(c => {
+    const el = document.getElementById('sort-' + c);
+    if (!el) return;
+    el.textContent = STATE.sortColumn === c ? (STATE.sortDir === 'asc' ? '↑' : '↓') : '';
+  });
+  renderTable();
+}
+
 function renderTable() {
   const tbody = document.getElementById('priceTableBody');
   const noData = document.getElementById('noData');
@@ -1501,12 +1521,29 @@ function renderTable() {
     items = items.filter(p => p.matName.toLowerCase().includes(query));
   }
 
-  // sort: ascending by deviation (most negative first), nulls at end
+  // configurable sort
+  const dir = STATE.sortDir === 'asc' ? 1 : -1;
   items.sort((a, b) => {
-    if (a.deviation === null && b.deviation === null) return 0;
-    if (a.deviation === null) return 1;
-    if (b.deviation === null) return -1;
-    return a.deviation - b.deviation;
+    switch (STATE.sortColumn) {
+      case 'name':     return dir * a.matName.localeCompare(b.matName);
+      case 'price':    return dir * ((a.currentPrice ?? Infinity) - (b.currentPrice ?? Infinity));
+      case 'avgPrice': return dir * ((a.avgPrice ?? Infinity) - (b.avgPrice ?? Infinity));
+      case 'histAvg':
+        if (a.histAvg === null && b.histAvg === null) return 0;
+        if (a.histAvg === null) return 1;
+        if (b.histAvg === null) return -1;
+        return dir * (a.histAvg - b.histAvg);
+      case 'deviation':
+        if (a.deviation === null && b.deviation === null) return 0;
+        if (a.deviation === null) return 1;
+        if (b.deviation === null) return -1;
+        return dir * (a.deviation - b.deviation);
+      default:
+        if (a.deviation === null && b.deviation === null) return 0;
+        if (a.deviation === null) return 1;
+        if (b.deviation === null) return -1;
+        return a.deviation - b.deviation;
+    }
   });
 
   if (!items.length) {
