@@ -561,6 +561,42 @@
     to { opacity: 0; transform: translateX(110%); max-height: 0; margin: 0; padding: 0; }
   }
 
+  /* ─── CHEAT SHEET ─── */
+  .cheat-sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cheat-sheet-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    min-width: 260px;
+  }
+  .cheat-sheet-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin-bottom: 16px;
+  }
+  .cheat-table { width: 100%; border-collapse: collapse; }
+  .cheat-table td { padding: 5px 8px; font-size: 13px; color: var(--text); }
+  .cheat-table td:first-child { width: 50px; }
+  kbd {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 12px;
+    color: var(--text-bright);
+    font-family: monospace;
+  }
+
   /* ─── RATE LIMIT BANNER ─── */
   .rate-limit-banner {
     background: var(--warn-glow);
@@ -668,6 +704,7 @@
   <div class="header-controls">
     <div class="status-dot" id="statusDot"></div>
     <span class="status-text" id="statusText">Inaktiv</span>
+    <button class="btn-sm" id="btnMute" onclick="toggleMute()" title="Sound ein/aus (M)" style="font-size:15px;">🔊</button>
     <button class="btn-sm" id="btnSettings" style="display:none;" onclick="stopMonitoring(); showView('setup')">⚙ Einstellungen</button>
   </div>
 </header>
@@ -849,6 +886,7 @@ const STATE = {
   alerted: new Set(), // matIds that already fired alarm this cycle
   sortColumn: 'deviation', // 'name' | 'price' | 'avgPrice' | 'deviation'
   sortDir: 'asc',          // 'asc' | 'desc'
+  muted: false,            // Alarm-Sound stummgeschaltet
   alarmMode: 'avg',        // 'avg' | 'hist'
   histRange: '1h',         // '1h' | '6h' | '1d' | '7d' | 'rec'
   priceHistory: {},   // matId → [[timestamp_ms, price], ...]
@@ -1131,7 +1169,7 @@ function startAllMonitoring() {
   schedulePriceFetch();
 }
 
-function startWishlistMonitoring() {
+async function startWishlistMonitoring() {
   STATE.running = true;
   STATE.alerted.clear();
   showView('monitor');
@@ -1141,7 +1179,9 @@ function startWishlistMonitoring() {
   document.getElementById('noData').style.display = '';
   document.getElementById('priceTableBody').innerHTML = '';
   syncHistControls();
-  fetchWishlistDetails();
+  // Wishlist-Details erst abwarten bevor Preise geholt werden,
+  // sonst ist wishlistMatIds noch leer wenn renderTable() läuft
+  await fetchWishlistDetails();
   fetchPrices();
   schedulePriceFetch();
   scheduleWishlistFetch();
@@ -1671,6 +1711,79 @@ function timeStr() {
 // ─── INIT ───
 loadHistory();
 loadSettings();
+// ─── KEYBOARD SHORTCUTS ───
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+  // Escape immer verarbeiten, auch wenn ein Input fokussiert ist
+  if (e.key === 'Escape') {
+    closeAllOverlays();
+    // Vom Einstellungsfenster zurück zum letzten Monitor-Zustand
+    const onSetup = document.getElementById('view-setup')?.classList.contains('active');
+    if (onSetup && STATE.prices.length > 0) {
+      if (STATE.mode === 'all') startAllMonitoring();
+      else if (STATE.mode === 'wishlist' && STATE.selectedWishlistId) startWishlistMonitoring();
+    }
+    return;
+  }
+
+  if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+
+  switch (e.key) {
+    case 's': case 'S':
+      // Zurück zu Einstellungen (nur wenn Monitoring läuft)
+      if (STATE.running) { stopMonitoring(); showView('setup'); }
+      break;
+    case 'r': case 'R':
+      // Preise sofort manuell abrufen
+      if (STATE.running && !STATE.rateLimited) fetchPrices();
+      break;
+    case 'f': case 'F':
+      // Fokus auf Suchfeld setzen
+      e.preventDefault();
+      document.getElementById('materialSearch')?.focus();
+      break;
+    case 'm': case 'M':
+      // Alarm-Sound stummschalten / wieder aktivieren
+      toggleMute();
+      break;
+    case '?':
+      // Shortcut-Übersicht ein-/ausblenden
+      toggleCheatSheet();
+      break;
+  }
+});
+
+function toggleMute() {
+  STATE.muted = !STATE.muted;
+  // TODO #27: playAlarmSound() soll STATE.muted respektieren (eigenes Issue)
+  document.getElementById('btnMute').textContent = STATE.muted ? '🔇' : '🔊';
+}
+
+function toggleCheatSheet() {
+  const el = document.getElementById('cheatSheet');
+  el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+}
+
+function closeAllOverlays() {
+  const cs = document.getElementById('cheatSheet');
+  if (cs) cs.style.display = 'none';
+}
 </script>
+
+<div class="cheat-sheet-overlay" id="cheatSheet" style="display:none">
+  <div class="cheat-sheet-box">
+    <div class="cheat-sheet-title">Keyboard Shortcuts</div>
+    <table class="cheat-table">
+      <tr><td><kbd>S</kbd></td><td>Einstellungen</td></tr>
+      <tr><td><kbd>R</kbd></td><td>Preise jetzt abrufen</td></tr>
+      <tr><td><kbd>F</kbd></td><td>Material suchen</td></tr>
+      <tr><td><kbd>M</kbd></td><td>Sound stummschalten</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Overlay schließen</td></tr>
+      <tr><td><kbd>?</kbd></td><td>Diese Übersicht</td></tr>
+    </table>
+    <button class="btn-sm" onclick="toggleCheatSheet()" style="margin-top:14px;">Schließen</button>
+  </div>
+</div>
 </body>
 </html>
