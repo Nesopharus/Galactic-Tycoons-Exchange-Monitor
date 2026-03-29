@@ -893,6 +893,7 @@ const STATE = {
   lastSnapshotTime: 0,
   apiHistoryLoaded: false,
   localTrackingStart: 0,  // timestamp of first local snapshot
+  lastFetchTime: null,  // timestamp of last successful price fetch
 };
 
 // ─── COST TRACKER ───
@@ -1229,6 +1230,7 @@ function schedulePriceFetch() {
   }
 
   STATE.countdownTimer = setInterval(() => {
+    updateLastFetchLabel();
     if (STATE.rateLimited) return;
     const total = STATE.fetchInterval * 1000;
     const elapsed = Date.now() - (STATE.nextFetchTime - total);
@@ -1258,7 +1260,8 @@ async function fetchPrices() {
   try {
     const data = await apiFetch('/public/exchange/mat-prices');
     STATE.prices = data.prices || [];
-    document.getElementById('lastFetch').textContent = timeStr();
+    STATE.lastFetchTime = Date.now();
+    updateLastFetchLabel();
     storeSnapshot();
     renderTable();
   } catch(e) {
@@ -1720,8 +1723,11 @@ function formatNum(n) {
   return (n / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $';
 }
 
-function timeStr() {
-  return new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+function updateLastFetchLabel() {
+  const el = document.getElementById('lastFetch');
+  if (!el || !STATE.lastFetchTime) return;
+  const sec = Math.floor((Date.now() - STATE.lastFetchTime) / 1000);
+  el.textContent = sec < 60 ? 'vor ' + sec + 's' : 'vor ' + Math.floor(sec / 60) + 'm ' + (sec % 60) + 's';
 }
 
 // ─── INIT ───
