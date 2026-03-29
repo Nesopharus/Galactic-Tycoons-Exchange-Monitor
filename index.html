@@ -497,6 +497,7 @@
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     animation: toast-in 0.3s ease;
     max-width: 360px;
+    max-height: 300px;
     display: flex;
     align-items: flex-start;
     gap: 10px;
@@ -524,6 +525,7 @@
     animation: toast-out 0.2s ease forwards;
   }
   @keyframes toast-out {
+    from { opacity: 1; transform: translateX(0); max-height: 300px; padding: 12px 16px; margin: 0; }
     to { opacity: 0; transform: translateX(110%); max-height: 0; margin: 0; padding: 0; }
   }
 
@@ -1492,7 +1494,10 @@ function renderTable() {
 
   // fire alarms: ≤4 individual toasts, >4 one summary sorted by deviation
   if (newAlarms.length > 0 && newAlarms.length <= 4) {
-    newAlarms.forEach(a => alarmToast(a.name, a.deviation, a.current, a.ref, a.refLabel));
+    playAlarmSound();
+    newAlarms.forEach(a => {
+      toast(`🔔 ${a.name}: ${a.deviation.toFixed(2)}% unter ${a.refLabel} (${formatNum(a.current)} vs ${formatNum(Math.round(a.ref))})`, 'alarm');
+    });
   } else if (newAlarms.length > 4) {
     newAlarms.sort((a, b) => a.deviation - b.deviation);
     playAlarmSound();
@@ -1546,10 +1551,10 @@ function toast(msg, type = 'info', raw = false) {
     <span>${raw ? msg : esc(msg)}</span>
     <span class="toast-dismiss" onclick="removeToast(this.parentElement)">✕</span>
   `;
+  // Keep max 4 toasts visible — remove oldest excess ones before appending
+  const allToasts = container.querySelectorAll('.toast:not(.removing)');
+  if (allToasts.length >= 4) removeToast(allToasts[0]);
   container.appendChild(div);
-  // Keep max 4 toasts visible — remove oldest excess ones
-  const allToasts = container.querySelectorAll('.toast');
-  if (allToasts.length > 4) removeToast(allToasts[0]);
   setTimeout(() => { if (div.parentElement) removeToast(div); }, type === 'alarm' ? 8000 : 5000);
 }
 
