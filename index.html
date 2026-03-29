@@ -453,6 +453,17 @@
     font-family: 'Outfit', sans-serif;
   }
 
+  /* ─── WISHLIST-ONLY COLUMNS ─── */
+  .col-wishlist { display: none; }
+  body.mode-wishlist .col-wishlist { display: table-cell; }
+  .col-reserve { display: none; }
+  body.mode-reserve .col-reserve { display: table-cell; }
+  /* Historischer-Ø-Spalte nur im Hist-Modus */
+  .col-hist { display: none; }
+  body.mode-hist .col-hist { display: table-cell; }
+  .reserve-urgent { color: var(--danger); font-weight: 600; }
+  .reserve-ok { color: var(--ok); }
+
   .no-data {
     text-align: center;
     padding: 60px 20px;
@@ -809,6 +820,12 @@
       </div>
     </div>
 
+    <!-- RESERVE TOGGLE — nur in Wishlist-Modus sichtbar -->
+    <div class="hist-controls col-wishlist" id="reserveControls">
+      <span class="hist-label">Reserve-Zeit:</span>
+      <button class="toggle-btn" id="btnReserve" onclick="toggleReserve()">🏭 Reserven</button>
+    </div>
+
     <!-- HIST CONTROLS -->
     <div class="hist-controls">
       <span class="hist-label">Alarm-Basis:</span>
@@ -836,14 +853,18 @@
           <tr>
             <th class="sortable" onclick="toggleSort('name')">Material <span id="sort-name"></span></th>
             <th class="sortable" onclick="toggleSort('price')">Aktueller Preis <span id="sort-price"></span></th>
+            <th class="col-wishlist">Menge</th>
+            <th class="col-wishlist sortable" onclick="toggleSort('total')">Gesamtwert <span id="sort-total"></span></th>
+            <th class="col-reserve sortable" onclick="toggleSort('reserve')">Reserve <span id="sort-reserve"></span></th>
             <th class="sortable" onclick="toggleSort('avgPrice')">Durchschnitt <span id="sort-avgPrice"></span></th>
-            <th class="sortable" onclick="toggleSort('histAvg')">Historischer Ø <span id="sort-histAvg"></span></th>
+            <th class="col-hist sortable" onclick="toggleSort('histAvg')">Historischer Ø <span id="sort-histAvg"></span></th>
             <th class="sortable" onclick="toggleSort('deviation')">Abweichung <span id="sort-deviation">↑</span></th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody id="priceTableBody">
         </tbody>
+        <tfoot id="priceTableFoot"></tfoot>
       </table>
       <div class="no-data" id="noData">
         <div class="no-data-icon">📡</div>
@@ -880,6 +901,11 @@ const STATE = {
   selectedWishlistId: null,
   selectedWishlistName: '',
   wishlistMatIds: new Set(),
+  wishlistAmounts: {},     // { matId: am } — Mengen aus der Wishlist
+  reserveData: {},         // { matId: { days: number, urgent: boolean } }
+  showReserve: false,      // Reserve-Zeit-Spalte ein-/ausgeblendet
+  gameData: null,          // gecachte gamedata.json (Rezepte, Buildings)
+  baseTimer: null,
   prices: [],
   running: false,
   priceTimer: null,
@@ -907,8 +933,9 @@ const COSTS = {
   '/public/wishlists': 7,
   '/public/wishlist': 3,
   '/public/exchange/mat-prices': 5,
-  '/public/exchange/mat-details':  60,  // alle Materialien, 7 Tage Historie
-  '/public/exchange/mat-details/':  5,  // einzelnes Material, 30 Tage Historie
+  '/public/exchange/mat-details':   60,  // alle Materialien, 7 Tage Historie
+  '/public/exchange/mat-details/':   5,  // einzelnes Material, 30 Tage Historie
+  '/public/company/bases':          20,  // Alle Bases inkl. Lagerbestand + Verbrauchsraten
 };
 
 let costLog = []; // { time: Date, points: number }
@@ -1168,7 +1195,7 @@ async function loadWishlists() {
 
 // ─── MONITORING ───
 function syncSortHeaders() {
-  ['name', 'price', 'avgPrice', 'deviation', 'histAvg'].forEach(c => {
+  ['name', 'price', 'avgPrice', 'deviation', 'histAvg', 'total', 'reserve'].forEach(c => {
     const el = document.getElementById('sort-' + c);
     if (el) el.textContent = STATE.sortColumn === c ? (STATE.sortDir === 'asc' ? '↑' : '↓') : '';
   });
@@ -1187,6 +1214,7 @@ function startAllMonitoring() {
   document.getElementById('noData').style.display = '';
   document.getElementById('priceTableBody').innerHTML = '';
   syncHistControls();
+  document.body.classList.remove('mode-wishlist');
   fetchPrices();
   schedulePriceFetch();
 }
@@ -1204,18 +1232,21 @@ async function startWishlistMonitoring() {
   document.getElementById('noData').style.display = '';
   document.getElementById('priceTableBody').innerHTML = '';
   syncHistControls();
+  document.body.classList.add('mode-wishlist');
   // Wishlist-Details erst abwarten bevor Preise geholt werden,
   // sonst ist wishlistMatIds noch leer wenn renderTable() läuft
   await fetchWishlistDetails();
   fetchPrices();
   schedulePriceFetch();
   scheduleWishlistFetch();
+  if (STATE.showReserve) fetchBaseData();
 }
 
 function stopMonitoring() {
   STATE.running = false;
   clearTimeout(STATE.priceTimer);
   clearTimeout(STATE.wishlistTimer);
+  clearTimeout(STATE.baseTimer);
   clearInterval(STATE.countdownTimer);
   document.getElementById('statusDot').classList.remove('active');
   document.getElementById('statusText').textContent = 'Inaktiv';
@@ -1280,21 +1311,120 @@ async function fetchWishlistDetails() {
     // Extract materials array - try all known field names
     // Local API uses "mats" with {id, am}, Public API might differ
     const rawMats = wlObj.mats || wlObj.materials || wlObj.items || [];
-    console.log('[GT Monitor] Raw materials from wishlist:', JSON.stringify(rawMats));
-
-    // Extract material IDs - handle both {id, am} (Local API style) and {matId, ...} formats
-    const matIds = rawMats.map(m => {
+    // Extract material IDs and amounts - handle both {id, am} (Local API style) and {matId, ...} formats
+    const amounts = {};
+    rawMats.forEach(m => {
       const mid = m.matId ?? m.materialId ?? m.id;
-      return mid;
-    }).filter(id => id != null);
+      if (mid != null) amounts[mid] = m.am ?? m.amount ?? m.quantity ?? 1;
+    });
 
-    console.log('[GT Monitor] Extracted matIds for wishlist filter:', matIds);
-    STATE.wishlistMatIds = new Set(matIds);
+    STATE.wishlistAmounts = amounts;
+    STATE.wishlistMatIds = new Set(Object.keys(amounts).map(Number));
     updateApiHistCost();
   } catch(e) {
     if (e.message !== 'RATE_LIMITED') {
       toast('Wishlist-Abruf fehlgeschlagen: ' + e.message, 'warn');
     }
+  }
+}
+
+// ─── BASE / RESERVE DATA ───
+async function loadGameData() {
+  if (STATE.gameData) return STATE.gameData;
+  const r = await fetch('https://api.g2.galactictycoons.com/gamedata.json');
+  STATE.gameData = await r.json();
+  return STATE.gameData;
+}
+
+async function fetchBaseData() {
+  if (!STATE.running || !STATE.showReserve) return;
+  try {
+    const [data, gd] = await Promise.all([
+      apiFetch('/public/company/bases'),
+      loadGameData(),
+    ]);
+    const baseList = Array.isArray(data) ? data : (data.bases || data.data || []);
+
+    // Rezept-Lookup: rId → recipe
+    const recipeById = {};
+    (gd.recipes || []).forEach(r => { recipeById[r.id] = r; });
+
+    // netRates: matId → Einheiten/Tag (negativ = Verbrauch, positiv = Produktion)
+    const netRates = {};  // matId → Einheiten/Tag
+    const buffer   = {};  // matId → laufender Tick-Anteil (Workforce)
+    const stock    = {};  // matId → Lagerbestand (Summe aller Bases)
+
+    baseList.forEach(base => {
+      // Workforce-Verbrauch: rate ist bereits in Einheiten/Tag
+      (base.workforce?.consumptionMaterials || []).forEach(m => {
+        if (m.matId == null || m.rate <= 0) return;
+        netRates[m.matId] = (netRates[m.matId] || 0) - m.rate;
+        buffer[m.matId]   = (buffer[m.matId]   || 0) + (m.buffer || 0);
+      });
+
+      // Lagerbestand
+      (base.warehouse?.mats || []).forEach(m => {
+        if (m.id != null) stock[m.id] = (stock[m.id] || 0) + m.am;
+      });
+
+      // Produktions-Nettofluss: aktive BuildingSlots mit laufendem Task
+      const activeOrders = new Set((base.productionOrders || []).map(o => o.rId));
+      (base.buildingSlots || []).forEach(slot => {
+        const bld = slot.building;
+        if (!bld?.task?.rId) return;
+        const recipe = recipeById[bld.task.rId];
+        if (!recipe || !activeOrders.has(bld.task.rId)) return;
+
+        const mul        = bld.task.mul ?? 1;
+        const speed      = Math.min((bld.cond ?? 1) + 0.2, 1.0);  // Building Productivity
+        const batchHours = (recipe.timeMinutes / 60) / speed;
+        const batchesPerDay = 24 / batchHours;
+
+        // Inputs verbrauchen, Output produzieren
+        (recipe.inputs || []).forEach(inp => {
+          netRates[inp.id] = (netRates[inp.id] || 0) - (inp.am * mul) * batchesPerDay;
+        });
+        if (recipe.output?.id != null) {
+          netRates[recipe.output.id] = (netRates[recipe.output.id] || 0) + (recipe.output.am * mul) * batchesPerDay;
+        }
+      });
+    });
+
+    // Reserve = (Vorrat − Tick-Puffer) ÷ |Nettofluss/Tag|
+    // Infinity wenn netto produziert oder kein Verbrauch
+    const result = {};
+    Object.keys(netRates).forEach(mid => {
+      const net = netRates[mid];
+      if (net >= 0) {
+        result[mid] = { days: Infinity, urgent: false };
+      } else {
+        const days = Math.max(0, ((stock[mid] || 0) - (buffer[mid] || 0)) / Math.abs(net));
+        result[mid] = { days, urgent: days < 1 };
+      }
+    });
+    STATE.reserveData = result;
+    if (STATE.prices.length > 0) renderTable();
+  } catch(e) {
+    if (e.message !== 'RATE_LIMITED') {
+      toast('Base-Daten fehlgeschlagen: ' + e.message, 'warn');
+    }
+  }
+}
+
+function toggleReserve() {
+  STATE.showReserve = !STATE.showReserve;
+  document.body.classList.toggle('mode-reserve', STATE.showReserve);
+  const btn = document.getElementById('btnReserve');
+  if (btn) {
+    btn.classList.toggle('selected', STATE.showReserve);
+    btn.textContent = STATE.showReserve ? '⏳ Reserven' : '🏭 Reserven';
+  }
+  if (STATE.showReserve) {
+    fetchBaseData();
+  } else {
+    clearTimeout(STATE.baseTimer);
+    STATE.reserveData = {};
+    renderTable();
   }
 }
 
@@ -1493,6 +1623,7 @@ function setAlarmMode(mode) {
   });
   const rg = document.getElementById('histRangeGroup');
   if (rg) rg.style.display = mode === 'hist' ? 'flex' : 'none';
+  document.body.classList.toggle('mode-hist', mode === 'hist');
   saveSettings();
   renderTable();
 }
@@ -1512,6 +1643,7 @@ function syncHistControls() {
   });
   const rg = document.getElementById('histRangeGroup');
   if (rg) rg.style.display = STATE.alarmMode === 'hist' ? 'flex' : 'none';
+  document.body.classList.toggle('mode-hist', STATE.alarmMode === 'hist');
   document.querySelectorAll('#histRangeGroup .toggle-btn').forEach(b => {
     b.classList.toggle('selected', b.dataset.range === STATE.histRange);
   });
@@ -1520,7 +1652,27 @@ function syncHistControls() {
 }
 
 // ─── RENDER TABLE ───
+function formatReserve(days) {
+  if (days == null || isNaN(days)) return '—';
+  if (days === Infinity) return '∞';
+  const totalMin = Math.round(days * 24 * 60);
+  const d = Math.floor(totalMin / 1440);
+  const h = Math.floor((totalMin % 1440) / 60);
+  const m = totalMin % 60;
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function renderReserveCell(reserve) {
+  if (!STATE.showReserve || reserve === null) return `<td class="col-reserve">—</td>`;
+  if (reserve.days === Infinity) return `<td class="col-reserve"><span class="reserve-ok">∞</span></td>`;
+  const cls = reserve.urgent ? 'reserve-urgent' : 'reserve-ok';
+  return `<td class="col-reserve"><span class="${cls}">${formatReserve(reserve.days)}</span></td>`;
+}
+
 function toggleSort(col) {
+  if (col === 'reserve' && !STATE.showReserve) return;
   if (STATE.sortColumn === col) {
     STATE.sortDir = STATE.sortDir === 'asc' ? 'desc' : 'asc';
   } else {
@@ -1543,15 +1695,15 @@ function renderTable() {
     const refPrice = (STATE.alarmMode === 'hist' && histAvg !== null) ? histAvg : p.avgPrice;
     const hasRef = refPrice > 0;
     const dev = (hasRef && hasCur) ? ((p.currentPrice - refPrice) / refPrice) * 100 : null;
-    return { ...p, deviation: dev, histAvg };
+    const am = STATE.wishlistAmounts[p.matId] ?? null;
+    const total = (am != null && p.currentPrice > 0) ? am * p.currentPrice : null;
+    const reserve = STATE.reserveData[p.matId] ?? null;
+    return { ...p, deviation: dev, histAvg, am, total, reserve };
   });
 
   // filter wishlist
   if (STATE.mode === 'wishlist') {
-    console.log('[GT Monitor] Filtering prices by wishlistMatIds:', [...STATE.wishlistMatIds]);
-    console.log('[GT Monitor] Available matIds in prices:', items.map(i => i.matId));
     items = items.filter(p => STATE.wishlistMatIds.has(p.matId));
-    console.log('[GT Monitor] After filter:', items.length, 'items');
   }
 
   // evaluate alarms on full dataset before search narrows it
@@ -1587,6 +1739,16 @@ function renderTable() {
         if (a.histAvg === null) return 1;
         if (b.histAvg === null) return -1;
         return dir * (a.histAvg - b.histAvg);
+      case 'total':
+        if (a.total === null && b.total === null) return 0;
+        if (a.total === null) return 1;
+        if (b.total === null) return -1;
+        return dir * (a.total - b.total);
+      case 'reserve':
+        if (a.reserve === null && b.reserve === null) return 0;
+        if (a.reserve === null) return 1;
+        if (b.reserve === null) return -1;
+        return dir * (a.reserve.days - b.reserve.days);
       case 'deviation':
         if (a.deviation === null && b.deviation === null) return 0;
         if (a.deviation === null) return 1;
@@ -1613,15 +1775,21 @@ function renderTable() {
 
   noData.style.display = 'none';
 
+  const tfoot = document.getElementById('priceTableFoot');
+
   tbody.innerHTML = items.map(p => {
-    const histCell = p.histAvg !== null ? formatNum(Math.round(p.histAvg)) : '—';
+    const histCell = p.histAvg !== null ? formatNum(p.histAvg) : '—';
+    const amCell = `<td class="col-wishlist">${p.am ?? '—'}</td>`;
+    const totalCell = `<td class="col-wishlist">${p.total != null ? formatNum(p.total) : '—'}</td>`;
+    const reserveCell = renderReserveCell(p.reserve);
 
     if (p.deviation === null) {
       return `<tr>
         <td class="td-name">${esc(p.matName)}</td>
         <td>${p.currentPrice === -1 ? '—' : formatNum(p.currentPrice)}</td>
+        ${amCell}${totalCell}${reserveCell}
         <td>${p.avgPrice === -1 ? '—' : formatNum(p.avgPrice)}</td>
-        <td>${histCell}</td>
+        <td class="col-hist">${histCell}</td>
         <td><span class="td-deviation neutral">n/a</span></td>
         <td>—</td>
       </tr>`;
@@ -1634,12 +1802,29 @@ function renderTable() {
     return `<tr class="${isAlert ? 'alarm-row' : ''}">
       <td class="td-name">${esc(p.matName)}</td>
       <td>${formatNum(p.currentPrice)}</td>
+      ${amCell}${totalCell}${reserveCell}
       <td>${formatNum(p.avgPrice)}</td>
-      <td>${histCell}</td>
+      <td class="col-hist">${histCell}</td>
       <td><span class="td-deviation ${devClass}">${devStr}</span></td>
       <td>${isAlert ? '<span class="alarm-badge">🔔 ALARM</span>' : '—'}</td>
     </tr>`;
   }).join('');
+
+  // Summenzeile für Wishlist-Modus
+  if (STATE.mode === 'wishlist') {
+    const grandTotal = items.reduce((s, p) => s + (p.total ?? 0), 0);
+    const totalCols = document.querySelectorAll('#priceTableBody tr:first-child td').length || 9;
+    const trailCols = totalCols - (STATE.showReserve ? 6 : 5);
+    tfoot.innerHTML = `<tr>
+      <td colspan="2" style="text-align:right; color:var(--text-dim); font-size:12px;">Gesamt:</td>
+      <td class="col-wishlist">—</td>
+      <td class="col-wishlist" style="font-weight:600;">${formatNum(grandTotal)}</td>
+      ${STATE.showReserve ? '<td class="col-reserve"></td>' : ''}
+      <td colspan="${trailCols}"></td>
+    </tr>`;
+  } else {
+    tfoot.innerHTML = '';
+  }
 
   // fire alarms: ≤4 individual toasts, >4 one summary sorted by deviation
   if (newAlarms.length > 0 && newAlarms.length <= 4) {
@@ -1769,6 +1954,10 @@ document.addEventListener('keydown', e => {
       // Alarm-Sound stummschalten / wieder aktivieren
       toggleMute();
       break;
+    case 'b': case 'B':
+      // Reserve-Zeit-Spalte ein-/ausblenden (nur Wishlist-Modus)
+      if (STATE.mode === 'wishlist') toggleReserve();
+      break;
     case '?':
       // Shortcut-Übersicht ein-/ausblenden
       toggleCheatSheet();
@@ -1801,6 +1990,7 @@ function closeAllOverlays() {
       <tr><td><kbd>R</kbd></td><td>Preise jetzt abrufen</td></tr>
       <tr><td><kbd>F</kbd></td><td>Material suchen</td></tr>
       <tr><td><kbd>M</kbd></td><td>Sound stummschalten</td></tr>
+      <tr><td><kbd>B</kbd></td><td>Reserve-Zeit (Wishlist)</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>Overlay schließen</td></tr>
       <tr><td><kbd>?</kbd></td><td>Diese Übersicht</td></tr>
     </table>
