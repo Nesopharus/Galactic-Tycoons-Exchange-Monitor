@@ -1701,7 +1701,8 @@ function esc(s) {
 }
 
 function formatNum(n) {
-  return n != null ? n.toLocaleString('de-DE') : '—';
+  if (n == null || isNaN(n)) return '—';
+  return (n / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' $';
 }
 
 function timeStr() {
