@@ -328,6 +328,18 @@
     color: var(--text-dim);
   }
 
+  .search-input {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-bright);
+    font-size: 13px;
+    padding: 5px 12px;
+    width: 200px;
+    outline: none;
+  }
+  .search-input:focus { border-color: var(--accent); }
+
   .fetch-ring { flex-shrink: 0; transform: rotate(-90deg); }
   .fetch-ring-track { fill: none; stroke: var(--border); stroke-width: 1.5; }
   .fetch-ring-progress {
@@ -741,6 +753,7 @@
 
     <div class="monitor-toolbar">
       <div class="monitor-title" id="monitorTitle">Marktübersicht</div>
+      <input type="search" id="materialSearch" class="search-input" placeholder="Filter…" oninput="renderTable()">
       <div class="monitor-meta">
         <svg class="fetch-ring" width="16" height="16" viewBox="0 0 16 16">
           <circle class="fetch-ring-track" cx="8" cy="8" r="6"/>
@@ -1467,6 +1480,27 @@ function renderTable() {
     console.log('[GT Monitor] After filter:', items.length, 'items');
   }
 
+  // evaluate alarms on full dataset before search narrows it
+  const threshold = -STATE.deviationThreshold;
+  const newAlarms = [];
+  for (const p of items) {
+    if (p.deviation === null) continue;
+    const isAlert = p.deviation <= threshold;
+    const refPrice = (STATE.alarmMode === 'hist' && p.histAvg !== null) ? p.histAvg : p.avgPrice;
+    const refLabel = STATE.alarmMode === 'hist' ? 'Hist. Ø' : 'Ø';
+    if (isAlert && !STATE.alerted.has(p.matId)) {
+      STATE.alerted.add(p.matId);
+      newAlarms.push({ name: p.matName, deviation: p.deviation, current: p.currentPrice, ref: refPrice, refLabel });
+    }
+    if (!isAlert && STATE.alerted.has(p.matId)) STATE.alerted.delete(p.matId);
+  }
+
+  // search filter (display only — alarms already evaluated above)
+  const query = (document.getElementById('materialSearch')?.value || '').toLowerCase().trim();
+  if (query) {
+    items = items.filter(p => p.matName.toLowerCase().includes(query));
+  }
+
   // sort: ascending by deviation (most negative first), nulls at end
   items.sort((a, b) => {
     if (a.deviation === null && b.deviation === null) return 0;
@@ -1478,16 +1512,15 @@ function renderTable() {
   if (!items.length) {
     noData.style.display = '';
     tbody.innerHTML = '';
-    if (STATE.prices.length > 0 && STATE.mode === 'wishlist') {
+    if (query) {
+      noData.querySelector('div:nth-child(2)').textContent = `Keine Ergebnisse für „${query}"`;
+    } else if (STATE.prices.length > 0 && STATE.mode === 'wishlist') {
       noData.querySelector('div:nth-child(2)').textContent = 'Keine Wishlist-Materialien gefunden…';
     }
     return;
   }
 
   noData.style.display = 'none';
-
-  const threshold = -STATE.deviationThreshold;
-  const newAlarms = [];
 
   tbody.innerHTML = items.map(p => {
     const histCell = p.histAvg !== null ? formatNum(Math.round(p.histAvg)) : '—';
@@ -1506,19 +1539,6 @@ function renderTable() {
     const devStr = (p.deviation >= 0 ? '+' : '') + p.deviation.toFixed(2) + '%';
     const isAlert = p.deviation <= threshold;
     const devClass = isAlert ? 'alert' : (p.deviation >= 0 ? 'warn' : 'ok');
-
-    const refPrice = (STATE.alarmMode === 'hist' && p.histAvg !== null) ? p.histAvg : p.avgPrice;
-    const refLabel = STATE.alarmMode === 'hist' ? 'Hist. Ø' : 'Ø';
-
-    // collect new alarms — fire after map so we can batch them
-    if (isAlert && !STATE.alerted.has(p.matId)) {
-      STATE.alerted.add(p.matId);
-      newAlarms.push({ name: p.matName, deviation: p.deviation, current: p.currentPrice, ref: refPrice, refLabel });
-    }
-    // reset alarm if back above threshold
-    if (!isAlert && STATE.alerted.has(p.matId)) {
-      STATE.alerted.delete(p.matId);
-    }
 
     return `<tr class="${isAlert ? 'alarm-row' : ''}">
       <td class="td-name">${esc(p.matName)}</td>
