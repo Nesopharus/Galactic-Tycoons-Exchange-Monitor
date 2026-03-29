@@ -1023,6 +1023,14 @@ async function loadWishlists() {
       document.getElementById('wishlistList').innerHTML = '<div class="no-data">Keine Wishlists gefunden.</div>';
       return;
     }
+    // Auto-select if only one wishlist exists
+    if (wishlists.length === 1) {
+      const wl = wishlists[0];
+      STATE.selectedWishlistId = wl.id ?? wl.wishlistId;
+      STATE.selectedWishlistName = wl.title || wl.name || wl.wishlistName || ('Planet-Wishlist #' + STATE.selectedWishlistId);
+      startWishlistMonitoring();
+      return;
+    }
     const container = document.getElementById('wishlistList');
     wishlists.forEach(wl => {
       const wlId = wl.id ?? wl.wishlistId;
