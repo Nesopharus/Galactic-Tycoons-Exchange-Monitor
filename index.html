@@ -476,12 +476,15 @@
   /* ─── TOAST ─── */
   #toast-container {
     position: fixed;
-    top: 16px;
+    bottom: 16px;
     right: 16px;
+    top: auto;
     z-index: 1000;
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse;
     gap: 8px;
+    max-height: calc(100vh - 32px);
+    overflow: hidden;
   }
 
   .toast {
@@ -516,6 +519,12 @@
   @keyframes toast-in {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
+  }
+  .toast.removing {
+    animation: toast-out 0.2s ease forwards;
+  }
+  @keyframes toast-out {
+    to { opacity: 0; transform: translateX(110%); max-height: 0; margin: 0; padding: 0; }
   }
 
   /* ─── RATE LIMIT BANNER ─── */
@@ -1438,6 +1447,7 @@ function renderTable() {
   noData.style.display = 'none';
 
   const threshold = -STATE.deviationThreshold;
+  const newAlarms = [];
 
   tbody.innerHTML = items.map(p => {
     const histCell = p.histAvg !== null ? formatNum(Math.round(p.histAvg)) : '—';
@@ -1460,10 +1470,10 @@ function renderTable() {
     const refPrice = (STATE.alarmMode === 'hist' && p.histAvg !== null) ? p.histAvg : p.avgPrice;
     const refLabel = STATE.alarmMode === 'hist' ? 'Hist. Ø' : 'Ø';
 
-    // fire alarm toast once per material per alert state
+    // collect new alarms — fire after map so we can batch them
     if (isAlert && !STATE.alerted.has(p.matId)) {
       STATE.alerted.add(p.matId);
-      alarmToast(p.matName, p.deviation, p.currentPrice, refPrice, refLabel);
+      newAlarms.push({ name: p.matName, deviation: p.deviation, current: p.currentPrice, ref: refPrice, refLabel });
     }
     // reset alarm if back above threshold
     if (!isAlert && STATE.alerted.has(p.matId)) {
@@ -1479,6 +1489,22 @@ function renderTable() {
       <td>${isAlert ? '<span class="alarm-badge">🔔 ALARM</span>' : '—'}</td>
     </tr>`;
   }).join('');
+
+  // fire alarms: ≤4 individual toasts, >4 one summary sorted by deviation
+  if (newAlarms.length > 0 && newAlarms.length <= 4) {
+    newAlarms.forEach(a => alarmToast(a.name, a.deviation, a.current, a.ref, a.refLabel));
+  } else if (newAlarms.length > 4) {
+    newAlarms.sort((a, b) => a.deviation - b.deviation);
+    playAlarmSound();
+    const shown = newAlarms.slice(0, 6);
+    const rows = shown.map(a =>
+      `<span>${esc(a.name)}: <b>${a.deviation.toFixed(2)}%</b></span>`
+    ).join('<br>');
+    const more = newAlarms.length > 6
+      ? `<br><span style="color:var(--text-dim)">…+${newAlarms.length - 6} weitere</span>`
+      : '';
+    toast(`🔔 ${newAlarms.length} Alarme<br>${rows}${more}`, 'alarm', true);
+  }
 }
 
 // ─── ALARM ───
@@ -1505,18 +1531,26 @@ function playAlarmSound() {
 }
 
 // ─── TOAST ───
-function toast(msg, type = 'info') {
+function removeToast(div) {
+  div.classList.add('removing');
+  setTimeout(() => div.remove(), 200);
+}
+
+function toast(msg, type = 'info', raw = false) {
   const container = document.getElementById('toast-container');
   const div = document.createElement('div');
   div.className = 'toast ' + type;
   const iconMap = { alarm: '🔔', warn: '⚠️', info: 'ℹ️' };
   div.innerHTML = `
     <span class="toast-icon">${iconMap[type] || 'ℹ️'}</span>
-    <span>${esc(msg)}</span>
-    <span class="toast-dismiss" onclick="this.parentElement.remove()">✕</span>
+    <span>${raw ? msg : esc(msg)}</span>
+    <span class="toast-dismiss" onclick="removeToast(this.parentElement)">✕</span>
   `;
   container.appendChild(div);
-  setTimeout(() => { if (div.parentElement) div.remove(); }, type === 'alarm' ? 8000 : 5000);
+  // Keep max 4 toasts visible — remove oldest excess ones
+  const allToasts = container.querySelectorAll('.toast');
+  if (allToasts.length > 4) removeToast(allToasts[0]);
+  setTimeout(() => { if (div.parentElement) removeToast(div); }, type === 'alarm' ? 8000 : 5000);
 }
 
 // ─── UTILS ───
