@@ -453,6 +453,18 @@
     font-family: 'Outfit', sans-serif;
   }
 
+  /* ─── SPARKLINE ─── */
+  .spark-cell  { padding: 2px 6px; vertical-align: middle; }
+  .spark-wrap  { position: relative; height: 32px; }
+  .sparkline   { display: block; width: 100%; height: 32px; cursor: default; }
+  .spark-max,
+  .spark-min,
+  .spark-time  { position: absolute; font-family: monospace; line-height: 1; pointer-events: none; }
+  .spark-max   { top: 1px;    right: 3px; font-size: 7px; color: rgba(255,255,255,0.9); }
+  .spark-min   { bottom: 2px; right: 3px; font-size: 7px; color: rgba(255,255,255,0.9); }
+  .spark-time  { bottom: 2px; left:  3px; font-size: 6px; color: rgba(255,255,255,0.6); }
+  .spark-empty { color: var(--text-dim); font-size: 0.8rem; }
+
   /* ─── WISHLIST-ONLY COLUMNS ─── */
   .col-wishlist { display: none; }
   body.mode-wishlist .col-wishlist { display: table-cell; }
@@ -741,6 +753,7 @@
 
 <!-- TOASTS -->
 <div id="toast-container"></div>
+<div id="spark-tooltip" style="display:none;position:fixed;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:0.75rem;pointer-events:none;z-index:9999;white-space:nowrap;"></div>
 
 <!-- MAIN -->
 <main>
@@ -872,6 +885,7 @@
             <th class="sortable" onclick="toggleSort('avgPrice')">Durchschnitt <span id="sort-avgPrice"></span></th>
             <th class="col-hist sortable" onclick="toggleSort('histAvg')">Historischer Ø <span id="sort-histAvg"></span></th>
             <th class="sortable" onclick="toggleSort('deviation')">Abweichung <span id="sort-deviation">↑</span></th>
+            <th>Sparkline</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -1502,10 +1516,32 @@ function storeSnapshot() {
 }
 
 function pruneHistory() {
-  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const cutoff    = now - 7 * 24 * 60 * 60 * 1000; // drop anything older than 7d
+  const thinAfter = now - 2 * 60 * 60 * 1000;       // compress to hourly beyond 2h ago
+
   for (const matId of Object.keys(STATE.priceHistory)) {
-    STATE.priceHistory[matId] = STATE.priceHistory[matId].filter(e => e[0] >= cutoff);
-    if (STATE.priceHistory[matId].length === 0) delete STATE.priceHistory[matId];
+    const entries = STATE.priceHistory[matId];
+    const recent = entries.filter(e => e[0] >= thinAfter);
+    const old    = entries.filter(e => e[0] >= cutoff && e[0] < thinAfter);
+
+    // Thin old entries: one averaged entry per hour
+    const hourly = {};
+    for (const [ts, price] of old) {
+      const d = new Date(ts);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}`;
+      if (!hourly[key]) hourly[key] = { ts, sum: 0, count: 0 };
+      if (ts < hourly[key].ts) hourly[key].ts = ts;
+      hourly[key].sum += price;
+      hourly[key].count++;
+    }
+    const thinned = Object.values(hourly)
+      .sort((a, b) => a.ts - b.ts)
+      .map(b => [b.ts, Math.round(b.sum / b.count)]);
+
+    const combined = [...thinned, ...recent];
+    if (combined.length === 0) delete STATE.priceHistory[matId];
+    else STATE.priceHistory[matId] = combined;
   }
 }
 
@@ -1521,6 +1557,25 @@ function saveHistory() {
       toast('Preishistorie konnte nicht gespeichert werden: ' + (e.message || e.name || 'Unbekannter Fehler'), 'warn');
     }
   }
+}
+
+function getSparkData(matId) {
+  const entries = STATE.priceHistory[matId];
+  if (!entries || entries.length < 2) return null;
+  const buckets = {};
+  for (const [ts, price] of entries) {
+    const d = new Date(ts);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}`;
+    if (!buckets[key]) buckets[key] = { ts, prices: [] };
+    else if (ts < buckets[key].ts) buckets[key].ts = ts; // keep earliest ts in bucket
+    buckets[key].prices.push(price);
+  }
+  const keys = Object.keys(buckets).sort().slice(-168);
+  if (keys.length < 2) return null;
+  return keys.map(key => {
+    const b = buckets[key];
+    return { ts: b.ts, avg: b.prices.reduce((s,v)=>s+v,0)/b.prices.length };
+  });
 }
 
 function getHistoricalAvg(matId, rangeMs) {
@@ -1731,7 +1786,7 @@ function renderTable() {
     const am = STATE.wishlistAmounts[p.matId] ?? null;
     const total = (am != null && p.currentPrice > 0) ? am * p.currentPrice : null;
     const reserve = STATE.reserveData[p.matId] ?? null;
-    return { ...p, deviation: dev, histAvg, am, total, reserve };
+    return { ...p, deviation: dev, histAvg, am, total, reserve, sparkHistory: getSparkData(p.matId) };
   });
 
   // filter wishlist
@@ -1820,16 +1875,15 @@ function renderTable() {
     const totalCell = `<td class="col-wishlist">${p.total != null ? formatNum(p.total) : '—'}</td>`;
     const reserveCell = renderReserveCell(p.reserve);
     const toggleBtn = `<button class="sell-toggle${sell ? ' sell-active' : ''}" onclick="toggleSellFlag(${p.matId})" title="${sell ? 'Verkaufen – zu Kaufen wechseln' : 'Kaufen – zu Verkaufen wechseln'}">${sell ? '💰' : '🛒'}</button>`;
-
     if (p.deviation === null) {
-      return `<tr>
+      return `<tr data-matid="${p.matId}">
         <td class="td-name">${toggleBtn}${esc(p.matName)}</td>
         <td>${p.currentPrice === -1 ? '—' : formatNum(p.currentPrice)}</td>
         ${amCell}${totalCell}${reserveCell}
         <td>${p.avgPrice === -1 ? '—' : formatNum(p.avgPrice)}</td>
         <td class="col-hist">${histCell}</td>
         <td><span class="td-deviation neutral">n/a</span></td>
-        <td>—</td>
+        <td class="spark-cell" colspan="2">${renderSparkline(p.sparkHistory, sell, true)}</td>
       </tr>`;
     }
 
@@ -1839,22 +1893,32 @@ function renderTable() {
     const devClass = isAlert ? 'alert'
       : sell ? (p.deviation >= 0 ? 'ok' : 'warn')
              : (p.deviation >= 0 ? 'warn' : 'ok');
+    const sparkSvg = renderSparkline(p.sparkHistory, sell, !isAlert);
 
-    return `<tr class="${isAlert ? 'alarm-row' : ''}">
+    return `<tr class="${isAlert ? 'alarm-row' : ''}" data-matid="${p.matId}">
       <td class="td-name">${toggleBtn}${esc(p.matName)}</td>
       <td>${formatNum(p.currentPrice)}</td>
       ${amCell}${totalCell}${reserveCell}
       <td>${formatNum(p.avgPrice)}</td>
       <td class="col-hist">${histCell}</td>
       <td><span class="td-deviation ${devClass}">${devStr}</span></td>
-      <td>${isAlert ? '<span class="alarm-badge">🔔 ALARM</span>' : '—'}</td>
+      ${isAlert
+        ? `<td class="spark-cell">${sparkSvg}</td><td><span class="alarm-badge">🔔 ALARM</span></td>`
+        : `<td class="spark-cell" colspan="2">${sparkSvg}</td>`}
     </tr>`;
   }).join('');
+
+  const sparkCache = new Map(items.map(p => [p.matId, p.sparkHistory]));
+  document.querySelectorAll('#priceTableBody .sparkline').forEach(svg => {
+    const matId = parseInt(svg.closest('tr').dataset.matid);
+    const history = sparkCache.get(matId);
+    if (history) attachSparkTooltip(svg, history);
+  });
 
   // Summenzeile für Wishlist-Modus
   if (STATE.mode === 'wishlist') {
     const grandTotal = items.reduce((s, p) => s + (p.total ?? 0), 0);
-    const totalCols = document.querySelectorAll('#priceTableBody tr:first-child td').length || 9;
+    const totalCols = 10; // name, price, wishlist×2, reserve, avg, histAvg, deviation, sparkline, status
     const trailCols = totalCols - (STATE.showReserve ? 6 : 5);
     tfoot.innerHTML = `<tr>
       <td colspan="2" style="text-align:right; color:var(--text-dim); font-size:12px;">Gesamt:</td>
@@ -1933,6 +1997,62 @@ function toast(msg, type = 'info', raw = false) {
   if (allToasts.length >= 4) removeToast(allToasts[0]);
   container.appendChild(div);
   setTimeout(() => { if (div.parentElement) removeToast(div); }, type === 'alarm' ? 8000 : 5000);
+}
+
+// ─── SPARKLINE ───
+function renderSparkline(history, sell, wide) {
+  if (!history || history.length < 2) return '<span class="spark-empty">—</span>';
+  const display = wide ? history : history.slice(-48);
+  if (display.length < 2) return '<span class="spark-empty">—</span>';
+
+  const W = 100, H = 22; // viewBox in relative units; CSS sets actual px size
+  const vals = display.map(h => h.avg);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = max - min || 1;
+  const points = vals.map((v, i) => {
+    const x = (i / (vals.length - 1)) * W;
+    const y = H - ((v - min) / range) * H;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const rising = vals[vals.length - 1] >= vals[0];
+  // Buyers want falling prices (green = down), sellers want rising prices (green = up)
+  const color = (sell ? rising : !rising) ? 'var(--success)' : 'var(--danger)';
+
+  const maxLabel = Math.round(max / 100);
+  const minLabel = Math.round(min / 100);
+  const ageDiff = Date.now() - display[0].ts;
+  const ageH = Math.floor(ageDiff / 3600000);
+  const firstLabel = ageH >= 24 ? `${Math.floor(ageH / 24)}d` : ageH >= 1 ? `${ageH}h` : '<1h';
+  const minText = minLabel !== maxLabel ? `<span class="spark-min">${minLabel}</span>` : '';
+
+  return `<div class="spark-wrap">
+    <svg class="sparkline" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+    </svg>
+    <span class="spark-max">${maxLabel}</span>
+    ${minText}
+    <span class="spark-time">${firstLabel}</span>
+  </div>`;
+}
+
+function attachSparkTooltip(svgEl, history) {
+  const tip = document.getElementById('spark-tooltip');
+  svgEl.addEventListener('mouseenter', () => {
+    const displayed = history.slice(-20);
+    tip.innerHTML = displayed.map(h => {
+      const d = new Date(h.ts);
+      const lbl = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:00`;
+      return `${lbl}: ${formatNum(h.avg)}`;
+    }).join('<br>');
+    tip.style.display = 'block';
+  });
+  svgEl.addEventListener('mousemove', (e) => {
+    tip.style.left = (e.pageX + 10) + 'px';
+    tip.style.top  = (e.pageY - 30) + 'px';
+  });
+  svgEl.addEventListener('mouseleave', () => {
+    tip.style.display = 'none';
+  });
 }
 
 // ─── UTILS ───
