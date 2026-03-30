@@ -474,7 +474,7 @@
   .col-hist { display: none; }
   body.mode-hist .col-hist { display: table-cell; }
   .reserve-urgent { color: var(--danger); font-weight: 600; }
-  .reserve-ok { color: var(--ok); }
+  .reserve-ok { color: var(--success); }
   .sell-toggle {
     background: none;
     border: 1px solid var(--border);
@@ -1034,6 +1034,8 @@ const STATE = {
   wishlistAmounts: {},     // { matId: am } — Mengen aus der Wishlist
   wishlistSellFlags: {},   // { 'wlId:matId': true } — true = Sell-Modus
   reserveData: {},         // { matId: { days: number, urgent: boolean } }
+  stockData: {},           // { matId: amount } — aktueller Lagerbestand (für Sell-Items)
+  companyCash: null,       // Aktuelles Vermögen in Cent
   showReserve: false,      // Reserve-Zeit-Spalte ein-/ausgeblendet
   gameData: null,          // gecachte gamedata.json (Rezepte, Buildings)
   baseTimer: null,
@@ -1073,6 +1075,8 @@ const COSTS = {
   '/public/exchange/mat-details':   60,  // alle Materialien, 7 Tage Historie
   '/public/exchange/mat-details/':   5,  // einzelnes Material, 30 Tage Historie
   '/public/company/bases':          20,  // Alle Bases inkl. Lagerbestand + Verbrauchsraten
+  '/public/company/warehouses':      8,  // Alle Warehouses (Bases + Schiffe + Exchange)
+  '/public/company':                 5,  // Company-Übersicht inkl. Vermögen (Kosten ggf. prüfen)
 };
 
 let costLog = []; // { time: Date, points: number }
@@ -1250,6 +1254,7 @@ function toggleSellFlag(matId) {
   const key = sellKey(matId);
   STATE.wishlistSellFlags[key] = !STATE.wishlistSellFlags[key];
   saveSellFlags();
+  if (STATE.wishlistSellFlags[key]) fetchStockData();
   renderTable();
 }
 function isSell(matId) {
@@ -1640,6 +1645,7 @@ async function startWishlistMonitoring() {
   schedulePriceFetch();
   scheduleWishlistFetch();
   if (STATE.showReserve) fetchBaseData();
+  fetchStockData();
 }
 
 function stopMonitoring() {
@@ -1737,6 +1743,10 @@ async function loadGameData() {
   return STATE.gameData;
 }
 
+function hasSellItems() {
+  return [...STATE.wishlistMatIds].some(id => isSell(id));
+}
+
 async function fetchBaseData() {
   if (!STATE.running || !STATE.showReserve) return;
   try {
@@ -1765,16 +1775,16 @@ async function fetchBaseData() {
 
       // Lagerbestand
       (base.warehouse?.mats || []).forEach(m => {
-        if (m.id != null) stock[m.id] = (stock[m.id] || 0) + m.am;
+        const sid = m.matId ?? m.id;
+        if (sid != null) stock[sid] = (stock[sid] || 0) + m.am;
       });
 
-      // Produktions-Nettofluss: aktive BuildingSlots mit laufendem Task
-      const activeOrders = new Set((base.productionOrders || []).map(o => o.rId));
+      // Produktions-Nettofluss: BuildingSlots mit laufendem Task
       (base.buildingSlots || []).forEach(slot => {
         const bld = slot.building;
         if (!bld?.task?.rId) return;
         const recipe = recipeById[bld.task.rId];
-        if (!recipe || !activeOrders.has(bld.task.rId)) return;
+        if (!recipe) return;
 
         const mul        = bld.task.mul ?? 1;
         const speed      = Math.min((bld.cond ?? 1) + 0.2, 1.0);  // Building Productivity
@@ -1826,6 +1836,29 @@ function toggleReserve() {
     clearTimeout(STATE.baseTimer);
     STATE.reserveData = {};
     renderTable();
+  }
+}
+
+async function fetchStockData() {
+  if (!STATE.running) return;
+  try {
+    const [warehouses, company] = await Promise.all([
+      apiFetch('/public/company/warehouses'),
+      apiFetch('/public/company'),
+    ]);
+    const stock = {};
+    (Array.isArray(warehouses) ? warehouses : []).forEach(wh => {
+      (wh.mats || []).forEach(m => {
+        if (m.id != null && m.am > 0) stock[m.id] = (stock[m.id] || 0) + m.am;
+      });
+    });
+    STATE.stockData = stock;
+    STATE.companyCash = company?.cash ?? null;
+    if (STATE.prices.length > 0) renderTable();
+  } catch(e) {
+    if (e.message !== 'RATE_LIMITED') {
+      toast('Lagerbestand fehlgeschlagen: ' + e.message, 'warn');
+    }
   }
 }
 
@@ -2137,7 +2170,10 @@ function renderTable() {
     const refPrice = (STATE.alarmMode === 'hist' && histAvg !== null) ? histAvg : p.avgPrice;
     const hasRef = refPrice > 0;
     const dev = (hasRef && hasCur) ? ((p.currentPrice - refPrice) / refPrice) * 100 : null;
-    const am = STATE.wishlistAmounts[p.matId] ?? null;
+    const sellFlag = isSell(p.matId);
+    const am = sellFlag
+      ? (STATE.stockData[p.matId] ?? STATE.wishlistAmounts[p.matId] ?? null)
+      : (STATE.wishlistAmounts[p.matId] ?? null);
     const total = (am != null && p.currentPrice > 0) ? am * p.currentPrice : null;
     const reserve = STATE.reserveData[p.matId] ?? null;
     return { ...p, deviation: dev, histAvg, am, total, reserve, sparkHistory: getSparkData(p.matId) };
@@ -2230,8 +2266,12 @@ function renderTable() {
   const renderRow = p => {
     const sell = isSell(p.matId);
     const histCell = p.histAvg !== null ? formatNum(p.histAvg) : '—';
-    const amCell = `<td class="col-wishlist">${p.am ?? '—'}</td>`;
-    const totalCell = `<td class="col-wishlist">${p.total != null ? formatNum(p.total) : '—'}</td>`;
+    const amCell = sell
+      ? `<td class="col-wishlist" style="color:var(--success)">${p.am ?? '—'}</td>`
+      : `<td class="col-wishlist">${p.am ?? '—'}</td>`;
+    const totalCell = sell
+      ? `<td class="col-wishlist" style="color:var(--success)">${p.total != null ? '+' + formatNum(p.total) : '—'}</td>`
+      : `<td class="col-wishlist">${p.total != null ? formatNum(p.total) : '—'}</td>`;
     const reserveCell = renderReserveCell(p.reserve);
     const toggleBtn = `<button class="sell-toggle${sell ? ' sell-active' : ''}" onclick="toggleSellFlag(${p.matId})" title="${sell ? 'Verkaufen – zu Kaufen wechseln' : 'Kaufen – zu Verkaufen wechseln'}">${sell ? '💰' : '🛒'}</button>`;
     if (p.deviation === null) {
@@ -2265,7 +2305,7 @@ function renderTable() {
   };
 
   // Gruppen-Trennung: bei mehreren Wishlists Trennzeilen mit Namen einfügen
-  const colCount = 8 + (STATE.showReserve ? 1 : 0);
+  const colCount = 8 + (STATE.showReserve ? 1 : 0) + (STATE.alarmMode === 'hist' ? 1 : 0);
   if (STATE.mode === 'wishlist' && STATE.selectedWishlistIds.size > 1) {
     const groupHtml = [];
     for (const wlId of [...STATE.selectedWishlistIds].sort((a, b) => a - b)) {
@@ -2322,13 +2362,30 @@ function renderTable() {
 
   // Summenzeile für Wishlist-Modus
   if (STATE.mode === 'wishlist') {
-    const grandTotal = items.reduce((s, p) => s + (p.total ?? 0), 0);
-    const totalCols = 10; // name, price, wishlist×2, reserve, avg, histAvg, deviation, sparkline, status
+    const buyTotal  = items.filter(p => !isSell(p.matId)).reduce((s, p) => s + (p.total ?? 0), 0);
+    const sellTotal = items.filter(p =>  isSell(p.matId)).reduce((s, p) => s + (p.total ?? 0), 0);
+    const netTotal  = sellTotal - buyTotal;  // positiv = Gewinn, negativ = Ausgabe
+    const totalCols = 10;
     const trailCols = totalCols - (STATE.showReserve ? 6 : 5);
+    const hasSell = sellTotal > 0;
+    const netSign  = netTotal >= 0 ? '+' : '-';
+    const netColor = netTotal >= 0 ? 'var(--success)' : 'var(--danger)';
+    const netFormatted = `<span style="font-weight:600;color:${netColor}">${netSign}${formatNum(Math.abs(netTotal))}</span>`;
+    const dim = 'color:var(--text-dim);font-size:11px;';
+    const kapitalHtml = STATE.companyCash !== null
+      ? `<span style="${dim}">Kapital</span><br><span style="font-weight:600;">${formatNum(STATE.companyCash)}</span>`
+      : '';
+    const breakdown = hasSell
+      ? `<span style="display:inline-flex;flex-direction:column;font-size:11px;line-height:1.5;margin-left:12px;vertical-align:middle;">
+           <span style="color:var(--success);">+${formatNum(sellTotal)} Verkauf</span>
+           <span style="color:var(--danger);">-${formatNum(buyTotal)} Einkauf</span>
+         </span>`
+      : '';
+    const nettoHtml = `<span style="${dim}">Netto-Rechnung</span><br>${netFormatted}${breakdown}`;
     tfoot.innerHTML = `<tr>
-      <td colspan="2" style="text-align:right; color:var(--text-dim); font-size:12px;">Gesamt:</td>
-      <td class="col-wishlist">—</td>
-      <td class="col-wishlist" style="font-weight:600;">${formatNum(grandTotal)}</td>
+      <td colspan="2" style="text-align:right;">${kapitalHtml}</td>
+      <td class="col-wishlist"></td>
+      <td class="col-wishlist" style="white-space:nowrap;">${nettoHtml}</td>
       ${STATE.showReserve ? '<td class="col-reserve"></td>' : ''}
       <td colspan="${trailCols}"></td>
     </tr>`;
