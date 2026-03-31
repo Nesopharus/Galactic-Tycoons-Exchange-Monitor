@@ -168,6 +168,7 @@
     width: 100%;
     margin: 0 auto;
   }
+  body.mode-tags main { max-width: 1440px; }
 
   /* ─── VIEWS ─── */
   .view { display: none; }
@@ -475,6 +476,26 @@
   body.mode-hist .col-hist { display: table-cell; }
   .reserve-urgent { color: var(--danger); font-weight: 600; }
   .reserve-ok { color: var(--success); }
+  /* ─── MARKET TAGS ─── */
+  .col-tags { display: none; }
+  body.mode-tags .col-tags { display: table-cell; }
+  body.mode-tags th.col-tags, body.mode-tags td.col-tags { width: 140px; min-width: 100px; }
+  .tag { display: inline-block; border-radius: 9999px; font-size: 10px; font-weight: 700;
+         padding: 1px 7px; margin-right: 2px; text-transform: lowercase; white-space: nowrap; }
+  .tag.breakout { background: rgba(34,197,94,0.15); color: #86efac; }
+  .tag.surge    { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .tag.squeeze  { background: rgba(16,185,129,0.15); color: #34d399; }
+  .tag.wall     { background: rgba(251,191,36,0.12); color: #fbbf24; }
+  .tag.monopoly { background: rgba(167,139,250,0.15); color: #a78bfa; }
+  .tag.dumping   { background: rgba(251,146,60,0.15);  color: #fb923c; }
+  .tag.fading    { background: rgba(99,102,241,0.15);  color: #818cf8; }
+  .tag.flooding  { background: rgba(59,130,246,0.15);  color: #60a5fa; }
+  .tag.volatile  { background: rgba(234,179,8,0.15);   color: #facc15; }
+  .tag.spike     { background: rgba(251,191,36,0.2);   color: #fde68a; }
+  .tag.dip       { background: rgba(56,189,248,0.15);  color: #7dd3fc; }
+  .trend-up   { color: #4ade80; font-weight: 700; margin-right: 3px; }
+  .trend-down { color: #f87171; font-weight: 700; margin-right: 3px; }
+  .trend-flat { color: var(--text-dim); margin-right: 3px; }
   .sell-toggle {
     background: none;
     border: 1px solid var(--border);
@@ -986,6 +1007,7 @@
             <th class="sortable" onclick="toggleSort('avgPrice')">Durchschnitt <span id="sort-avgPrice"></span></th>
             <th class="col-hist sortable" onclick="toggleSort('histAvg')">Historischer Ø <span id="sort-histAvg"></span></th>
             <th class="sortable" onclick="toggleSort('deviation')">Abweichung <span id="sort-deviation">↑</span></th>
+            <th class="col-tags">Tags</th>
             <th>Sparkline</th>
             <th>Status</th>
           </tr>
@@ -1063,6 +1085,7 @@ const STATE = {
   ghostSellFlags: {},         // { matId: false } — nur gesetzt wenn Buy-Modus; default ist Sell (true)
   allWishlists: [],           // [{ id, name }] — alle bekannten Wishlists
   wishlistAmountsById: {},    // { wlId: { matId: amount } } — Mengen pro Wishlist
+  matDetails: {},             // matId → { totalQtyAvailable, avgQtySoldDaily, orders[], recentHistory[] }
 };
 
 // ─── COST TRACKER ───
@@ -1237,6 +1260,10 @@ function loadSettings() {
     if (saved.muted != null) {
       STATE.muted = saved.muted;
       document.getElementById('btnMute').textContent = STATE.muted ? '🔇' : '🔊';
+    }
+    if (saved.showReserve) {
+      STATE.showReserve = true;
+      document.body.classList.add('mode-reserve');
     }
   } catch(e) {}
 }
@@ -1494,6 +1521,7 @@ function saveSettings() {
     alarmMode: STATE.alarmMode,
     histRange: STATE.histRange,
     muted: STATE.muted,
+    showReserve: STATE.showReserve,
   };
   try { localStorage.setItem('gt_monitor_settings', JSON.stringify(settings)); } catch(e) {}
 }
@@ -1555,6 +1583,7 @@ async function loadWishlists() {
       const name = wl.title || wl.name || wl.wishlistName || ('Planet-Wishlist #' + id);
       return { id, name };
     });
+    try { localStorage.setItem('gt_wishlists', JSON.stringify(STATE.allWishlists)); } catch(_) {}
 
     const container = document.getElementById('wishlistList');
     wishlists.forEach(wl => {
@@ -1591,6 +1620,37 @@ async function loadWishlists() {
     }
   } catch(e) {
     document.getElementById('wishlistLoading').style.display = 'none';
+    // Try to render from cached wishlist list
+    try {
+      const cached = JSON.parse(localStorage.getItem('gt_wishlists') || 'null');
+      if (cached && cached.length) {
+        STATE.allWishlists = cached;
+        const container = document.getElementById('wishlistList');
+        container.innerHTML = '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">⚠ Gecachte Daten (Rate-Limit aktiv)</div>';
+        cached.forEach(wl => {
+          STATE.selectedWishlistNames[wl.id] = wl.name;
+          const div = document.createElement('div');
+          div.className = 'wishlist-item';
+          div.innerHTML = `<span class="wishlist-item-name">${esc(wl.name)}</span><span class="wishlist-item-count">#${wl.id}</span>`;
+          div.addEventListener('click', () => {
+            if (STATE.selectedWishlistIds.has(wl.id)) {
+              STATE.selectedWishlistIds.delete(wl.id);
+              div.classList.remove('selected');
+            } else {
+              STATE.selectedWishlistIds.add(wl.id);
+              div.classList.add('selected');
+            }
+            document.getElementById('btnStartWishlist').disabled = STATE.selectedWishlistIds.size === 0;
+          });
+          container.appendChild(div);
+        });
+        if (cached.length === 1) {
+          container.querySelector('.wishlist-item').click();
+          startWishlistMonitoring();
+        }
+        return;
+      }
+    } catch(_) {}
     document.getElementById('wishlistList').innerHTML = '<div class="no-data">Fehler: ' + esc(e.message) + '</div>';
   }
 }
@@ -1613,10 +1673,9 @@ function startAllMonitoring() {
   document.getElementById('monitorTitle').textContent = '📊 Alle Materialien';
   document.getElementById('statusDot').classList.add('active');
   document.getElementById('statusText').textContent = 'Aktiv – Alle';
-  document.getElementById('noData').style.display = '';
-  document.getElementById('priceTableBody').innerHTML = '';
   syncHistControls();
   document.body.classList.remove('mode-wishlist');
+  renderTable();
   fetchPrices();
   schedulePriceFetch();
 }
@@ -1634,13 +1693,21 @@ async function startWishlistMonitoring() {
   document.getElementById('monitorTitle').textContent = '⭐ ' + names;
   document.getElementById('statusDot').classList.add('active');
   document.getElementById('statusText').textContent = 'Aktiv – Wishlist';
-  document.getElementById('noData').style.display = '';
-  document.getElementById('priceTableBody').innerHTML = '';
   syncHistControls();
   document.body.classList.add('mode-wishlist');
+  // Pre-populate wishlist details from cache so table is not empty during rate limit
+  try {
+    const wd = JSON.parse(localStorage.getItem('gt_wishlist_details') || 'null');
+    if (wd && wd.amounts && [...STATE.selectedWishlistIds].every(id => wd.selectedIds?.includes(id))) {
+      STATE.wishlistAmounts = wd.amounts;
+      STATE.wishlistAmountsById = wd.amountsById || {};
+      STATE.wishlistMatIds = new Set(Object.keys(wd.amounts).map(Number));
+    }
+  } catch(_) {}
   // Wishlist-Details erst abwarten bevor Preise geholt werden,
   // sonst ist wishlistMatIds noch leer wenn renderTable() läuft
   await fetchWishlistDetails();
+  renderTable(); // show cached prices while waiting for fresh fetch
   fetchPrices();
   schedulePriceFetch();
   scheduleWishlistFetch();
@@ -1697,6 +1764,7 @@ async function fetchPrices() {
     STATE.lastFetchTime = Date.now();
     updateLastFetchLabel();
     storeSnapshot();
+    try { localStorage.setItem('gt_last_prices', JSON.stringify({ ts: Date.now(), prices: STATE.prices })); } catch(_) {}
     renderTable();
   } catch(e) {
     if (e.message !== 'RATE_LIMITED') {
@@ -1727,6 +1795,14 @@ async function fetchWishlistDetails() {
     });
     STATE.wishlistAmounts = amounts;
     STATE.wishlistMatIds = new Set(Object.keys(amounts).map(Number));
+    try {
+      localStorage.setItem('gt_wishlist_details', JSON.stringify({
+        ts: Date.now(),
+        selectedIds: [...STATE.selectedWishlistIds],
+        amounts,
+        amountsById: STATE.wishlistAmountsById,
+      }));
+    } catch(_) {}
     updateApiHistCost();
   } catch(e) {
     if (e.message !== 'RATE_LIMITED') {
@@ -1814,6 +1890,7 @@ async function fetchBaseData() {
       }
     });
     STATE.reserveData = result;
+    try { localStorage.setItem('gt_reserve_data', JSON.stringify({ ts: Date.now(), data: result })); } catch(_) {}
     if (STATE.prices.length > 0) renderTable();
   } catch(e) {
     if (e.message !== 'RATE_LIMITED') {
@@ -1830,11 +1907,19 @@ function toggleReserve() {
     btn.classList.toggle('selected', STATE.showReserve);
     btn.textContent = STATE.showReserve ? '⏳ Reserven' : '🏭 Reserven';
   }
+  saveSettings();
   if (STATE.showReserve) {
+    // Restore from cache immediately while waiting for fresh fetch
+    if (!Object.keys(STATE.reserveData).length) {
+      try {
+        const lr = JSON.parse(localStorage.getItem('gt_reserve_data') || 'null');
+        if (lr && Date.now() - lr.ts < 4 * 60 * 60 * 1000 && lr.data) STATE.reserveData = lr.data;
+      } catch(_) {}
+    }
+    renderTable();
     fetchBaseData();
   } else {
     clearTimeout(STATE.baseTimer);
-    STATE.reserveData = {};
     renderTable();
   }
 }
@@ -1854,6 +1939,7 @@ async function fetchStockData() {
     });
     STATE.stockData = stock;
     STATE.companyCash = company?.cash ?? null;
+    try { localStorage.setItem('gt_stock_data', JSON.stringify({ ts: Date.now(), data: stock, cash: STATE.companyCash })); } catch(_) {}
     if (STATE.prices.length > 0) renderTable();
   } catch(e) {
     if (e.message !== 'RATE_LIMITED') {
@@ -1871,6 +1957,46 @@ const HIST_RANGES = {
   'rec': null,   // gesamter Aufzeichnungszeitraum
 };
 
+function saveMatDetails() {
+  try {
+    const toSave = {};
+    for (const [matId, d] of Object.entries(STATE.matDetails)) {
+      toSave[matId] = {
+        totalQtyAvailable: d.totalQtyAvailable,
+        avgQtySoldDaily:   d.avgQtySoldDaily,
+        recentHistory:     d.recentHistory,
+        // orders[] wird nicht gespeichert (veraltet nach Reload)
+      };
+    }
+    localStorage.setItem('gt_mat_details', JSON.stringify({ ts: Date.now(), data: toSave }));
+  } catch(e) {
+    console.warn('[GT Monitor] saveMatDetails failed:', e);
+  }
+}
+
+function loadMatDetails() {
+  try {
+    const raw = localStorage.getItem('gt_mat_details');
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    const MAX_AGE_MS = 8 * 60 * 60 * 1000; // 8 Stunden
+    if (Date.now() - parsed.ts > MAX_AGE_MS) return; // veraltet → ignorieren
+    for (const [matId, d] of Object.entries(parsed.data || {})) {
+      STATE.matDetails[parseInt(matId)] = {
+        totalQtyAvailable: d.totalQtyAvailable ?? 0,
+        avgQtySoldDaily:   d.avgQtySoldDaily   ?? 0,
+        orders: [], // nicht persistiert — wall/monopoly erst nach erneutem Laden
+        recentHistory: d.recentHistory || [],
+      };
+    }
+    if (Object.keys(STATE.matDetails).length > 0) {
+      document.body.classList.add('mode-tags');
+    }
+  } catch(e) {
+    console.warn('[GT Monitor] loadMatDetails failed:', e);
+  }
+}
+
 function loadHistory() {
   try {
     const raw = localStorage.getItem('gt_price_history');
@@ -1878,6 +2004,29 @@ function loadHistory() {
     STATE.apiHistoryLoaded = localStorage.getItem('gt_api_hist_loaded') === '1';
     const lts = localStorage.getItem('gt_local_tracking_start');
     STATE.localTrackingStart = lts ? parseInt(lts, 10) : 0;
+    loadMatDetails();
+    // Restore last known prices (max 2h) so table is not empty during rate limit
+    try {
+      const lp = JSON.parse(localStorage.getItem('gt_last_prices') || 'null');
+      if (lp && Date.now() - lp.ts < 2 * 60 * 60 * 1000 && Array.isArray(lp.prices)) {
+        STATE.prices = lp.prices;
+      }
+    } catch(_) {}
+    // Restore reserve data (max 4h)
+    try {
+      const lr = JSON.parse(localStorage.getItem('gt_reserve_data') || 'null');
+      if (lr && Date.now() - lr.ts < 4 * 60 * 60 * 1000 && lr.data) {
+        STATE.reserveData = lr.data;
+      }
+    } catch(_) {}
+    // Restore stock / sell amounts (max 4h)
+    try {
+      const ls = JSON.parse(localStorage.getItem('gt_stock_data') || 'null');
+      if (ls && Date.now() - ls.ts < 4 * 60 * 60 * 1000 && ls.data) {
+        STATE.stockData = ls.data;
+        if (ls.cash != null) STATE.companyCash = ls.cash;
+      }
+    } catch(_) {}
   } catch(e) {
     STATE.priceHistory = {};
     STATE.localTrackingStart = 0;
@@ -1996,10 +2145,23 @@ function updateApiHistCost() {
   const el = document.getElementById('apiHistCost');
   const btn = document.getElementById('loadApiHistBtn');
   if (!el || !btn) return;
-  if (STATE.apiHistoryLoaded) {
+  const hasOrders = Object.values(STATE.matDetails).some(d => d.orders.length > 0);
+  if (hasOrders) {
     el.textContent = '✓';
     btn.disabled = true;
     btn.title = 'Historiedaten bereits geladen';
+    return;
+  }
+  if (Object.keys(STATE.matDetails).length > 0) {
+    el.textContent = '↺';
+    btn.disabled = false;
+    btn.title = 'Tags aus Cache (wall/monopoly fehlen) – neu laden für vollständige Daten';
+    return;
+  }
+  if (STATE.apiHistoryLoaded) {
+    el.textContent = '↺';
+    btn.disabled = false;
+    btn.title = 'History neu laden um Tags anzuzeigen';
     return;
   }
   if (STATE.mode === 'wishlist') {
@@ -2011,7 +2173,7 @@ function updateApiHistCost() {
 }
 
 async function loadApiHistory() {
-  if (STATE.apiHistoryLoaded) {
+  if (Object.values(STATE.matDetails).some(d => d.orders.length > 0)) {
     toast('API-Historiedaten bereits geladen.', 'info');
     return;
   }
@@ -2038,6 +2200,19 @@ async function loadApiHistory() {
           }
         }
         STATE.priceHistory[matId].sort((a, b) => a[0] - b[0]);
+        STATE.matDetails[matId] = {
+          totalQtyAvailable: data.totalQtyAvailable ?? 0,
+          avgQtySoldDaily:   data.avgQtySoldDaily   ?? 0,
+          orders: data.orders || [],
+          recentHistory: [...history]
+            .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+            .slice(0, 7)
+            .map(d => ({
+              avgPrice:     d.avgPrice     ?? 0,
+              qtySold:      d.qtySold      ?? 0,
+              qtyRemaining: d.qtyRemaining ?? 0,
+            })),
+        };
       }
     } else {
       const raw = await apiFetch('/public/exchange/mat-details');
@@ -2045,6 +2220,7 @@ async function loadApiHistory() {
                         Array.isArray(raw.materials) ? raw.materials :
                         Array.isArray(raw.mats) ? raw.mats : [];
       for (const mat of materials) {
+        if (!mat) continue;
         const matId = mat.matId;
         if (!matId) continue;
         const history = mat.priceHistory || [];
@@ -2062,6 +2238,19 @@ async function loadApiHistory() {
         if (STATE.priceHistory[matId].length > 0) {
           STATE.priceHistory[matId].sort((a, b) => a[0] - b[0]);
         }
+        STATE.matDetails[matId] = {
+          totalQtyAvailable: mat.totalQtyAvailable ?? 0,
+          avgQtySoldDaily:   mat.avgQtySoldDaily   ?? 0,
+          orders: mat.orders || [],
+          recentHistory: [...history]
+            .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+            .slice(0, 7)
+            .map(d => ({
+              avgPrice:     d.avgPrice     ?? 0,
+              qtySold:      d.qtySold      ?? 0,
+              qtyRemaining: d.qtyRemaining ?? 0,
+            })),
+        };
       }
     }
 
@@ -2074,6 +2263,8 @@ async function loadApiHistory() {
     } else {
       STATE.apiHistoryLoaded = true;
       localStorage.setItem('gt_api_hist_loaded', '1');
+      document.body.classList.add('mode-tags');
+      saveMatDetails();
       toast(`API-Historiedaten geladen (${newEntries} Tagespunkte hinzugefügt).`, 'info');
     }
 
@@ -2124,6 +2315,11 @@ function syncHistControls() {
   });
   updateRecIndicator();
   updateApiHistCost();
+  const btnR = document.getElementById('btnReserve');
+  if (btnR) {
+    btnR.classList.toggle('selected', STATE.showReserve);
+    btnR.textContent = STATE.showReserve ? '⏳ Reserven' : '🏭 Reserven';
+  }
 }
 
 // ─── RENDER TABLE ───
@@ -2156,6 +2352,128 @@ function toggleSort(col) {
   }
   syncSortHeaders();
   renderTable();
+}
+
+// ─── MARKET TAGS & TREND ───
+function _effectiveDays(matId) {
+  const d = STATE.matDetails[matId];
+  if (!d || d.avgQtySoldDaily <= 0) return Infinity;
+  return d.totalQtyAvailable / d.avgQtySoldDaily;
+}
+
+function _supplyDeclining(matId) {
+  const h = STATE.matDetails[matId]?.recentHistory || [];
+  if (h.length < 2) return false;
+  return h[0].qtyRemaining < h[h.length - 1].qtyRemaining;
+}
+
+const TAG_TOOLTIPS = {
+  breakout: 'Starke Preisbewegung: Preis > 1,3× Durchschnitt',
+  surge:    'Nachfrage-Spike: Heutiger Umsatz > 1,5× 7-Tage-Schnitt + Angebot sinkend',
+  squeeze:  'Sehr niedriges Angebot (< 0,25 Tage) + weiter sinkend',
+  wall:     'Angebotswall: Top-Order > 60 % des Gesamtangebots',
+  monopoly: 'Monopol: 1 Verkäufer kontrolliert > 70 % des Angebots',
+  dumping:  'Dumping: Preis > 30 % unter Durchschnitt',
+  fading:   'Nachfrage sinkt: Heutiger Umsatz < 50 % des 7-Tage-Schnitts',
+  flooding: 'Angebotsflut: > 10 Tage effektive Versorgung + Angebot wächst',
+  volatile: 'Volatil: Preisschwankungen > 15 % des Durchschnitts (7 Tage)',
+  spike:    'Kurzzeit-Spike: Preis > 8 % über 23h-Schnitt (nur lokale Live-Daten, mind. 3 Snapshots)',
+  dip:      'Kurzzeit-Dip: Preis > 8 % unter 23h-Schnitt (nur lokale Live-Daten, mind. 3 Snapshots)',
+};
+
+const TAG_DEFS = {
+  // gt-companion: "Strong price move - price up significantly with demand support"
+  breakout: p => p.avgPrice > 0 && p.currentPrice > p.avgPrice * 1.3,
+  // gt-companion: "Demand spiking - 1d demand well above 7d average, supply declining"
+  // h[0]=heute (unvollständig), h[1]=gestern (vollständig) → gestern vs. Basis h[2..]
+  surge: p => {
+    const h = STATE.matDetails[p.matId]?.recentHistory || [];
+    if (h.length < 4) return false;
+    const avgBase = h.slice(2).reduce((s, d) => s + d.qtySold, 0) / (h.length - 2);
+    return avgBase > 0 && h[1].qtySold > avgBase * 1.5 && _supplyDeclining(p.matId);
+  },
+  // gt-companion: "Running out - very low effective supply and still declining"
+  squeeze: p => _effectiveDays(p.matId) < 0.25 && _supplyDeclining(p.matId),
+  // Top-1-Order > 60 % des Gesamtangebots
+  wall: p => {
+    const orders = STATE.matDetails[p.matId]?.orders || [];
+    if (!orders.length) return false;
+    const total = orders.reduce((s, o) => s + o.qty, 0);
+    return total > 0 && orders[0].qty / total > 0.6;
+  },
+  // 1 Verkäufer kontrolliert > 70 % des Angebots
+  monopoly: p => {
+    const orders = STATE.matDetails[p.matId]?.orders || [];
+    if (!orders.length) return false;
+    const total = orders.reduce((s, o) => s + o.qty, 0);
+    if (total <= 0) return false;
+    const bySeller = {};
+    orders.forEach(o => { bySeller[o.cId] = (bySeller[o.cId] || 0) + o.qty; });
+    return Math.max(...Object.values(bySeller)) / total > 0.7;
+  },
+  // Gegenstück zu breakout: Preis > 30 % unter Durchschnitt (Unterbietung)
+  dumping: p => p.avgPrice > 0 && p.currentPrice > 0 && p.currentPrice < p.avgPrice * 0.7,
+  // Gegenstück zu surge: gestern < 50 % der Basis h[2..] (h[0] ist unvollständiger Tag)
+  fading: p => {
+    const h = STATE.matDetails[p.matId]?.recentHistory || [];
+    if (h.length < 4) return false;
+    const avgBase = h.slice(2).reduce((s, d) => s + d.qtySold, 0) / (h.length - 2);
+    return avgBase > 0 && h[1].qtySold < avgBase * 0.5;
+  },
+  // Gegenstück zu squeeze: > 10 Tage Angebot + wächst
+  flooding: p => {
+    if (_effectiveDays(p.matId) <= 10) return false;
+    const h = STATE.matDetails[p.matId]?.recentHistory || [];
+    if (h.length < 2) return false;
+    return h[0].qtyRemaining > h[h.length - 1].qtyRemaining;
+  },
+  // Kurzzeit-Signale — nur lokal getrackte currentPrice-Snapshots (kein API-Merge)
+  spike: p => {
+    if (!STATE.localTrackingStart || p.currentPrice <= 0) return false;
+    const entries = STATE.priceHistory[p.matId];
+    if (!entries) return false;
+    const cutoff = Math.max(Date.now() - 23 * 3600 * 1000, STATE.localTrackingStart);
+    const inWindow = entries.filter(e => e[0] >= cutoff);
+    if (inWindow.length < 3) return false;
+    const avg = inWindow.reduce((s, e) => s + e[1], 0) / inWindow.length;
+    return p.currentPrice > avg * 1.08;
+  },
+  dip: p => {
+    if (!STATE.localTrackingStart || p.currentPrice <= 0) return false;
+    const entries = STATE.priceHistory[p.matId];
+    if (!entries) return false;
+    const cutoff = Math.max(Date.now() - 23 * 3600 * 1000, STATE.localTrackingStart);
+    const inWindow = entries.filter(e => e[0] >= cutoff);
+    if (inWindow.length < 3) return false;
+    const avg = inWindow.reduce((s, e) => s + e[1], 0) / inWindow.length;
+    return p.currentPrice < avg * 0.92;
+  },
+  // Hohe Preisschwankungen (Stddev > 15 % des Mittelwerts über 7 Tage)
+  volatile: p => {
+    const h = STATE.matDetails[p.matId]?.recentHistory || [];
+    const prices = h.map(d => d.avgPrice).filter(v => v > 0);
+    if (prices.length < 4) return false;
+    const mean = prices.reduce((s, v) => s + v, 0) / prices.length;
+    if (mean <= 0) return false;
+    const variance = prices.reduce((s, v) => s + (v - mean) ** 2, 0) / prices.length;
+    return Math.sqrt(variance) / mean > 0.15;
+  },
+};
+
+function getTagsForMaterial(p) {
+  if (!STATE.apiHistoryLoaded) return [];
+  return Object.entries(TAG_DEFS).filter(([, fn]) => fn(p)).map(([tag]) => tag);
+}
+
+function getPriceTrend(matId) {
+  if (!STATE.apiHistoryLoaded) return null;
+  const h = STATE.matDetails[matId]?.recentHistory || [];
+  if (h.length < 2) return null;
+  const last = h[h.length - 1].avgPrice;
+  if (last <= 0) return null;
+  const delta = h[0].avgPrice - last;
+  if (Math.abs(delta) < last * 0.02) return '→';
+  return delta > 0 ? '↑' : '↓';
 }
 
 function renderTable() {
@@ -2266,6 +2584,14 @@ function renderTable() {
   const renderRow = p => {
     const sell = isSell(p.matId);
     const histCell = p.histAvg !== null ? formatNum(p.histAvg) : '—';
+    const tags = getTagsForMaterial(p);
+    const trend = getPriceTrend(p.matId);
+    const trendClass = trend === '↑' ? 'trend-up' : trend === '↓' ? 'trend-down' : 'trend-flat';
+    const trendTitles = { '↑': 'Preis gestiegen (7 Tage)', '↓': 'Preis gesunken (7 Tage)', '→': 'Preis stabil ±2 % (7 Tage)' };
+    const trendPrefix = trend ? `<span class="${trendClass}" title="${trendTitles[trend]}">${trend}</span>` : '';
+    const tagHtml = STATE.apiHistoryLoaded
+      ? trendPrefix + tags.map(t => `<span class="tag ${t}" title="${TAG_TOOLTIPS[t] || t}">${t}</span>`).join('')
+      : '';
     const amCell = sell
       ? `<td class="col-wishlist" style="color:var(--success)">${p.am ?? '—'}</td>`
       : `<td class="col-wishlist">${p.am ?? '—'}</td>`;
@@ -2282,6 +2608,7 @@ function renderTable() {
         <td>${p.avgPrice === -1 ? '—' : formatNum(p.avgPrice)}</td>
         <td class="col-hist">${histCell}</td>
         <td><span class="td-deviation neutral">n/a</span></td>
+        <td class="col-tags">${tagHtml}</td>
         <td class="spark-cell" colspan="2">${renderSparkline(p.sparkHistory, sell, true)}</td>
       </tr>`;
     }
@@ -2298,6 +2625,7 @@ function renderTable() {
       <td>${formatNum(p.avgPrice)}</td>
       <td class="col-hist">${histCell}</td>
       <td><span class="td-deviation ${devClass}">${devStr}</span></td>
+      <td class="col-tags">${tagHtml}</td>
       ${isAlert
         ? `<td class="spark-cell">${sparkSvg}</td><td><span class="alarm-badge">🔔 ALARM</span></td>`
         : `<td class="spark-cell" colspan="2">${sparkSvg}</td>`}
@@ -2305,7 +2633,7 @@ function renderTable() {
   };
 
   // Gruppen-Trennung: bei mehreren Wishlists Trennzeilen mit Namen einfügen
-  const colCount = 8 + (STATE.showReserve ? 1 : 0) + (STATE.alarmMode === 'hist' ? 1 : 0);
+  const colCount = 8 + (STATE.showReserve ? 1 : 0) + (STATE.alarmMode === 'hist' ? 1 : 0) + (document.body.classList.contains('mode-tags') ? 1 : 0);
   if (STATE.mode === 'wishlist' && STATE.selectedWishlistIds.size > 1) {
     const groupHtml = [];
     for (const wlId of [...STATE.selectedWishlistIds].sort((a, b) => a - b)) {
@@ -2347,6 +2675,7 @@ function renderTable() {
           <td>${p.avgPrice > 0 ? formatNum(p.avgPrice) : '—'}</td>
           <td class="col-hist">—</td>
           <td><span class="td-deviation neutral">—</span></td>
+          <td class="col-tags">—</td>
           <td class="spark-cell" colspan="2">${addSelect}</td>
         </tr>`;
       }).join('');
@@ -2623,6 +2952,21 @@ function closeAllOverlays() {
     <table class="cheat-table">
       <tr><td>🛒</td><td>Kaufen — Alarm bei niedrigem Preis</td></tr>
       <tr><td>💰</td><td>Verkaufen — Alarm bei hohem Preis</td></tr>
+    </table>
+    <div class="cheat-sheet-title" style="margin-top:16px;">Tags &amp; Trend</div>
+    <table class="cheat-table">
+      <tr><td><span class="tag breakout">breakout</span></td><td>Preis &gt; 1,3× Ø</td></tr>
+      <tr><td><span class="tag surge">surge</span></td><td>Nachfrage-Spike + Angebot sinkt</td></tr>
+      <tr><td><span class="tag squeeze">squeeze</span></td><td>Angebot &lt; 0,25 Tage + sinkend</td></tr>
+      <tr><td><span class="tag wall">wall</span></td><td>1 Order &gt; 60 % Angebot</td></tr>
+      <tr><td><span class="tag monopoly">monopoly</span></td><td>1 Verkäufer &gt; 70 % Angebot</td></tr>
+      <tr><td><span class="tag dumping">dumping</span></td><td>Preis &gt; 30 % unter Durchschnitt</td></tr>
+      <tr><td><span class="tag fading">fading</span></td><td>Nachfrage sinkt (&lt; 50 % des 7d-Schnitts)</td></tr>
+      <tr><td><span class="tag flooding">flooding</span></td><td>Angebotsflut (&gt; 10 Tage Vorrat, wächst)</td></tr>
+      <tr><td><span class="tag volatile">volatile</span></td><td>Preis schwankt &gt; 15 % (7 Tage)</td></tr>
+      <tr><td><span class="tag spike">spike</span></td><td>Preis &gt; 15 % über 23h-Schnitt</td></tr>
+      <tr><td><span class="tag dip">dip</span></td><td>Preis &gt; 15 % unter 23h-Schnitt</td></tr>
+      <tr><td style="color:var(--text-dim)">↑ ↓ →</td><td>Preis-Trend (7 Tage) — in der Tags-Spalte</td></tr>
     </table>
     <button class="btn-sm" onclick="toggleCheatSheet()" style="margin-top:14px;">Schließen</button>
   </div>
