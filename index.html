@@ -790,6 +790,32 @@
 
   .rate-limit-banner.visible { display: flex; }
 
+  .api-change-banner {
+    background: rgba(230, 140, 0, 0.12);
+    border: 1px solid #e68c00;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #e68c00;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .api-change-banner.visible { display: flex; }
+  .api-change-banner-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-weight: 600;
+  }
+  .api-change-banner ul {
+    margin: 4px 0 0 18px;
+    padding: 0;
+    font-size: 12px;
+  }
+
   /* ─── RESPONSIVE ─── */
   @media (max-width: 640px) {
     .settings-grid { grid-template-columns: 1fr; }
@@ -971,6 +997,14 @@
   <div class="view" id="view-monitor">
     <div class="rate-limit-banner" id="rateLimitBanner">
       ⚠ Rate Limit erreicht – Abrufe pausiert. Automatische Wiederaufnahme in <span id="rateLimitCountdown">--</span>s.
+    </div>
+
+    <div class="api-change-banner" id="apiChangeBanner">
+      <div class="api-change-banner-header">
+        <span>⚠ API-Änderung erkannt – möglicherweise funktionieren einige Funktionen nicht mehr korrekt.</span>
+        <button class="btn-sm" onclick="document.getElementById('apiChangeBanner').classList.remove('visible')" title="Schließen">✕</button>
+      </div>
+      <ul id="apiChangeBannerList"></ul>
     </div>
 
     <div class="monitor-toolbar">
@@ -2965,11 +2999,119 @@ function updateLastFetchLabel() {
   el.textContent = sec < 60 ? 'vor ' + sec + 's' : 'vor ' + Math.floor(sec / 60) + 'm ' + (sec % 60) + 's';
 }
 
+// ─── API COMPATIBILITY CHECK ───
+function simpleHash(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = (h * 0x01000193) >>> 0;
+  }
+  return h.toString(16);
+}
+
+const WATCHED_ENDPOINTS = [
+  '/public/wishlists',
+  '/public/wishlist/{wishlistId}',
+  '/public/exchange/mat-prices',
+  '/public/exchange/mat-details',
+  '/public/company/bases',
+  '/public/company/warehouses',
+  '/public/company',
+];
+
+const CRITICAL_FIELDS = {
+  PWishlistModel:               ['id', 'title', 'mats'],
+  PMaterialAmountModel:         ['id', 'amount'],
+  PExchangePricesResponseModel: ['prices'],
+  PExchangeMaterialPriceModel:  ['matId', 'matName', 'currentPrice', 'avgPrice'],
+};
+
+function extractWatchedSpec(swagger) {
+  const paths = swagger.paths || {};
+  const schemas = (swagger.components || {}).schemas || {};
+  const watched = {};
+  for (const ep of WATCHED_ENDPOINTS) {
+    if (paths[ep]) {
+      watched[ep] = { get: { exists: !!paths[ep].get } };
+    }
+  }
+  const fields = {};
+  for (const [model, keys] of Object.entries(CRITICAL_FIELDS)) {
+    const props = (schemas[model] || {}).properties || {};
+    fields[model] = keys.reduce((acc, k) => { acc[k] = k in props; return acc; }, {});
+  }
+  return { watched, fields };
+}
+
+function detectBreakingChanges(oldSpec, newSwagger) {
+  const warnings = [];
+  const newPaths = newSwagger.paths || {};
+  const newSchemas = (newSwagger.components || {}).schemas || {};
+
+  for (const ep of WATCHED_ENDPOINTS) {
+    if (oldSpec.watched[ep] && !newPaths[ep]) {
+      warnings.push(`Endpoint entfernt: ${ep}`);
+    } else if (oldSpec.watched[ep]?.get?.exists && !newPaths[ep]?.get) {
+      warnings.push(`GET ${ep} nicht mehr verfügbar`);
+    }
+  }
+  for (const [model, fields] of Object.entries(CRITICAL_FIELDS)) {
+    const newProps = ((newSchemas[model] || {}).properties) || {};
+    for (const field of fields) {
+      if (oldSpec.fields[model]?.[field] && !(field in newProps)) {
+        warnings.push(`Feld entfernt: ${model}.${field}`);
+      }
+    }
+  }
+  return warnings;
+}
+
+async function checkApiSpec() {
+  const MS_PER_DAY = 86_400_000;
+  const stored = localStorage.getItem('gt_swagger_spec');
+  const oldData = stored ? JSON.parse(stored) : null;
+  if (oldData && Date.now() - oldData.ts < MS_PER_DAY) return; // already checked today
+
+  let swagger;
+  try {
+    const res = await fetch('https://api.g2.galactictycoons.com/swagger/v1/swagger.json');
+    if (!res.ok) return;
+    swagger = await res.json();
+  } catch { return; } // network error — fail silently
+
+  const hashInput = JSON.stringify({ paths: swagger.paths, schemas: (swagger.components || {}).schemas });
+  const newHash = simpleHash(hashInput);
+  const newSpec = extractWatchedSpec(swagger);
+
+  if (!oldData) {
+    // First run — save snapshot silently
+    localStorage.setItem('gt_swagger_spec', JSON.stringify({ hash: newHash, ts: Date.now(), watchedPaths: newSpec }));
+    return;
+  }
+
+  if (newHash === oldData.hash) {
+    localStorage.setItem('gt_swagger_spec', JSON.stringify({ ...oldData, ts: Date.now() }));
+    return;
+  }
+
+  const warnings = detectBreakingChanges(oldData.watchedPaths, swagger);
+  localStorage.setItem('gt_swagger_spec', JSON.stringify({ hash: newHash, ts: Date.now(), watchedPaths: newSpec }));
+
+  if (warnings.length > 0) {
+    const list = document.getElementById('apiChangeBannerList');
+    list.innerHTML = warnings.map(w => `<li>${esc(w)}</li>`).join('');
+    document.getElementById('apiChangeBanner').classList.add('visible');
+  } else {
+    toast('API-Schema hat sich geändert – bitte auf neue Felder prüfen.', 'warn');
+  }
+}
+
 // ─── INIT ───
 loadHistory();
 loadSettings();
 loadSellFlags();
 loadNettoExclusions();
+checkApiSpec();
 // ─── KEYBOARD SHORTCUTS ───
 document.addEventListener('keydown', e => {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
