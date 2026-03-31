@@ -2089,29 +2089,47 @@ function storeSnapshot() {
 
 function pruneHistory() {
   const now = Date.now();
-  const cutoff    = now - 7 * 24 * 60 * 60 * 1000; // drop anything older than 7d
-  const thinAfter = now - 2 * 60 * 60 * 1000;       // compress to hourly beyond 2h ago
+  const cutoff      = now - 7 * 24 * 60 * 60 * 1000; // drop anything older than 7d
+  const thinAfter   = now - 2 * 60 * 60 * 1000;       // compress beyond 2h ago
+  const hourlyAfter = now - 6 * 60 * 60 * 1000;       // switch to hourly+min/max beyond 6h
 
   for (const matId of Object.keys(STATE.priceHistory)) {
     const entries = STATE.priceHistory[matId];
-    const recent = entries.filter(e => e[0] >= thinAfter);
-    const old    = entries.filter(e => e[0] >= cutoff && e[0] < thinAfter);
+    const recent   = entries.filter(e => e[0] >= thinAfter);
+    const mid      = entries.filter(e => e[0] >= hourlyAfter && e[0] < thinAfter);
+    const old      = entries.filter(e => e[0] >= cutoff      && e[0] < hourlyAfter);
 
-    // Thin old entries: one averaged entry per hour
+    // 2h–6h: compress to 15-min averages
+    const quarters = {};
+    for (const [ts, price] of mid) {
+      const d = new Date(ts);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${Math.floor(d.getMinutes()/15)}`;
+      if (!quarters[key]) quarters[key] = { ts, sum: 0, count: 0 };
+      if (ts < quarters[key].ts) quarters[key].ts = ts;
+      quarters[key].sum += price;
+      quarters[key].count++;
+    }
+    const thinnedMid = Object.values(quarters)
+      .sort((a, b) => a.ts - b.ts)
+      .map(b => [b.ts, Math.round(b.sum / b.count)]);
+
+    // >6h: compress to hourly avg+min+max
     const hourly = {};
     for (const [ts, price] of old) {
       const d = new Date(ts);
       const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}`;
-      if (!hourly[key]) hourly[key] = { ts, sum: 0, count: 0 };
+      if (!hourly[key]) hourly[key] = { ts, sum: 0, count: 0, min: price, max: price };
       if (ts < hourly[key].ts) hourly[key].ts = ts;
       hourly[key].sum += price;
       hourly[key].count++;
+      if (price < hourly[key].min) hourly[key].min = price;
+      if (price > hourly[key].max) hourly[key].max = price;
     }
-    const thinned = Object.values(hourly)
+    const thinnedOld = Object.values(hourly)
       .sort((a, b) => a.ts - b.ts)
-      .map(b => [b.ts, Math.round(b.sum / b.count)]);
+      .map(b => [b.ts, Math.round(b.sum / b.count), b.min, b.max]);
 
-    const combined = [...thinned, ...recent];
+    const combined = [...thinnedOld, ...thinnedMid, ...recent];
     if (combined.length === 0) delete STATE.priceHistory[matId];
     else STATE.priceHistory[matId] = combined;
   }
@@ -2134,19 +2152,33 @@ function saveHistory() {
 function getSparkData(matId) {
   const entries = STATE.priceHistory[matId];
   if (!entries || entries.length < 2) return null;
+  const sixHAgo = Date.now() - 6 * 60 * 60 * 1000;
   const buckets = {};
-  for (const [ts, price] of entries) {
+  for (const entry of entries) {
+    const [ts, price, storedMin, storedMax] = entry;
     const d = new Date(ts);
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}`;
-    if (!buckets[key]) buckets[key] = { ts, prices: [] };
-    else if (ts < buckets[key].ts) buckets[key].ts = ts; // keep earliest ts in bucket
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const hh = String(d.getHours()).padStart(2,'0');
+    // Use 15-min buckets for recent data, hourly for old
+    const key = ts >= sixHAgo
+      ? `${d.getFullYear()}-${mm}-${dd}-${hh}-${Math.floor(d.getMinutes()/15)}`
+      : `${d.getFullYear()}-${mm}-${dd}-${hh}`;
+    if (!buckets[key]) buckets[key] = { ts, prices: [], min: price, max: price };
+    else if (ts < buckets[key].ts) buckets[key].ts = ts;
     buckets[key].prices.push(price);
+    // propagate stored min/max from compressed entries
+    const lo = storedMin ?? price;
+    const hi = storedMax ?? price;
+    if (lo < buckets[key].min) buckets[key].min = lo;
+    if (hi > buckets[key].max) buckets[key].max = hi;
   }
-  const keys = Object.keys(buckets).sort().slice(-168);
+  const keys = Object.keys(buckets).sort().slice(-672);
   if (keys.length < 2) return null;
   return keys.map(key => {
     const b = buckets[key];
-    return { ts: b.ts, avg: b.prices.reduce((s,v)=>s+v,0)/b.prices.length };
+    const avg = b.prices.reduce((s,v)=>s+v,0)/b.prices.length;
+    return { ts: b.ts, avg, min: b.min, max: b.max };
   });
 }
 
@@ -2849,31 +2881,42 @@ function toast(msg, type = 'info', raw = false) {
 // ─── SPARKLINE ───
 function renderSparkline(history, sell, wide) {
   if (!history || history.length < 2) return '<span class="spark-empty">—</span>';
-  const display = wide ? history : history.slice(-48);
+  const display = wide ? history : history.slice(-96);
   if (display.length < 2) return '<span class="spark-empty">—</span>';
 
-  const W = 100, H = 22; // viewBox in relative units; CSS sets actual px size
-  const vals = display.map(h => h.avg);
-  const min = Math.min(...vals), max = Math.max(...vals);
-  const range = max - min || 1;
-  const points = vals.map((v, i) => {
-    const x = (i / (vals.length - 1)) * W;
-    const y = H - ((v - min) / range) * H;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(' ');
-  const rising = vals[vals.length - 1] >= vals[0];
-  // Buyers want falling prices (green = down), sellers want rising prices (green = up)
+  const W = 100, H = 22;
+  const allLo  = display.map(h => h.min);
+  const allHi  = display.map(h => h.max);
+  const allAvg = display.map(h => h.avg);
+  const globalMin = Math.min(...allLo);
+  const globalMax = Math.max(...allHi);
+  const range = globalMax - globalMin || 1;
+  const toY = v => H - ((v - globalMin) / range) * H;
+  const toX = i => (i / (display.length - 1)) * W;
+
+  // Band polygon between min and max (only where min !== max)
+  const hasBand = display.some(h => h.min !== h.max);
+  let bandPolygon = '';
+  if (hasBand) {
+    const topPts  = display.map((h, i) => `${toX(i).toFixed(1)},${toY(h.max).toFixed(1)}`).join(' ');
+    const botPts  = display.map((h, i) => `${toX(i).toFixed(1)},${toY(h.min).toFixed(1)}`).reverse().join(' ');
+    bandPolygon = `<polygon points="${topPts} ${botPts}" fill="currentColor" opacity="0.12" vector-effect="non-scaling-stroke"/>`;
+  }
+
+  const points = allAvg.map((v, i) => `${toX(i).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
+  const rising = allAvg[allAvg.length - 1] >= allAvg[0];
   const color = (sell ? rising : !rising) ? 'var(--success)' : 'var(--danger)';
 
-  const maxLabel = Math.round(max / 100);
-  const minLabel = Math.round(min / 100);
+  const maxLabel = Math.round(globalMax / 100);
+  const minLabel = Math.round(globalMin / 100);
   const ageDiff = Date.now() - display[0].ts;
   const ageH = Math.floor(ageDiff / 3600000);
   const firstLabel = ageH >= 24 ? `${Math.floor(ageH / 24)}d` : ageH >= 1 ? `${ageH}h` : '<1h';
   const minText = minLabel !== maxLabel ? `<span class="spark-min">${minLabel}</span>` : '';
 
   return `<div class="spark-wrap">
-    <svg class="sparkline" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <svg class="sparkline" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="color:${color}">
+      ${bandPolygon}
       <polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
     </svg>
     <span class="spark-max">${maxLabel}</span>
@@ -2888,8 +2931,9 @@ function attachSparkTooltip(svgEl, history) {
     const displayed = history.slice(-20);
     tip.innerHTML = displayed.map(h => {
       const d = new Date(h.ts);
-      const lbl = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:00`;
-      return `${lbl}: ${formatNum(h.avg)}`;
+      const lbl = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      const range = (h.min !== h.max) ? ` <span style="color:var(--text-dim);font-size:10px;">(${Math.round(h.min/100)}–${Math.round(h.max/100)})</span>` : '';
+      return `${lbl}: ${formatNum(h.avg)}${range}`;
     }).join('<br>');
     tip.style.display = 'block';
   });
