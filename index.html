@@ -2273,7 +2273,11 @@ function renderTable() {
       if (!wlItems.length) continue;
       const name = STATE.selectedWishlistNames[wlId] || '#' + wlId;
       groupHtml.push(`<tr class="wl-group-header"><td colspan="${colCount}">⭐ ${esc(name)}</td></tr>`);
-      wlItems.forEach(p => groupHtml.push(renderRow(p)));
+      wlItems.forEach(p => {
+        const wlAm = (STATE.wishlistAmountsById[wlId] || {})[p.matId] ?? null;
+        const wlTotal = (wlAm != null && p.currentPrice > 0) ? wlAm * p.currentPrice : null;
+        groupHtml.push(renderRow({ ...p, am: wlAm, total: wlTotal }));
+      });
     }
     tbody.innerHTML = groupHtml.join('');
   } else {
