@@ -520,6 +520,23 @@
     padding: 5px 12px;
     border-top: 2px solid var(--border);
   }
+  .netto-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 1px 6px;
+    margin-left: 8px;
+    vertical-align: middle;
+    opacity: 0.4;
+    transition: opacity 0.15s;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+  }
+  .netto-toggle:hover { opacity: 0.8; }
+  .netto-toggle.netto-active { opacity: 1; color: var(--success); border-color: var(--success); }
 
   tr.ghost-row { opacity: 0.45; }
   tr.ghost-row:hover { opacity: 0.75; }
@@ -1085,6 +1102,7 @@ const STATE = {
   ghostSellFlags: {},         // { matId: false } — nur gesetzt wenn Buy-Modus; default ist Sell (true)
   allWishlists: [],           // [{ id, name }] — alle bekannten Wishlists
   wishlistAmountsById: {},    // { wlId: { matId: amount } } — Mengen pro Wishlist
+  nettoExcludedWlIds: new Set(), // Set<Number> — Wishlists excluded from Netto calculation
   matDetails: {},             // matId → { totalQtyAvailable, avgQtySoldDaily, orders[], recentHistory[] }
 };
 
@@ -1273,6 +1291,24 @@ function loadSellFlags() {
 }
 function saveSellFlags() {
   try { localStorage.setItem('gt_monitor_sell_flags', JSON.stringify(STATE.wishlistSellFlags)); } catch(e) {}
+}
+function loadNettoExclusions() {
+  try {
+    const ids = JSON.parse(localStorage.getItem('gt_netto_excluded_wl_ids') || '[]');
+    STATE.nettoExcludedWlIds = new Set(ids);
+  } catch(e) {}
+}
+function saveNettoExclusions() {
+  try { localStorage.setItem('gt_netto_excluded_wl_ids', JSON.stringify([...STATE.nettoExcludedWlIds])); } catch(e) {}
+}
+function toggleNettoExclusion(wlId) {
+  if (STATE.nettoExcludedWlIds.has(wlId)) {
+    STATE.nettoExcludedWlIds.delete(wlId);
+  } else {
+    STATE.nettoExcludedWlIds.add(wlId);
+  }
+  saveNettoExclusions();
+  renderTable();
 }
 function sellKey(matId) {
   return String(matId);
@@ -2640,7 +2676,9 @@ function renderTable() {
       const wlItems = items.filter(p => (STATE.wishlistAmountsById[wlId] || {})[p.matId] != null);
       if (!wlItems.length) continue;
       const name = STATE.selectedWishlistNames[wlId] || '#' + wlId;
-      groupHtml.push(`<tr class="wl-group-header"><td colspan="${colCount}">⭐ ${esc(name)}</td></tr>`);
+      const nettoExcluded = STATE.nettoExcludedWlIds.has(wlId);
+      const nettoBtn = `<button class="netto-toggle${nettoExcluded ? '' : ' netto-active'}" onclick="toggleNettoExclusion(${wlId})" title="${nettoExcluded ? 'Von Netto-Rechnung ausgeschlossen – klicken zum Einschließen' : 'In Netto-Rechnung eingeschlossen – klicken zum Ausschließen'}">∑</button>`;
+      groupHtml.push(`<tr class="wl-group-header"><td colspan="${colCount}">⭐ ${esc(name)}${nettoBtn}</td></tr>`);
       wlItems.forEach(p => {
         const wlAm = (STATE.wishlistAmountsById[wlId] || {})[p.matId] ?? null;
         const wlTotal = (wlAm != null && p.currentPrice > 0) ? wlAm * p.currentPrice : null;
@@ -2695,8 +2733,21 @@ function renderTable() {
 
   // Summenzeile für Wishlist-Modus
   if (STATE.mode === 'wishlist') {
-    const buyTotal  = items.filter(p => !isSell(p.matId)).reduce((s, p) => s + (p.total ?? 0), 0);
-    const sellTotal = items.filter(p =>  isSell(p.matId)).reduce((s, p) => s + (p.total ?? 0), 0);
+    // Netto: only count wishlists not excluded; use per-wishlist amounts to avoid double-counting
+    const nettoWlIds = [...STATE.selectedWishlistIds].filter(id => !STATE.nettoExcludedWlIds.has(id));
+    const nettoAmounts = {};
+    for (const wlId of nettoWlIds) {
+      for (const [mid, am] of Object.entries(STATE.wishlistAmountsById[wlId] || {})) {
+        nettoAmounts[mid] = (nettoAmounts[mid] || 0) + am;
+      }
+    }
+    const priceMap = Object.fromEntries(STATE.prices.map(p => [p.matId, p.currentPrice]));
+    let buyTotal = 0, sellTotal = 0;
+    for (const [mid, am] of Object.entries(nettoAmounts)) {
+      const price = priceMap[Number(mid)] ?? 0;
+      if (price <= 0) continue;
+      if (isSell(Number(mid))) { sellTotal += am * price; } else { buyTotal += am * price; }
+    }
     const netTotal  = sellTotal - buyTotal;  // positiv = Gewinn, negativ = Ausgabe
     const totalCols = 10;
     const trailCols = totalCols - (STATE.showReserve ? 6 : 5);
@@ -2873,6 +2924,7 @@ function updateLastFetchLabel() {
 loadHistory();
 loadSettings();
 loadSellFlags();
+loadNettoExclusions();
 // ─── KEYBOARD SHORTCUTS ───
 document.addEventListener('keydown', e => {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
