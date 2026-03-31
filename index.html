@@ -2680,6 +2680,7 @@ function renderTable() {
       const nettoBtn = `<button class="netto-toggle${nettoExcluded ? '' : ' netto-active'}" onclick="toggleNettoExclusion(${wlId})" title="${nettoExcluded ? 'Von Netto-Rechnung ausgeschlossen – klicken zum Einschließen' : 'In Netto-Rechnung eingeschlossen – klicken zum Ausschließen'}">∑</button>`;
       groupHtml.push(`<tr class="wl-group-header"><td colspan="${colCount}">⭐ ${esc(name)}${nettoBtn}</td></tr>`);
       wlItems.forEach(p => {
+        if (isSell(p.matId)) { groupHtml.push(renderRow(p)); return; }
         const wlAm = (STATE.wishlistAmountsById[wlId] || {})[p.matId] ?? null;
         const wlTotal = (wlAm != null && p.currentPrice > 0) ? wlAm * p.currentPrice : null;
         groupHtml.push(renderRow({ ...p, am: wlAm, total: wlTotal }));
