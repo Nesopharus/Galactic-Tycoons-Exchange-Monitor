@@ -104,10 +104,11 @@
     font-family: 'Outfit', sans-serif;
     font-size: 13px;
     font-weight: 500;
+    height: 32px;
     border: 1px solid var(--border);
     background: var(--bg-card);
     color: var(--text);
-    padding: 8px 16px;
+    padding: 0 12px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.15s;
@@ -115,6 +116,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
+    line-height: 1;
   }
 
   button:hover { background: var(--bg-hover); border-color: var(--border-bright); }
@@ -913,8 +916,13 @@
     <span class="status-text" id="statusText">Inaktiv</span>
     <button class="btn-sm" id="btnMute" onclick="toggleMute()" title="Sound ein/aus (M)" style="font-size:15px;">🔊</button>
     <button class="btn-sm" id="btnSettings" style="display:none;" onclick="stopMonitoring(); showView('setup')">⚙ Einstellungen</button>
-    <a class="btn-sm" href="https://github.com/Nesopharus/Galactic-Tycoons-Exchange-Monitor" target="_blank" rel="noopener noreferrer" title="Code auf GitHub">GitHub</a>
-    <a class="btn-sm" href="https://github.com/Nesopharus/Galactic-Tycoons-Exchange-Monitor/issues/new" target="_blank" rel="noopener noreferrer" title="Bug melden oder Idee vorschlagen (GitHub-Account nötig)">Bug / Idee</a>
+    <a class="btn btn-sm" href="https://github.com/Nesopharus/Galactic-Tycoons-Exchange-Monitor" target="_blank" rel="noopener noreferrer" title="Code auf GitHub" role="button">
+      <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+    </a>
+    <a class="btn btn-sm" href="https://github.com/Nesopharus/Galactic-Tycoons-Exchange-Monitor/issues/new" target="_blank" rel="noopener noreferrer" title="Bug melden oder Idee vorschlagen (GitHub-Account nötig)" role="button">
+      <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor"><path fill-rule="evenodd" d="M8 0a8 8 0 100 16A8 8 0 008 0zm1 12H7V7h2v5zM8 6a1 1 0 110-2 1 1 0 010 2z"></path></svg>
+      Bug / Idee
+    </a>
     <button class="btn-sm" id="btnHelp" onclick="toggleCheatSheet()" title="Shortcuts &amp; Hilfe (?)">?</button>
   </div>
 </header>
@@ -3180,7 +3188,19 @@ function toggleMute() {
 
 function toggleCheatSheet() {
   const el = document.getElementById('cheatSheet');
-  el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+  const isOpening = el.style.display === 'none';
+  el.style.display = isOpening ? 'flex' : 'none';
+
+  if (isOpening) {
+    // Schließen bei Klick außerhalb der Box
+    const closeOnOutside = (e) => {
+      if (e.target === el) {
+        el.style.display = 'none';
+        el.removeEventListener('click', closeOnOutside);
+      }
+    };
+    el.addEventListener('click', closeOnOutside);
+  }
 }
 
 function closeAllOverlays() {
