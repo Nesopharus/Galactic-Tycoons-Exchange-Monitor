@@ -100,7 +100,7 @@
   }
 
   /* ─── BUTTONS ─── */
-  button, .btn {
+  button, .btn, a.btn {
     font-family: 'Outfit', sans-serif;
     font-size: 13px;
     font-weight: 500;
@@ -111,6 +111,10 @@
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.15s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   button:hover { background: var(--bg-hover); border-color: var(--border-bright); }
@@ -909,6 +913,9 @@
     <span class="status-text" id="statusText">Inaktiv</span>
     <button class="btn-sm" id="btnMute" onclick="toggleMute()" title="Sound ein/aus (M)" style="font-size:15px;">🔊</button>
     <button class="btn-sm" id="btnSettings" style="display:none;" onclick="stopMonitoring(); showView('setup')">⚙ Einstellungen</button>
+    <a class="btn-sm" href="https://github.com/Nesopharus/Galactic-Tycoons-Exchange-Monitor" target="_blank" rel="noopener noreferrer" title="Code auf GitHub">GitHub</a>
+    <a class="btn-sm" href="https://github.com/Nesopharus/Galactic-Tycoons-Exchange-Monitor/issues/new" target="_blank" rel="noopener noreferrer" title="Bug melden oder Idee vorschlagen (GitHub-Account nötig)">Bug / Idee</a>
+    <button class="btn-sm" id="btnHelp" onclick="toggleCheatSheet()" title="Shortcuts &amp; Hilfe (?)">?</button>
   </div>
 </header>
 
