@@ -943,6 +943,7 @@ const COSTS = {
   '/public/exchange/mat-prices': 5,
   '/public/exchange/mat-details':  60,  // alle Materialien, 7 Tage Historie
   '/public/exchange/mat-details/':  5,  // einzelnes Material, 30 Tage Historie
+  '/swagger/v1/swagger.json': 0,
 };
 
 let costLog = []; // { time: Date, points: number }
@@ -1806,6 +1807,7 @@ function extractWatchedSpec(swagger) {
 }
 
 function detectBreakingChanges(oldSpec, newSwagger) {
+  if (!oldSpec?.watched || !oldSpec?.fields || typeof newSwagger?.paths !== 'object') return [];
   const warnings = [];
   const newPaths = newSwagger.paths || {};
   const newSchemas = (newSwagger.components || {}).schemas || {};
@@ -1847,17 +1849,17 @@ async function checkApiSpec() {
 
   if (!oldData) {
     // First run — save snapshot silently
-    localStorage.setItem('gt_swagger_spec', JSON.stringify({ hash: newHash, ts: Date.now(), watchedPaths: newSpec }));
+    try { localStorage.setItem('gt_swagger_spec', JSON.stringify({ hash: newHash, ts: Date.now(), watchedPaths: newSpec })); } catch { /* QuotaExceededError — skip */ }
     return;
   }
 
   if (newHash === oldData.hash) {
-    localStorage.setItem('gt_swagger_spec', JSON.stringify({ ...oldData, ts: Date.now() }));
+    try { localStorage.setItem('gt_swagger_spec', JSON.stringify({ ...oldData, ts: Date.now() })); } catch { /* QuotaExceededError — skip */ }
     return;
   }
 
   const warnings = detectBreakingChanges(oldData.watchedPaths, swagger);
-  localStorage.setItem('gt_swagger_spec', JSON.stringify({ hash: newHash, ts: Date.now(), watchedPaths: newSpec }));
+  try { localStorage.setItem('gt_swagger_spec', JSON.stringify({ hash: newHash, ts: Date.now(), watchedPaths: newSpec })); } catch { /* QuotaExceededError — skip */ }
 
   if (warnings.length > 0) {
     const list = document.getElementById('apiChangeBannerList');
