@@ -1,0 +1,115 @@
+name: API Watch (Swagger Monitor)
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  check-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch current Swagger spec
+        run: |
+          mkdir -p .github/swagger-cache
+          curl -s https://api.g2.galactictycoons.com/swagger/v1/swagger.json > current_swagger.json
+
+      - name: Ensure labels exist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create "api-change"   --color "e4e669" --description "Non-breaking API schema update"     2>/dev/null || true
+          gh label create "api-breaking" --color "d73a4a" --description "Breaking change in used API endpoints" 2>/dev/null || true
+
+      - name: Detect changes and create Issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CACHE_FILE=".github/swagger-cache/swagger.json"
+          if [ ! -f "$CACHE_FILE" ]; then
+            echo "No cache found. Initializing."
+            mv current_swagger.json "$CACHE_FILE"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add "$CACHE_FILE"
+            git commit -m "chore: initialize swagger cache [skip ci]"
+            git push
+            exit 0
+          fi
+
+          # Compare hashes of paths and components
+          OLD_HASH=$(jq -c '{paths, schemas: .components.schemas}' "$CACHE_FILE" | sha256sum)
+          NEW_HASH=$(jq -c '{paths, schemas: .components.schemas}' current_swagger.json | sha256sum)
+
+          if [ "$OLD_HASH" = "$NEW_HASH" ]; then
+            echo "No significant API changes detected."
+            exit 0
+          fi
+
+          echo "API change detected!"
+
+          # ── Path-level diff ──────────────────────────────────────────────
+          OLD_PATHS=$(jq -r '.paths | keys[]' "$CACHE_FILE" | sort)
+          NEW_PATHS=$(jq -r '.paths | keys[]' current_swagger.json | sort)
+          DIFF_REMOVED=$(comm -23 <(echo "$OLD_PATHS") <(echo "$NEW_PATHS"))
+          DIFF_ADDED=$(comm -13 <(echo "$OLD_PATHS") <(echo "$NEW_PATHS"))
+
+          # ── Schema field-level diff for critical models ──────────────────
+          # Check that fields used by the app still exist in their schemas
+          FIELD_BREAKS=""
+          check_fields() {
+            local MODEL=$1; shift
+            for FIELD in "$@"; do
+              OLD_HAS=$(jq -e ".components.schemas.${MODEL}.properties.${FIELD}" "$CACHE_FILE"        > /dev/null 2>&1 && echo yes || echo no)
+              NEW_HAS=$(jq -e ".components.schemas.${MODEL}.properties.${FIELD}" current_swagger.json > /dev/null 2>&1 && echo yes || echo no)
+              if [ "$OLD_HAS" = "yes" ] && [ "$NEW_HAS" = "no" ]; then
+                FIELD_BREAKS="${FIELD_BREAKS}\`${MODEL}.${FIELD}\` "
+              fi
+            done
+          }
+          check_fields PWishlistModel               id title mats
+          check_fields PMaterialAmountModel         id amount
+          check_fields PExchangePricesResponseModel prices
+          check_fields PExchangeMaterialPriceModel  matId matName currentPrice avgPrice
+
+          # ── Determine if this is a breaking change ───────────────────────
+          BREAKING=false
+          WATCHED="/public/wishlists /public/wishlist/ /public/exchange/mat-prices /public/exchange/mat-details /public/company"
+          for p in $WATCHED; do
+            if echo "$DIFF_REMOVED" | grep -q "$p"; then BREAKING=true; fi
+          done
+          if [ -n "$FIELD_BREAKS" ]; then BREAKING=true; fi
+
+          # ── Build issue body ─────────────────────────────────────────────
+          ISSUE_BODY="## ⚠ API-Änderung erkannt\n\nDie Swagger-Spezifikation der Galactic Tycoons API hat sich geändert.\n\n"
+          if [ -n "$DIFF_REMOVED" ]; then
+            ISSUE_BODY="${ISSUE_BODY}### ❌ Entfernte Endpunkte\n\`\`\`\n${DIFF_REMOVED}\n\`\`\`\n\n"
+          fi
+          if [ -n "$DIFF_ADDED" ]; then
+            ISSUE_BODY="${ISSUE_BODY}### ✨ Neue Endpunkte\n\`\`\`\n${DIFF_ADDED}\n\`\`\`\n\n"
+          fi
+          if [ -n "$FIELD_BREAKS" ]; then
+            ISSUE_BODY="${ISSUE_BODY}### ❌ Entfernte Felder (genutzte Modelle)\n${FIELD_BREAKS}\n\n"
+          fi
+          ISSUE_BODY="${ISSUE_BODY}---\n_Dieser Issue wurde automatisch vom API Watch Workflow erstellt._"
+
+          LABEL="api-change"
+          if [ "$BREAKING" = "true" ]; then LABEL="api-breaking"; fi
+
+          gh issue create --title "[API Change] Swagger-Änderung erkannt - $(date +%F)" \
+            --body "$(printf '%b' "$ISSUE_BODY")" \
+            --label "$LABEL"
+
+          # Update cache
+          mv current_swagger.json "$CACHE_FILE"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "$CACHE_FILE"
+          git commit -m "chore: update swagger cache [skip ci]"
+          git push
