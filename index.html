@@ -3191,15 +3191,13 @@ function toggleCheatSheet() {
   const isOpening = el.style.display === 'none';
   el.style.display = isOpening ? 'flex' : 'none';
 
+  if (el._closeOnOutside) { el.removeEventListener('click', el._closeOnOutside); el._closeOnOutside = null; }
   if (isOpening) {
     // Schließen bei Klick außerhalb der Box
-    const closeOnOutside = (e) => {
-      if (e.target === el) {
-        el.style.display = 'none';
-        el.removeEventListener('click', closeOnOutside);
-      }
+    el._closeOnOutside = (e) => {
+      if (e.target === el) { el.style.display = 'none'; el.removeEventListener('click', el._closeOnOutside); el._closeOnOutside = null; }
     };
-    el.addEventListener('click', closeOnOutside);
+    el.addEventListener('click', el._closeOnOutside);
   }
 }
 
