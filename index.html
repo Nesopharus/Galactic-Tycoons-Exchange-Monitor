@@ -1833,7 +1833,8 @@ function detectBreakingChanges(oldSpec, newSwagger) {
 async function checkApiSpec() {
   const MS_PER_DAY = 86_400_000;
   const stored = localStorage.getItem('gt_swagger_spec');
-  const oldData = stored ? JSON.parse(stored) : null;
+  let oldData = null;
+  try { oldData = stored ? JSON.parse(stored) : null; } catch { localStorage.removeItem('gt_swagger_spec'); }
   if (oldData && Date.now() - oldData.ts < MS_PER_DAY) return; // already checked today
 
   let swagger;
