@@ -1,0 +1,108 @@
+name: Dev Release
+
+on:
+  push:
+    branches: [develop]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version bump from commit message
+        id: bump
+        run: |
+          MSG=$(git log -1 --pretty=%s)
+          echo "Commit: $MSG"
+          if echo "$MSG" | grep -qiE "^feature(\(.*\))?:"; then
+            echo "type=minor" >> $GITHUB_OUTPUT
+          else
+            echo "type=patch" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Compute next version
+        id: version
+        run: |
+          LATEST=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*-dev" | sort -V | tail -1)
+          if [ -z "$LATEST" ]; then
+            LATEST="v0.9.0-dev"
+          fi
+          BASE="${LATEST%-dev}"
+          MAJOR=$(echo "$BASE" | cut -d. -f1 | tr -d 'v')
+          MINOR=$(echo "$BASE" | cut -d. -f2)
+          PATCH=$(echo "$BASE" | cut -d. -f3)
+          if [ "${{ steps.bump.outputs.type }}" = "minor" ]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+          NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}-dev"
+          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "prev=$LATEST" >> $GITHUB_OUTPUT
+          echo "Next version: $NEW_TAG (was $LATEST)"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV="${{ steps.version.outputs.prev }}"
+          FEATURES=$(git log "${PREV}..HEAD" --pretty="- %s" --no-merges | grep -iE "^- feature(\(.*\))?:" || true)
+          FIXES=$(git log "${PREV}..HEAD" --pretty="- %s" --no-merges | grep -iE "^- fix(\(.*\))?:" || true)
+          OTHER=$(git log "${PREV}..HEAD" --pretty="- %s" --no-merges | grep -ivE "^- (feature|fix)(\(.*\))?:" || true)
+
+          BODY=""
+          if [ -n "$FEATURES" ]; then
+            BODY="${BODY}### ✨ Features\n${FEATURES}\n\n"
+          fi
+          if [ -n "$FIXES" ]; then
+            BODY="${BODY}### 🐛 Fixes\n${FIXES}\n\n"
+          fi
+          if [ -n "$OTHER" ]; then
+            BODY="${BODY}### 🔧 Other\n${OTHER}\n\n"
+          fi
+          if [ -z "$BODY" ]; then
+            BODY="No notable changes."
+          fi
+
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          printf "%b" "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create versioned tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Force-update latest-dev tag
+        run: |
+          git tag -f latest-dev
+          git push origin latest-dev --force
+
+      - name: Create versioned GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --target develop \
+            --title "${{ steps.version.outputs.tag }} — Dev Build" \
+            --prerelease \
+            --notes "$(printf '%b' "${{ steps.changelog.outputs.body }}\n---\nBuilt from \`develop\` branch · previous: \`${{ steps.version.outputs.prev }}\`")"
+
+      - name: Update latest-dev release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete latest-dev --yes 2>/dev/null || true
+          gh release create latest-dev \
+            --target develop \
+            --title "latest-dev — Dev Build (${{ steps.version.outputs.tag }})" \
+            --prerelease \
+            --notes "$(printf '%b' "## Current dev build\n\nAlways points to the latest \`develop\` commit.\nCurrent version: **${{ steps.version.outputs.tag }}**\n\n${{ steps.changelog.outputs.body }}\n---\nBuilt from \`develop\` branch.")"

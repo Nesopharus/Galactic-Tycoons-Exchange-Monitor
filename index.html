@@ -100,17 +100,24 @@
   }
 
   /* ─── BUTTONS ─── */
-  button, .btn {
+  button, .btn, a.btn {
     font-family: 'Outfit', sans-serif;
     font-size: 13px;
     font-weight: 500;
+    height: 32px;
     border: 1px solid var(--border);
     background: var(--bg-card);
     color: var(--text);
-    padding: 8px 16px;
+    padding: 0 12px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.15s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    line-height: 1;
   }
 
   button:hover { background: var(--bg-hover); border-color: var(--border-bright); }
@@ -168,6 +175,7 @@
     width: 100%;
     margin: 0 auto;
   }
+  body.mode-tags main { max-width: 1440px; }
 
   /* ─── VIEWS ─── */
   .view { display: none; }
@@ -453,6 +461,176 @@
     font-family: 'Outfit', sans-serif;
   }
 
+  /* ─── SPARKLINE ─── */
+  .spark-cell  { padding: 2px 6px; vertical-align: middle; }
+  .spark-wrap  { position: relative; height: 32px; }
+  .sparkline   { display: block; width: 100%; height: 32px; cursor: default; }
+  .spark-max,
+  .spark-min,
+  .spark-time  { position: absolute; font-family: monospace; line-height: 1; pointer-events: none; }
+  .spark-max   { top: 1px;    right: 3px; font-size: 7px; color: rgba(255,255,255,0.9); }
+  .spark-min   { bottom: 2px; right: 3px; font-size: 7px; color: rgba(255,255,255,0.9); }
+  .spark-time  { bottom: 2px; left:  3px; font-size: 6px; color: rgba(255,255,255,0.6); }
+  .spark-empty { color: var(--text-dim); font-size: 0.8rem; }
+
+  /* ─── WISHLIST-ONLY COLUMNS ─── */
+  .col-wishlist { display: none; }
+  body.mode-wishlist .col-wishlist { display: table-cell; }
+  .col-reserve { display: none; }
+  body.mode-reserve .col-reserve { display: table-cell; }
+  /* Historischer-Ø-Spalte nur im Hist-Modus */
+  .col-hist { display: none; }
+  body.mode-hist .col-hist { display: table-cell; }
+  .reserve-urgent { color: var(--danger); font-weight: 600; }
+  .reserve-ok { color: var(--success); }
+  /* ─── MARKET TAGS ─── */
+  .col-tags { display: none; }
+  body.mode-tags .col-tags { display: table-cell; }
+  body.mode-tags th.col-tags, body.mode-tags td.col-tags { width: 140px; min-width: 100px; }
+  .tag { display: inline-block; border-radius: 9999px; font-size: 10px; font-weight: 700;
+         padding: 1px 7px; margin-right: 2px; text-transform: lowercase; white-space: nowrap; }
+  .tag.breakout { background: rgba(34,197,94,0.15); color: #86efac; }
+  .tag.surge    { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .tag.squeeze  { background: rgba(16,185,129,0.15); color: #34d399; }
+  .tag.wall     { background: rgba(251,191,36,0.12); color: #fbbf24; }
+  .tag.monopoly { background: rgba(167,139,250,0.15); color: #a78bfa; }
+  .tag.dumping   { background: rgba(251,146,60,0.15);  color: #fb923c; }
+  .tag.fading    { background: rgba(99,102,241,0.15);  color: #818cf8; }
+  .tag.flooding  { background: rgba(59,130,246,0.15);  color: #60a5fa; }
+  .tag.volatile  { background: rgba(234,179,8,0.15);   color: #facc15; }
+  .tag.spike     { background: rgba(251,191,36,0.2);   color: #fde68a; }
+  .tag.dip       { background: rgba(56,189,248,0.15);  color: #7dd3fc; }
+  .trend-up   { color: #4ade80; font-weight: 700; margin-right: 3px; }
+  .trend-down { color: #f87171; font-weight: 700; margin-right: 3px; }
+  .trend-flat { color: var(--text-dim); margin-right: 3px; }
+  .sell-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 1px 5px;
+    margin-right: 6px;
+    vertical-align: middle;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+  }
+  .sell-toggle:hover, .sell-toggle.sell-active { opacity: 1; }
+
+  tr.wl-group-header td {
+    background: var(--bg-deep);
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-top: 2px solid var(--border);
+  }
+  .netto-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 1px 6px;
+    margin-left: 8px;
+    vertical-align: middle;
+    opacity: 0.4;
+    transition: opacity 0.15s;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+  }
+  .netto-toggle:hover { opacity: 0.8; }
+  .netto-toggle.netto-active { opacity: 1; color: var(--success); border-color: var(--success); }
+
+  tr.ghost-row { opacity: 0.45; }
+  tr.ghost-row:hover { opacity: 0.75; }
+
+  .wl-add-select {
+    background: var(--bg-panel);
+    color: var(--text);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    max-width: 150px;
+  }
+  .wl-add-select:focus { outline: none; border-color: var(--accent); }
+
+  #contextMenu {
+    position: fixed;
+    z-index: 9000;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-bright);
+    border-radius: 8px;
+    padding: 4px 0;
+    min-width: 200px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    font-size: 13px;
+  }
+  .ctx-header {
+    padding: 6px 14px 4px;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2px;
+  }
+  .ctx-section {
+    padding: 2px 0;
+    border-top: 1px solid var(--border);
+    margin-top: 2px;
+  }
+  .ctx-label {
+    padding: 3px 14px;
+    color: var(--text-dim);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .ctx-item {
+    padding: 6px 14px;
+    cursor: pointer;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.1s;
+  }
+  .ctx-item:hover { background: var(--bg-hover); }
+  .ctx-item.danger { color: var(--danger); }
+  .ctx-new-list {
+    padding: 4px 10px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .ctx-new-input {
+    flex: 1;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    padding: 3px 7px;
+    font-size: 12px;
+  }
+  .ctx-new-input:focus { outline: none; border-color: var(--accent); }
+  .ctx-new-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
   .no-data {
     text-align: center;
     padding: 60px 20px;
@@ -619,6 +797,32 @@
 
   .rate-limit-banner.visible { display: flex; }
 
+  .api-change-banner {
+    background: rgba(230, 140, 0, 0.12);
+    border: 1px solid #e68c00;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #e68c00;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .api-change-banner.visible { display: flex; }
+  .api-change-banner-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-weight: 600;
+  }
+  .api-change-banner ul {
+    margin: 4px 0 0 18px;
+    padding: 0;
+    font-size: 12px;
+  }
+
   /* ─── RESPONSIVE ─── */
   @media (max-width: 640px) {
     .settings-grid { grid-template-columns: 1fr; }
@@ -712,11 +916,24 @@
     <span class="status-text" id="statusText">Inaktiv</span>
     <button class="btn-sm" id="btnMute" onclick="toggleMute()" title="Sound ein/aus (M)" style="font-size:15px;">🔊</button>
     <button class="btn-sm" id="btnSettings" style="display:none;" onclick="stopMonitoring(); showView('setup')">⚙ Einstellungen</button>
+    <a class="btn btn-sm" href="https://github.com/Nesopharus/Galactic-Tycoons-Exchange-Monitor" target="_blank" rel="noopener noreferrer" title="Code auf GitHub" role="button">
+      <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+    </a>
+    <a class="btn btn-sm" href="https://github.com/Nesopharus/Galactic-Tycoons-Exchange-Monitor/issues/new" target="_blank" rel="noopener noreferrer" title="Bug melden oder Idee vorschlagen (GitHub-Account nötig)" role="button">
+      <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor"><path fill-rule="evenodd" d="M8 0a8 8 0 100 16A8 8 0 008 0zm1 12H7V7h2v5zM8 6a1 1 0 110-2 1 1 0 010 2z"></path></svg>
+      Bug / Idee
+    </a>
+    <button class="btn-sm" id="btnHelp" onclick="toggleCheatSheet()" title="Shortcuts &amp; Hilfe (?)">?</button>
   </div>
 </header>
 
 <!-- TOASTS -->
 <div id="toast-container"></div>
+
+<!-- CONTEXT MENU -->
+<div id="contextMenu" style="display:none;"></div>
+
+<div id="spark-tooltip" style="display:none;position:fixed;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:0.75rem;pointer-events:none;z-index:9999;white-space:nowrap;"></div>
 
 <!-- MAIN -->
 <main>
@@ -797,6 +1014,14 @@
       ⚠ Rate Limit erreicht – Abrufe pausiert. Automatische Wiederaufnahme in <span id="rateLimitCountdown">--</span>s.
     </div>
 
+    <div class="api-change-banner" id="apiChangeBanner">
+      <div class="api-change-banner-header">
+        <span>⚠ API-Änderung erkannt – möglicherweise funktionieren einige Funktionen nicht mehr korrekt.</span>
+        <button class="btn-sm" onclick="document.getElementById('apiChangeBanner').classList.remove('visible')" title="Schließen">✕</button>
+      </div>
+      <ul id="apiChangeBannerList"></ul>
+    </div>
+
     <div class="monitor-toolbar">
       <div class="monitor-title" id="monitorTitle">Marktübersicht</div>
       <input type="search" id="materialSearch" class="search-input" placeholder="Filter…" oninput="renderTable()">
@@ -807,6 +1032,12 @@
         </svg>
         <span>Zuletzt aktualisiert: <span id="lastFetch">--</span></span>
       </div>
+    </div>
+
+    <!-- RESERVE TOGGLE — nur in Wishlist-Modus sichtbar -->
+    <div class="hist-controls col-wishlist" id="reserveControls">
+      <span class="hist-label">Reserve-Zeit:</span>
+      <button class="toggle-btn" id="btnReserve" onclick="toggleReserve()">🏭 Reserven</button>
     </div>
 
     <!-- HIST CONTROLS -->
@@ -836,14 +1067,20 @@
           <tr>
             <th class="sortable" onclick="toggleSort('name')">Material <span id="sort-name"></span></th>
             <th class="sortable" onclick="toggleSort('price')">Aktueller Preis <span id="sort-price"></span></th>
+            <th class="col-wishlist">Menge</th>
+            <th class="col-wishlist sortable" onclick="toggleSort('total')">Gesamtwert <span id="sort-total"></span></th>
+            <th class="col-reserve sortable" onclick="toggleSort('reserve')">Reserve <span id="sort-reserve"></span></th>
             <th class="sortable" onclick="toggleSort('avgPrice')">Durchschnitt <span id="sort-avgPrice"></span></th>
-            <th class="sortable" onclick="toggleSort('histAvg')">Historischer Ø <span id="sort-histAvg"></span></th>
+            <th class="col-hist sortable" onclick="toggleSort('histAvg')">Historischer Ø <span id="sort-histAvg"></span></th>
             <th class="sortable" onclick="toggleSort('deviation')">Abweichung <span id="sort-deviation">↑</span></th>
+            <th class="col-tags">Tags</th>
+            <th>Sparkline</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody id="priceTableBody">
         </tbody>
+        <tfoot id="priceTableFoot"></tfoot>
       </table>
       <div class="no-data" id="noData">
         <div class="no-data-icon">📡</div>
@@ -877,9 +1114,19 @@ const STATE = {
   fetchInterval: 15,
   wishlistInterval: 60,
   deviationThreshold: 10,
-  selectedWishlistId: null,
-  selectedWishlistName: '',
+  selectedWishlistId: null,       // compat (erstes/einziges Element aus selectedWishlistIds)
+  selectedWishlistName: '',       // compat
+  selectedWishlistIds: new Set(), // alle aktuell ausgewählten Wishlist-IDs
+  selectedWishlistNames: {},      // { id: displayName }
   wishlistMatIds: new Set(),
+  wishlistAmounts: {},     // { matId: am } — Mengen aus der Wishlist
+  wishlistSellFlags: {},   // { 'wlId:matId': true } — true = Sell-Modus
+  reserveData: {},         // { matId: { days: number, urgent: boolean } }
+  stockData: {},           // { matId: amount } — aktueller Lagerbestand (für Sell-Items)
+  companyCash: null,       // Aktuelles Vermögen in Cent
+  showReserve: false,      // Reserve-Zeit-Spalte ein-/ausgeblendet
+  gameData: null,          // gecachte gamedata.json (Rezepte, Buildings)
+  baseTimer: null,
   prices: [],
   running: false,
   priceTimer: null,
@@ -900,15 +1147,27 @@ const STATE = {
   apiHistoryLoaded: false,
   localTrackingStart: 0,  // timestamp of first local snapshot
   lastFetchTime: null,  // timestamp of last successful price fetch
+  generalWishlistId: null,    // ID der "General"-Wishlist (lazy via API angelegt)
+  ghostSellFlags: {},         // { matId: false } — nur gesetzt wenn Buy-Modus; default ist Sell (true)
+  allWishlists: [],           // [{ id, name }] — alle bekannten Wishlists
+  wishlistAmountsById: {},    // { wlId: { matId: amount } } — Mengen pro Wishlist
+  nettoExcludedWlIds: new Set(), // Set<Number> — Wishlists excluded from Netto calculation
+  matDetails: {},             // matId → { totalQtyAvailable, avgQtySoldDaily, orders[], recentHistory[] }
 };
 
 // ─── COST TRACKER ───
 const COSTS = {
   '/public/wishlists': 7,
   '/public/wishlist': 3,
+  '/public/wishlist/create': 30,        // Custom-Wishlist anlegen
+  '/public/wishlist/additems': 5,       // TODO: tatsächliche Kosten in API-Docs prüfen
   '/public/exchange/mat-prices': 5,
-  '/public/exchange/mat-details':  60,  // alle Materialien, 7 Tage Historie
-  '/public/exchange/mat-details/':  5,  // einzelnes Material, 30 Tage Historie
+  '/public/exchange/mat-details':   60,  // alle Materialien, 7 Tage Historie
+  '/public/exchange/mat-details/':   5,  // einzelnes Material, 30 Tage Historie
+  '/public/company/bases':          20,  // Alle Bases inkl. Lagerbestand + Verbrauchsraten
+  '/public/company/warehouses':      8,  // Alle Warehouses (Bases + Schiffe + Exchange)
+  '/public/company':                 5,  // Company-Übersicht inkl. Vermögen (Kosten ggf. prüfen)
+  '/swagger/v1/swagger.json':        0,
 };
 
 let costLog = []; // { time: Date, points: number }
@@ -959,10 +1218,12 @@ function wouldExceedLimit(endpoint) {
 // ─── API ───
 const API_BASE = 'https://api.g2.galactictycoons.com';
 
-async function apiFetch(path) {
+async function apiFetch(path, opts = {}) {
   if (STATE.rateLimited) throw new Error('RATE_LIMITED');
 
-  const endpointKey = path.startsWith('/public/wishlist/') ? '/public/wishlist' :
+  const endpointKey = path === '/public/wishlist/create' ? '/public/wishlist/create' :
+                      path.endsWith('/additems') ? '/public/wishlist/additems' :
+                      path.startsWith('/public/wishlist/') ? '/public/wishlist' :
                       path.startsWith('/public/wishlists') ? '/public/wishlists' :
                       path.startsWith('/public/exchange/mat-prices') ? '/public/exchange/mat-prices' :
                       path.startsWith('/public/exchange/mat-details/') ? '/public/exchange/mat-details/' :
@@ -973,12 +1234,19 @@ async function apiFetch(path) {
     throw new Error('RATE_LIMITED');
   }
 
-  const res = await fetch(API_BASE + path, {
+  const fetchOpts = {
+    method: opts.method || 'GET',
     headers: {
       'Authorization': 'Bearer ' + STATE.apiKey,
       'Accept': 'application/json',
-    }
-  });
+    },
+  };
+  if (opts.body !== undefined) {
+    fetchOpts.headers['Content-Type'] = 'application/json';
+    fetchOpts.body = JSON.stringify(opts.body);
+  }
+
+  const res = await fetch(API_BASE + path, fetchOpts);
 
   if (res.status === 429) {
     const retryAfter = parseInt(res.headers.get('Retry-After') || '60', 10);
@@ -1061,7 +1329,272 @@ function loadSettings() {
       STATE.muted = saved.muted;
       document.getElementById('btnMute').textContent = STATE.muted ? '🔇' : '🔊';
     }
+    if (saved.showReserve) {
+      STATE.showReserve = true;
+      document.body.classList.add('mode-reserve');
+    }
   } catch(e) {}
+}
+
+function loadSellFlags() {
+  try { STATE.wishlistSellFlags = JSON.parse(localStorage.getItem('gt_monitor_sell_flags') || '{}'); } catch(e) {}
+}
+function saveSellFlags() {
+  try { localStorage.setItem('gt_monitor_sell_flags', JSON.stringify(STATE.wishlistSellFlags)); } catch(e) {}
+}
+function loadNettoExclusions() {
+  try {
+    const ids = JSON.parse(localStorage.getItem('gt_netto_excluded_wl_ids') || '[]');
+    STATE.nettoExcludedWlIds = new Set(ids);
+  } catch(e) {}
+}
+function saveNettoExclusions() {
+  try { localStorage.setItem('gt_netto_excluded_wl_ids', JSON.stringify([...STATE.nettoExcludedWlIds])); } catch(e) {}
+}
+function toggleNettoExclusion(wlId) {
+  if (STATE.nettoExcludedWlIds.has(wlId)) {
+    STATE.nettoExcludedWlIds.delete(wlId);
+  } else {
+    STATE.nettoExcludedWlIds.add(wlId);
+  }
+  saveNettoExclusions();
+  renderTable();
+}
+function sellKey(matId) {
+  return String(matId);
+}
+function toggleSellFlag(matId) {
+  const key = sellKey(matId);
+  STATE.wishlistSellFlags[key] = !STATE.wishlistSellFlags[key];
+  saveSellFlags();
+  if (STATE.wishlistSellFlags[key]) fetchStockData();
+  renderTable();
+}
+function isSell(matId) {
+  return !!STATE.wishlistSellFlags[sellKey(matId)];
+}
+
+// ─── GHOST-ROW SELL-TOGGLE (vor dem Hinzufügen zur General-Wishlist) ───
+// Default: Sell (true). ghostSellFlags[matId] = false bedeutet Buy-Modus.
+function isGhostSell(matId) {
+  return STATE.ghostSellFlags[matId] !== false;
+}
+function toggleGhostSell(matId) {
+  STATE.ghostSellFlags[matId] = !isGhostSell(matId);
+  renderTable();
+}
+
+// ─── GENERAL-WISHLIST ───
+async function ensureGeneralWishlist() {
+  if (STATE.generalWishlistId) return;
+  const saved = localStorage.getItem('gt_monitor_general_wl_id');
+  if (saved) { STATE.generalWishlistId = Number(saved); return; }
+
+  // Wishlists abrufen und nach "General" suchen
+  const data = await apiFetch('/public/wishlists');
+  const wls = Array.isArray(data) ? data : (data.wishlists || data.items || data.data || []);
+  const existing = wls.find(wl => (wl.title || wl.name) === 'General');
+
+  if (existing) {
+    STATE.generalWishlistId = existing.id ?? existing.wishlistId;
+  } else {
+    const created = await apiFetch('/public/wishlist/create', { method: 'POST', body: { title: 'General' } });
+    STATE.generalWishlistId = created.id ?? created.wishlistId;
+    toast('General-Wishlist angelegt.', 'info');
+  }
+  localStorage.setItem('gt_monitor_general_wl_id', String(STATE.generalWishlistId));
+}
+
+// Generalisierte Wishlist-Operationen
+async function addToWishlist(matId, wishlistId, asSell) {
+  const mat = STATE.prices.find(p => p.matId === matId);
+  const matName = mat ? mat.matName : 'Material #' + matId;
+  const wl = STATE.allWishlists.find(w => w.id === wishlistId);
+  const wlName = wl ? wl.name : '#' + wishlistId;
+  try {
+    await apiFetch('/public/wishlist/' + wishlistId + '/additems', {
+      method: 'POST',
+      body: [{ id: matId, am: 1 }],
+    });
+    // Optimistic: lokalen State aktualisieren
+    if (!STATE.wishlistAmountsById[wishlistId]) STATE.wishlistAmountsById[wishlistId] = {};
+    STATE.wishlistAmountsById[wishlistId][matId] = 1;
+    // Sell-Flag setzen (Key = matId, konsistent mit sellKey())
+    STATE.wishlistSellFlags[sellKey(matId)] = !!asSell;
+    saveSellFlags();
+    delete STATE.ghostSellFlags[matId];
+    toast(esc(matName) + ' → ' + esc(wlName) + ' (' + (asSell ? '💰' : '🛒') + ')', 'info');
+    if (STATE.selectedWishlistIds.has(wishlistId)) {
+      rebuildMergedAmounts();
+      renderTable();
+    }
+  } catch(e) {
+    if (e.message !== 'RATE_LIMITED') toast('Fehler beim Hinzufügen: ' + esc(e.message), 'warn');
+  }
+}
+
+async function removeFromWishlist(matId, wishlistId) {
+  const mat = STATE.prices.find(p => p.matId === matId);
+  const matName = mat ? mat.matName : 'Material #' + matId;
+  const wl = STATE.allWishlists.find(w => w.id === wishlistId);
+  const wlName = wl ? wl.name : '#' + wishlistId;
+  const currentAm = (STATE.wishlistAmountsById[wishlistId] || {})[matId] || 1;
+  try {
+    await apiFetch('/public/wishlist/' + wishlistId + '/additems', {
+      method: 'POST',
+      body: [{ id: matId, am: -currentAm }],
+    });
+    if (STATE.wishlistAmountsById[wishlistId]) delete STATE.wishlistAmountsById[wishlistId][matId];
+    toast(esc(matName) + ' aus ' + esc(wlName) + ' entfernt', 'info');
+    if (STATE.selectedWishlistIds.has(wishlistId)) {
+      rebuildMergedAmounts();
+      renderTable();
+    }
+  } catch(e) {
+    if (e.message !== 'RATE_LIMITED') toast('Fehler beim Entfernen: ' + esc(e.message), 'warn');
+  }
+}
+
+async function moveToWishlist(matId, fromId, toId) {
+  await addToWishlist(matId, toId, isSell(matId));
+  await removeFromWishlist(matId, fromId);
+}
+
+async function createWishlistAndAdd(matId, title, asSell) {
+  try {
+    const created = await apiFetch('/public/wishlist/create', { method: 'POST', body: { title } });
+    const newId = created.id ?? created.wishlistId;
+    STATE.allWishlists.push({ id: newId, name: title });
+    STATE.selectedWishlistNames[newId] = title;
+    toast('Liste "' + esc(title) + '" angelegt.', 'info');
+    await addToWishlist(matId, newId, asSell);
+  } catch(e) {
+    if (e.message !== 'RATE_LIMITED') toast('Fehler beim Erstellen: ' + esc(e.message), 'warn');
+  }
+}
+
+function rebuildMergedAmounts() {
+  const amounts = {};
+  for (const [wlId, perWl] of Object.entries(STATE.wishlistAmountsById)) {
+    if (!STATE.selectedWishlistIds.has(Number(wlId))) continue;
+    for (const [mid, am] of Object.entries(perWl)) {
+      amounts[mid] = (amounts[mid] || 0) + am;
+    }
+  }
+  STATE.wishlistAmounts = amounts;
+  STATE.wishlistMatIds = new Set(Object.keys(amounts).map(Number));
+}
+
+async function handleGhostAdd(selectEl, matId) {
+  const val = selectEl.value;
+  selectEl.value = '';
+  if (!val) return;
+  const asSell = isGhostSell(matId);
+  if (val === 'new') {
+    const title = window.prompt('Name der neuen Liste:');
+    if (title && title.trim()) await createWishlistAndAdd(matId, title.trim(), asSell);
+  } else {
+    await addToWishlist(matId, Number(val), asSell);
+  }
+}
+
+// Compat-Wrapper
+async function addToGeneralWishlist(matId) {
+  await ensureGeneralWishlist();
+  await addToWishlist(matId, STATE.generalWishlistId, isGhostSell(matId));
+}
+
+// ─── CONTEXT MENU ───
+function hideContextMenu() {
+  const m = document.getElementById('contextMenu');
+  m.style.display = 'none';
+  m.innerHTML = '';
+}
+
+document.addEventListener('click', e => {
+  const menu = document.getElementById('contextMenu');
+  if (!menu.contains(e.target)) hideContextMenu();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideContextMenu(); });
+
+function showContextMenu(matId, x, y) {
+  const mat = STATE.prices.find(p => p.matId === matId);
+  if (!mat) return;
+
+  // Wishlists die dieses Mat enthalten (unter den bekannten)
+  const containingIds = STATE.allWishlists
+    .map(w => w.id)
+    .filter(id => (STATE.wishlistAmountsById[id] || {})[matId] != null);
+  const notContainingIds = STATE.allWishlists
+    .map(w => w.id)
+    .filter(id => (STATE.wishlistAmountsById[id] || {})[matId] == null);
+
+  let html = `<div class="ctx-header">${esc(mat.matName)}</div>`;
+
+  // Hinzufügen zu…
+  if (notContainingIds.length > 0 || true /* immer "Neue Liste" zeigen */) {
+    html += `<div class="ctx-section">`;
+    html += `<div class="ctx-label">Hinzufügen zu</div>`;
+    notContainingIds.forEach(id => {
+      const name = (STATE.allWishlists.find(w => w.id === id) || {}).name || '#' + id;
+      html += `<div class="ctx-item" onclick="addToWishlist(${matId},${id},${isSell(matId)});hideContextMenu()">✚ ${esc(name)}</div>`;
+    });
+    html += `<div class="ctx-new-list">
+      <input class="ctx-new-input" id="ctxNewName" placeholder="Neue Liste…" onkeydown="if(event.key==='Enter')ctxCreateAndAdd(${matId})">
+      <button class="ctx-new-btn" onclick="ctxCreateAndAdd(${matId})">+</button>
+    </div>`;
+    html += `</div>`;
+  }
+
+  // Verschieben (von A nach B) — nur wenn in mind. einer Liste und mind. eine andere existiert
+  const movePairs = [];
+  containingIds.forEach(fromId => {
+    notContainingIds.forEach(toId => {
+      movePairs.push({ fromId, toId });
+    });
+  });
+  if (movePairs.length > 0) {
+    html += `<div class="ctx-section"><div class="ctx-label">Verschieben</div>`;
+    movePairs.forEach(({ fromId, toId }) => {
+      const from = (STATE.allWishlists.find(w => w.id === fromId) || {}).name || '#' + fromId;
+      const to = (STATE.allWishlists.find(w => w.id === toId) || {}).name || '#' + toId;
+      html += `<div class="ctx-item" onclick="moveToWishlist(${matId},${fromId},${toId});hideContextMenu()">➡ ${esc(from)} → ${esc(to)}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Entfernen von…
+  if (containingIds.length > 0) {
+    html += `<div class="ctx-section"><div class="ctx-label">Entfernen von</div>`;
+    containingIds.forEach(id => {
+      const name = (STATE.allWishlists.find(w => w.id === id) || {}).name || '#' + id;
+      html += `<div class="ctx-item danger" onclick="removeFromWishlist(${matId},${id});hideContextMenu()">✕ ${esc(name)}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  const menu = document.getElementById('contextMenu');
+  menu.innerHTML = html;
+  menu.style.display = 'block';
+
+  // Positionierung: nicht über den Rand
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const mw = 220, mh = 300; // geschätzte Abmessungen
+  menu.style.left = (x + mw > vw ? vw - mw - 8 : x) + 'px';
+  menu.style.top  = (y + mh > vh ? y - Math.min(mh, y - 8) : y) + 'px';
+
+  // Fokus auf Neues-Listen-Input setzen falls vorhanden und keine anderen Optionen
+  if (notContainingIds.length === 0) {
+    setTimeout(() => document.getElementById('ctxNewName')?.focus(), 50);
+  }
+}
+
+function ctxCreateAndAdd(matId) {
+  const input = document.getElementById('ctxNewName');
+  const title = input ? input.value.trim() : '';
+  if (!title) return;
+  hideContextMenu();
+  createWishlistAndAdd(matId, title, isSell(matId));
 }
 
 function saveSettings() {
@@ -1074,6 +1607,7 @@ function saveSettings() {
     alarmMode: STATE.alarmMode,
     histRange: STATE.histRange,
     muted: STATE.muted,
+    showReserve: STATE.showReserve,
   };
   try { localStorage.setItem('gt_monitor_settings', JSON.stringify(settings)); } catch(e) {}
 }
@@ -1105,6 +1639,8 @@ async function loadWishlists() {
   document.getElementById('wishlistList').innerHTML = '';
   document.getElementById('btnStartWishlist').disabled = true;
   STATE.selectedWishlistId = null;
+  STATE.selectedWishlistIds.clear();
+  STATE.selectedWishlistNames = {};
 
   try {
     const data = await apiFetch('/public/wishlists');
@@ -1128,22 +1664,20 @@ async function loadWishlists() {
       document.getElementById('wishlistList').innerHTML = '<div class="no-data">Keine Wishlists gefunden.</div>';
       return;
     }
-    // Auto-select if only one wishlist exists
-    if (wishlists.length === 1) {
-      const wl = wishlists[0];
-      STATE.selectedWishlistId = wl.id ?? wl.wishlistId;
-      STATE.selectedWishlistName = wl.title || wl.name || wl.wishlistName || ('Planet-Wishlist #' + STATE.selectedWishlistId);
-      startWishlistMonitoring();
-      return;
-    }
+    STATE.allWishlists = wishlists.map(wl => {
+      const id = wl.id ?? wl.wishlistId;
+      const name = wl.title || wl.name || wl.wishlistName || ('Planet-Wishlist #' + id);
+      return { id, name };
+    });
+    try { localStorage.setItem('gt_wishlists', JSON.stringify(STATE.allWishlists)); } catch(_) {}
+
     const container = document.getElementById('wishlistList');
     wishlists.forEach(wl => {
       const wlId = wl.id ?? wl.wishlistId;
-      // title field from API (can be null for planet wishlists), fallback to name
       const wlTitle = wl.title || wl.name || wl.wishlistName || null;
       const displayName = wlTitle || ('Planet-Wishlist #' + wlId);
-      // Count materials if available
       const matCount = (wl.mats || wl.materials || wl.items || []).length;
+      STATE.selectedWishlistNames[wlId] = displayName;
 
       const div = document.createElement('div');
       div.className = 'wishlist-item';
@@ -1152,23 +1686,64 @@ async function loadWishlists() {
         <span class="wishlist-item-count">${matCount ? matCount + ' Mat.' : ''} #${wlId}</span>
       `;
       div.addEventListener('click', () => {
-        document.querySelectorAll('.wishlist-item').forEach(i => i.classList.remove('selected'));
-        div.classList.add('selected');
-        STATE.selectedWishlistId = wlId;
-        STATE.selectedWishlistName = displayName;
-        document.getElementById('btnStartWishlist').disabled = false;
+        if (STATE.selectedWishlistIds.has(wlId)) {
+          STATE.selectedWishlistIds.delete(wlId);
+          div.classList.remove('selected');
+        } else {
+          STATE.selectedWishlistIds.add(wlId);
+          div.classList.add('selected');
+        }
+        document.getElementById('btnStartWishlist').disabled = STATE.selectedWishlistIds.size === 0;
       });
       container.appendChild(div);
     });
+
+    // Auto-select und starten wenn nur eine Wishlist vorhanden
+    if (wishlists.length === 1) {
+      container.querySelector('.wishlist-item').click();
+      startWishlistMonitoring();
+      return;
+    }
   } catch(e) {
     document.getElementById('wishlistLoading').style.display = 'none';
+    // Try to render from cached wishlist list
+    try {
+      const cached = JSON.parse(localStorage.getItem('gt_wishlists') || 'null');
+      if (cached && cached.length) {
+        STATE.allWishlists = cached;
+        const container = document.getElementById('wishlistList');
+        container.innerHTML = '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">⚠ Gecachte Daten (Rate-Limit aktiv)</div>';
+        cached.forEach(wl => {
+          STATE.selectedWishlistNames[wl.id] = wl.name;
+          const div = document.createElement('div');
+          div.className = 'wishlist-item';
+          div.innerHTML = `<span class="wishlist-item-name">${esc(wl.name)}</span><span class="wishlist-item-count">#${wl.id}</span>`;
+          div.addEventListener('click', () => {
+            if (STATE.selectedWishlistIds.has(wl.id)) {
+              STATE.selectedWishlistIds.delete(wl.id);
+              div.classList.remove('selected');
+            } else {
+              STATE.selectedWishlistIds.add(wl.id);
+              div.classList.add('selected');
+            }
+            document.getElementById('btnStartWishlist').disabled = STATE.selectedWishlistIds.size === 0;
+          });
+          container.appendChild(div);
+        });
+        if (cached.length === 1) {
+          container.querySelector('.wishlist-item').click();
+          startWishlistMonitoring();
+        }
+        return;
+      }
+    } catch(_) {}
     document.getElementById('wishlistList').innerHTML = '<div class="no-data">Fehler: ' + esc(e.message) + '</div>';
   }
 }
 
 // ─── MONITORING ───
 function syncSortHeaders() {
-  ['name', 'price', 'avgPrice', 'deviation', 'histAvg'].forEach(c => {
+  ['name', 'price', 'avgPrice', 'deviation', 'histAvg', 'total', 'reserve'].forEach(c => {
     const el = document.getElementById('sort-' + c);
     if (el) el.textContent = STATE.sortColumn === c ? (STATE.sortDir === 'asc' ? '↑' : '↓') : '';
   });
@@ -1184,9 +1759,9 @@ function startAllMonitoring() {
   document.getElementById('monitorTitle').textContent = '📊 Alle Materialien';
   document.getElementById('statusDot').classList.add('active');
   document.getElementById('statusText').textContent = 'Aktiv – Alle';
-  document.getElementById('noData').style.display = '';
-  document.getElementById('priceTableBody').innerHTML = '';
   syncHistControls();
+  document.body.classList.remove('mode-wishlist');
+  renderTable();
   fetchPrices();
   schedulePriceFetch();
 }
@@ -1198,24 +1773,39 @@ async function startWishlistMonitoring() {
   STATE.sortDir = 'asc';
   syncSortHeaders();
   showView('monitor');
-  document.getElementById('monitorTitle').textContent = '⭐ Wishlist: ' + STATE.selectedWishlistName;
+  const names = [...STATE.selectedWishlistIds]
+    .map(id => STATE.selectedWishlistNames[id] || '#' + id)
+    .join(', ');
+  document.getElementById('monitorTitle').textContent = '⭐ ' + names;
   document.getElementById('statusDot').classList.add('active');
   document.getElementById('statusText').textContent = 'Aktiv – Wishlist';
-  document.getElementById('noData').style.display = '';
-  document.getElementById('priceTableBody').innerHTML = '';
   syncHistControls();
+  document.body.classList.add('mode-wishlist');
+  // Pre-populate wishlist details from cache so table is not empty during rate limit
+  try {
+    const wd = JSON.parse(localStorage.getItem('gt_wishlist_details') || 'null');
+    if (wd && wd.amounts && [...STATE.selectedWishlistIds].every(id => wd.selectedIds?.includes(id))) {
+      STATE.wishlistAmounts = wd.amounts;
+      STATE.wishlistAmountsById = wd.amountsById || {};
+      STATE.wishlistMatIds = new Set(Object.keys(wd.amounts).map(Number));
+    }
+  } catch(_) {}
   // Wishlist-Details erst abwarten bevor Preise geholt werden,
   // sonst ist wishlistMatIds noch leer wenn renderTable() läuft
   await fetchWishlistDetails();
+  renderTable(); // show cached prices while waiting for fresh fetch
   fetchPrices();
   schedulePriceFetch();
   scheduleWishlistFetch();
+  if (STATE.showReserve) fetchBaseData();
+  fetchStockData();
 }
 
 function stopMonitoring() {
   STATE.running = false;
   clearTimeout(STATE.priceTimer);
   clearTimeout(STATE.wishlistTimer);
+  clearTimeout(STATE.baseTimer);
   clearInterval(STATE.countdownTimer);
   document.getElementById('statusDot').classList.remove('active');
   document.getElementById('statusText').textContent = 'Inaktiv';
@@ -1260,6 +1850,7 @@ async function fetchPrices() {
     STATE.lastFetchTime = Date.now();
     updateLastFetchLabel();
     storeSnapshot();
+    try { localStorage.setItem('gt_last_prices', JSON.stringify({ ts: Date.now(), prices: STATE.prices })); } catch(_) {}
     renderTable();
   } catch(e) {
     if (e.message !== 'RATE_LIMITED') {
@@ -1269,31 +1860,176 @@ async function fetchPrices() {
 }
 
 async function fetchWishlistDetails() {
-  if (!STATE.running || !STATE.selectedWishlistId) return;
+  if (!STATE.running || STATE.selectedWishlistIds.size === 0) return;
   try {
-    const data = await apiFetch('/public/wishlist/' + STATE.selectedWishlistId);
-    console.log('[GT Monitor] /public/wishlist/' + STATE.selectedWishlistId + ' response:', JSON.stringify(data, null, 2));
-
-    // Handle: the wishlist object might be the data directly or wrapped
-    let wlObj = data;
-
-    // Extract materials array - try all known field names
-    // Local API uses "mats" with {id, am}, Public API might differ
-    const rawMats = wlObj.mats || wlObj.materials || wlObj.items || [];
-    console.log('[GT Monitor] Raw materials from wishlist:', JSON.stringify(rawMats));
-
-    // Extract material IDs - handle both {id, am} (Local API style) and {matId, ...} formats
-    const matIds = rawMats.map(m => {
-      const mid = m.matId ?? m.materialId ?? m.id;
-      return mid;
-    }).filter(id => id != null);
-
-    console.log('[GT Monitor] Extracted matIds for wishlist filter:', matIds);
-    STATE.wishlistMatIds = new Set(matIds);
+    const ids = [...STATE.selectedWishlistIds];
+    const results = await Promise.all(ids.map(id => apiFetch('/public/wishlist/' + id)));
+    const amounts = {};
+    results.forEach((data, i) => {
+      const wlId = ids[i];
+      const rawMats = data.mats || data.materials || data.items || [];
+      const perWl = {};
+      rawMats.forEach(m => {
+        const mid = m.matId ?? m.materialId ?? m.id;
+        if (mid != null) {
+          const am = m.am ?? m.amount ?? m.quantity ?? 1;
+          perWl[mid] = am;
+          amounts[mid] = (amounts[mid] || 0) + am;
+        }
+      });
+      STATE.wishlistAmountsById[wlId] = perWl;
+    });
+    STATE.wishlistAmounts = amounts;
+    STATE.wishlistMatIds = new Set(Object.keys(amounts).map(Number));
+    try {
+      localStorage.setItem('gt_wishlist_details', JSON.stringify({
+        ts: Date.now(),
+        selectedIds: [...STATE.selectedWishlistIds],
+        amounts,
+        amountsById: STATE.wishlistAmountsById,
+      }));
+    } catch(_) {}
     updateApiHistCost();
   } catch(e) {
     if (e.message !== 'RATE_LIMITED') {
       toast('Wishlist-Abruf fehlgeschlagen: ' + e.message, 'warn');
+    }
+  }
+}
+
+// ─── BASE / RESERVE DATA ───
+async function loadGameData() {
+  if (STATE.gameData) return STATE.gameData;
+  const r = await fetch('https://api.g2.galactictycoons.com/gamedata.json');
+  STATE.gameData = await r.json();
+  return STATE.gameData;
+}
+
+function hasSellItems() {
+  return [...STATE.wishlistMatIds].some(id => isSell(id));
+}
+
+async function fetchBaseData() {
+  if (!STATE.running || !STATE.showReserve) return;
+  try {
+    const [data, gd] = await Promise.all([
+      apiFetch('/public/company/bases'),
+      loadGameData(),
+    ]);
+    const baseList = Array.isArray(data) ? data : (data.bases || data.data || []);
+
+    // Rezept-Lookup: rId → recipe
+    const recipeById = {};
+    (gd.recipes || []).forEach(r => { recipeById[r.id] = r; });
+
+    // netRates: matId → Einheiten/Tag (negativ = Verbrauch, positiv = Produktion)
+    const netRates = {};  // matId → Einheiten/Tag
+    const buffer   = {};  // matId → laufender Tick-Anteil (Workforce)
+    const stock    = {};  // matId → Lagerbestand (Summe aller Bases)
+
+    baseList.forEach(base => {
+      // Workforce-Verbrauch: rate ist bereits in Einheiten/Tag
+      (base.workforce?.consumptionMaterials || []).forEach(m => {
+        if (m.matId == null || m.rate <= 0) return;
+        netRates[m.matId] = (netRates[m.matId] || 0) - m.rate;
+        buffer[m.matId]   = (buffer[m.matId]   || 0) + (m.buffer || 0);
+      });
+
+      // Lagerbestand
+      (base.warehouse?.mats || []).forEach(m => {
+        const sid = m.matId ?? m.id;
+        if (sid != null) stock[sid] = (stock[sid] || 0) + m.am;
+      });
+
+      // Produktions-Nettofluss: BuildingSlots mit laufendem Task
+      (base.buildingSlots || []).forEach(slot => {
+        const bld = slot.building;
+        if (!bld?.task?.rId) return;
+        const recipe = recipeById[bld.task.rId];
+        if (!recipe) return;
+
+        const mul        = bld.task.mul ?? 1;
+        const speed      = Math.min((bld.cond ?? 1) + 0.2, 1.0);  // Building Productivity
+        const batchHours = (recipe.timeMinutes / 60) / speed;
+        const batchesPerDay = 24 / batchHours;
+
+        // Inputs verbrauchen, Output produzieren
+        (recipe.inputs || []).forEach(inp => {
+          netRates[inp.id] = (netRates[inp.id] || 0) - (inp.am * mul) * batchesPerDay;
+        });
+        if (recipe.output?.id != null) {
+          netRates[recipe.output.id] = (netRates[recipe.output.id] || 0) + (recipe.output.am * mul) * batchesPerDay;
+        }
+      });
+    });
+
+    // Reserve = (Vorrat − Tick-Puffer) ÷ |Nettofluss/Tag|
+    // Infinity wenn netto produziert oder kein Verbrauch
+    const result = {};
+    Object.keys(netRates).forEach(mid => {
+      const net = netRates[mid];
+      if (net >= 0) {
+        result[mid] = { days: Infinity, urgent: false };
+      } else {
+        const days = Math.max(0, ((stock[mid] || 0) - (buffer[mid] || 0)) / Math.abs(net));
+        result[mid] = { days, urgent: days < 1 };
+      }
+    });
+    STATE.reserveData = result;
+    try { localStorage.setItem('gt_reserve_data', JSON.stringify({ ts: Date.now(), data: result })); } catch(_) {}
+    if (STATE.prices.length > 0) renderTable();
+  } catch(e) {
+    if (e.message !== 'RATE_LIMITED') {
+      toast('Base-Daten fehlgeschlagen: ' + e.message, 'warn');
+    }
+  }
+}
+
+function toggleReserve() {
+  STATE.showReserve = !STATE.showReserve;
+  document.body.classList.toggle('mode-reserve', STATE.showReserve);
+  const btn = document.getElementById('btnReserve');
+  if (btn) {
+    btn.classList.toggle('selected', STATE.showReserve);
+    btn.textContent = STATE.showReserve ? '⏳ Reserven' : '🏭 Reserven';
+  }
+  saveSettings();
+  if (STATE.showReserve) {
+    // Restore from cache immediately while waiting for fresh fetch
+    if (!Object.keys(STATE.reserveData).length) {
+      try {
+        const lr = JSON.parse(localStorage.getItem('gt_reserve_data') || 'null');
+        if (lr && Date.now() - lr.ts < 4 * 60 * 60 * 1000 && lr.data) STATE.reserveData = lr.data;
+      } catch(_) {}
+    }
+    renderTable();
+    fetchBaseData();
+  } else {
+    clearTimeout(STATE.baseTimer);
+    renderTable();
+  }
+}
+
+async function fetchStockData() {
+  if (!STATE.running) return;
+  try {
+    const [warehouses, company] = await Promise.all([
+      apiFetch('/public/company/warehouses'),
+      apiFetch('/public/company'),
+    ]);
+    const stock = {};
+    (Array.isArray(warehouses) ? warehouses : []).forEach(wh => {
+      (wh.mats || []).forEach(m => {
+        if (m.id != null && m.am > 0) stock[m.id] = (stock[m.id] || 0) + m.am;
+      });
+    });
+    STATE.stockData = stock;
+    STATE.companyCash = company?.cash ?? null;
+    try { localStorage.setItem('gt_stock_data', JSON.stringify({ ts: Date.now(), data: stock, cash: STATE.companyCash })); } catch(_) {}
+    if (STATE.prices.length > 0) renderTable();
+  } catch(e) {
+    if (e.message !== 'RATE_LIMITED') {
+      toast('Lagerbestand fehlgeschlagen: ' + e.message, 'warn');
     }
   }
 }
@@ -1307,6 +2043,46 @@ const HIST_RANGES = {
   'rec': null,   // gesamter Aufzeichnungszeitraum
 };
 
+function saveMatDetails() {
+  try {
+    const toSave = {};
+    for (const [matId, d] of Object.entries(STATE.matDetails)) {
+      toSave[matId] = {
+        totalQtyAvailable: d.totalQtyAvailable,
+        avgQtySoldDaily:   d.avgQtySoldDaily,
+        recentHistory:     d.recentHistory,
+        // orders[] wird nicht gespeichert (veraltet nach Reload)
+      };
+    }
+    localStorage.setItem('gt_mat_details', JSON.stringify({ ts: Date.now(), data: toSave }));
+  } catch(e) {
+    console.warn('[GT Monitor] saveMatDetails failed:', e);
+  }
+}
+
+function loadMatDetails() {
+  try {
+    const raw = localStorage.getItem('gt_mat_details');
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    const MAX_AGE_MS = 8 * 60 * 60 * 1000; // 8 Stunden
+    if (Date.now() - parsed.ts > MAX_AGE_MS) return; // veraltet → ignorieren
+    for (const [matId, d] of Object.entries(parsed.data || {})) {
+      STATE.matDetails[parseInt(matId)] = {
+        totalQtyAvailable: d.totalQtyAvailable ?? 0,
+        avgQtySoldDaily:   d.avgQtySoldDaily   ?? 0,
+        orders: [], // nicht persistiert — wall/monopoly erst nach erneutem Laden
+        recentHistory: d.recentHistory || [],
+      };
+    }
+    if (Object.keys(STATE.matDetails).length > 0) {
+      document.body.classList.add('mode-tags');
+    }
+  } catch(e) {
+    console.warn('[GT Monitor] loadMatDetails failed:', e);
+  }
+}
+
 function loadHistory() {
   try {
     const raw = localStorage.getItem('gt_price_history');
@@ -1314,6 +2090,29 @@ function loadHistory() {
     STATE.apiHistoryLoaded = localStorage.getItem('gt_api_hist_loaded') === '1';
     const lts = localStorage.getItem('gt_local_tracking_start');
     STATE.localTrackingStart = lts ? parseInt(lts, 10) : 0;
+    loadMatDetails();
+    // Restore last known prices (max 2h) so table is not empty during rate limit
+    try {
+      const lp = JSON.parse(localStorage.getItem('gt_last_prices') || 'null');
+      if (lp && Date.now() - lp.ts < 2 * 60 * 60 * 1000 && Array.isArray(lp.prices)) {
+        STATE.prices = lp.prices;
+      }
+    } catch(_) {}
+    // Restore reserve data (max 4h)
+    try {
+      const lr = JSON.parse(localStorage.getItem('gt_reserve_data') || 'null');
+      if (lr && Date.now() - lr.ts < 4 * 60 * 60 * 1000 && lr.data) {
+        STATE.reserveData = lr.data;
+      }
+    } catch(_) {}
+    // Restore stock / sell amounts (max 4h)
+    try {
+      const ls = JSON.parse(localStorage.getItem('gt_stock_data') || 'null');
+      if (ls && Date.now() - ls.ts < 4 * 60 * 60 * 1000 && ls.data) {
+        STATE.stockData = ls.data;
+        if (ls.cash != null) STATE.companyCash = ls.cash;
+      }
+    } catch(_) {}
   } catch(e) {
     STATE.priceHistory = {};
     STATE.localTrackingStart = 0;
@@ -1339,10 +2138,50 @@ function storeSnapshot() {
 }
 
 function pruneHistory() {
-  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const cutoff      = now - 7 * 24 * 60 * 60 * 1000; // drop anything older than 7d
+  const thinAfter   = now - 2 * 60 * 60 * 1000;       // compress beyond 2h ago
+  const hourlyAfter = now - 6 * 60 * 60 * 1000;       // switch to hourly+min/max beyond 6h
+
   for (const matId of Object.keys(STATE.priceHistory)) {
-    STATE.priceHistory[matId] = STATE.priceHistory[matId].filter(e => e[0] >= cutoff);
-    if (STATE.priceHistory[matId].length === 0) delete STATE.priceHistory[matId];
+    const entries = STATE.priceHistory[matId];
+    const recent   = entries.filter(e => e[0] >= thinAfter);
+    const mid      = entries.filter(e => e[0] >= hourlyAfter && e[0] < thinAfter);
+    const old      = entries.filter(e => e[0] >= cutoff      && e[0] < hourlyAfter);
+
+    // 2h–6h: compress to 15-min averages
+    const quarters = {};
+    for (const [ts, price] of mid) {
+      const d = new Date(ts);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${Math.floor(d.getMinutes()/15)}`;
+      if (!quarters[key]) quarters[key] = { ts, sum: 0, count: 0 };
+      if (ts < quarters[key].ts) quarters[key].ts = ts;
+      quarters[key].sum += price;
+      quarters[key].count++;
+    }
+    const thinnedMid = Object.values(quarters)
+      .sort((a, b) => a.ts - b.ts)
+      .map(b => [b.ts, Math.round(b.sum / b.count)]);
+
+    // >6h: compress to hourly avg+min+max
+    const hourly = {};
+    for (const [ts, price] of old) {
+      const d = new Date(ts);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}`;
+      if (!hourly[key]) hourly[key] = { ts, sum: 0, count: 0, min: price, max: price };
+      if (ts < hourly[key].ts) hourly[key].ts = ts;
+      hourly[key].sum += price;
+      hourly[key].count++;
+      if (price < hourly[key].min) hourly[key].min = price;
+      if (price > hourly[key].max) hourly[key].max = price;
+    }
+    const thinnedOld = Object.values(hourly)
+      .sort((a, b) => a.ts - b.ts)
+      .map(b => [b.ts, Math.round(b.sum / b.count), b.min, b.max]);
+
+    const combined = [...thinnedOld, ...thinnedMid, ...recent];
+    if (combined.length === 0) delete STATE.priceHistory[matId];
+    else STATE.priceHistory[matId] = combined;
   }
 }
 
@@ -1358,6 +2197,39 @@ function saveHistory() {
       toast('Preishistorie konnte nicht gespeichert werden: ' + (e.message || e.name || 'Unbekannter Fehler'), 'warn');
     }
   }
+}
+
+function getSparkData(matId) {
+  const entries = STATE.priceHistory[matId];
+  if (!entries || entries.length < 2) return null;
+  const sixHAgo = Date.now() - 6 * 60 * 60 * 1000;
+  const buckets = {};
+  for (const entry of entries) {
+    const [ts, price, storedMin, storedMax] = entry;
+    const d = new Date(ts);
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const hh = String(d.getHours()).padStart(2,'0');
+    // Use 15-min buckets for recent data, hourly for old
+    const key = ts >= sixHAgo
+      ? `${d.getFullYear()}-${mm}-${dd}-${hh}-${Math.floor(d.getMinutes()/15)}`
+      : `${d.getFullYear()}-${mm}-${dd}-${hh}`;
+    if (!buckets[key]) buckets[key] = { ts, prices: [], min: price, max: price };
+    else if (ts < buckets[key].ts) buckets[key].ts = ts;
+    buckets[key].prices.push(price);
+    // propagate stored min/max from compressed entries
+    const lo = storedMin ?? price;
+    const hi = storedMax ?? price;
+    if (lo < buckets[key].min) buckets[key].min = lo;
+    if (hi > buckets[key].max) buckets[key].max = hi;
+  }
+  const keys = Object.keys(buckets).sort().slice(-672);
+  if (keys.length < 2) return null;
+  return keys.map(key => {
+    const b = buckets[key];
+    const avg = b.prices.reduce((s,v)=>s+v,0)/b.prices.length;
+    return { ts: b.ts, avg, min: b.min, max: b.max };
+  });
 }
 
 function getHistoricalAvg(matId, rangeMs) {
@@ -1391,10 +2263,23 @@ function updateApiHistCost() {
   const el = document.getElementById('apiHistCost');
   const btn = document.getElementById('loadApiHistBtn');
   if (!el || !btn) return;
-  if (STATE.apiHistoryLoaded) {
+  const hasOrders = Object.values(STATE.matDetails).some(d => d.orders.length > 0);
+  if (hasOrders) {
     el.textContent = '✓';
     btn.disabled = true;
     btn.title = 'Historiedaten bereits geladen';
+    return;
+  }
+  if (Object.keys(STATE.matDetails).length > 0) {
+    el.textContent = '↺';
+    btn.disabled = false;
+    btn.title = 'Tags aus Cache (wall/monopoly fehlen) – neu laden für vollständige Daten';
+    return;
+  }
+  if (STATE.apiHistoryLoaded) {
+    el.textContent = '↺';
+    btn.disabled = false;
+    btn.title = 'History neu laden um Tags anzuzeigen';
     return;
   }
   if (STATE.mode === 'wishlist') {
@@ -1406,7 +2291,7 @@ function updateApiHistCost() {
 }
 
 async function loadApiHistory() {
-  if (STATE.apiHistoryLoaded) {
+  if (Object.values(STATE.matDetails).some(d => d.orders.length > 0)) {
     toast('API-Historiedaten bereits geladen.', 'info');
     return;
   }
@@ -1433,6 +2318,19 @@ async function loadApiHistory() {
           }
         }
         STATE.priceHistory[matId].sort((a, b) => a[0] - b[0]);
+        STATE.matDetails[matId] = {
+          totalQtyAvailable: data.totalQtyAvailable ?? 0,
+          avgQtySoldDaily:   data.avgQtySoldDaily   ?? 0,
+          orders: data.orders || [],
+          recentHistory: [...history]
+            .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+            .slice(0, 7)
+            .map(d => ({
+              avgPrice:     d.avgPrice     ?? 0,
+              qtySold:      d.qtySold      ?? 0,
+              qtyRemaining: d.qtyRemaining ?? 0,
+            })),
+        };
       }
     } else {
       const raw = await apiFetch('/public/exchange/mat-details');
@@ -1440,6 +2338,7 @@ async function loadApiHistory() {
                         Array.isArray(raw.materials) ? raw.materials :
                         Array.isArray(raw.mats) ? raw.mats : [];
       for (const mat of materials) {
+        if (!mat) continue;
         const matId = mat.matId;
         if (!matId) continue;
         const history = mat.priceHistory || [];
@@ -1457,6 +2356,19 @@ async function loadApiHistory() {
         if (STATE.priceHistory[matId].length > 0) {
           STATE.priceHistory[matId].sort((a, b) => a[0] - b[0]);
         }
+        STATE.matDetails[matId] = {
+          totalQtyAvailable: mat.totalQtyAvailable ?? 0,
+          avgQtySoldDaily:   mat.avgQtySoldDaily   ?? 0,
+          orders: mat.orders || [],
+          recentHistory: [...history]
+            .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+            .slice(0, 7)
+            .map(d => ({
+              avgPrice:     d.avgPrice     ?? 0,
+              qtySold:      d.qtySold      ?? 0,
+              qtyRemaining: d.qtyRemaining ?? 0,
+            })),
+        };
       }
     }
 
@@ -1469,6 +2381,8 @@ async function loadApiHistory() {
     } else {
       STATE.apiHistoryLoaded = true;
       localStorage.setItem('gt_api_hist_loaded', '1');
+      document.body.classList.add('mode-tags');
+      saveMatDetails();
       toast(`API-Historiedaten geladen (${newEntries} Tagespunkte hinzugefügt).`, 'info');
     }
 
@@ -1493,6 +2407,7 @@ function setAlarmMode(mode) {
   });
   const rg = document.getElementById('histRangeGroup');
   if (rg) rg.style.display = mode === 'hist' ? 'flex' : 'none';
+  document.body.classList.toggle('mode-hist', mode === 'hist');
   saveSettings();
   renderTable();
 }
@@ -1512,15 +2427,41 @@ function syncHistControls() {
   });
   const rg = document.getElementById('histRangeGroup');
   if (rg) rg.style.display = STATE.alarmMode === 'hist' ? 'flex' : 'none';
+  document.body.classList.toggle('mode-hist', STATE.alarmMode === 'hist');
   document.querySelectorAll('#histRangeGroup .toggle-btn').forEach(b => {
     b.classList.toggle('selected', b.dataset.range === STATE.histRange);
   });
   updateRecIndicator();
   updateApiHistCost();
+  const btnR = document.getElementById('btnReserve');
+  if (btnR) {
+    btnR.classList.toggle('selected', STATE.showReserve);
+    btnR.textContent = STATE.showReserve ? '⏳ Reserven' : '🏭 Reserven';
+  }
 }
 
 // ─── RENDER TABLE ───
+function formatReserve(days) {
+  if (days == null || isNaN(days)) return '—';
+  if (days === Infinity) return '∞';
+  const totalMin = Math.round(days * 24 * 60);
+  const d = Math.floor(totalMin / 1440);
+  const h = Math.floor((totalMin % 1440) / 60);
+  const m = totalMin % 60;
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function renderReserveCell(reserve) {
+  if (!STATE.showReserve || reserve === null) return `<td class="col-reserve">—</td>`;
+  if (reserve.days === Infinity) return `<td class="col-reserve"><span class="reserve-ok">∞</span></td>`;
+  const cls = reserve.urgent ? 'reserve-urgent' : 'reserve-ok';
+  return `<td class="col-reserve"><span class="${cls}">${formatReserve(reserve.days)}</span></td>`;
+}
+
 function toggleSort(col) {
+  if (col === 'reserve' && !STATE.showReserve) return;
   if (STATE.sortColumn === col) {
     STATE.sortDir = STATE.sortDir === 'asc' ? 'desc' : 'asc';
   } else {
@@ -1529,6 +2470,128 @@ function toggleSort(col) {
   }
   syncSortHeaders();
   renderTable();
+}
+
+// ─── MARKET TAGS & TREND ───
+function _effectiveDays(matId) {
+  const d = STATE.matDetails[matId];
+  if (!d || d.avgQtySoldDaily <= 0) return Infinity;
+  return d.totalQtyAvailable / d.avgQtySoldDaily;
+}
+
+function _supplyDeclining(matId) {
+  const h = STATE.matDetails[matId]?.recentHistory || [];
+  if (h.length < 2) return false;
+  return h[0].qtyRemaining < h[h.length - 1].qtyRemaining;
+}
+
+const TAG_TOOLTIPS = {
+  breakout: 'Starke Preisbewegung: Preis > 1,3× Durchschnitt',
+  surge:    'Nachfrage-Spike: Heutiger Umsatz > 1,5× 7-Tage-Schnitt + Angebot sinkend',
+  squeeze:  'Sehr niedriges Angebot (< 0,25 Tage) + weiter sinkend',
+  wall:     'Angebotswall: Top-Order > 60 % des Gesamtangebots',
+  monopoly: 'Monopol: 1 Verkäufer kontrolliert > 70 % des Angebots',
+  dumping:  'Dumping: Preis > 30 % unter Durchschnitt',
+  fading:   'Nachfrage sinkt: Heutiger Umsatz < 50 % des 7-Tage-Schnitts',
+  flooding: 'Angebotsflut: > 10 Tage effektive Versorgung + Angebot wächst',
+  volatile: 'Volatil: Preisschwankungen > 15 % des Durchschnitts (7 Tage)',
+  spike:    'Kurzzeit-Spike: Preis > 8 % über 23h-Schnitt (nur lokale Live-Daten, mind. 3 Snapshots)',
+  dip:      'Kurzzeit-Dip: Preis > 8 % unter 23h-Schnitt (nur lokale Live-Daten, mind. 3 Snapshots)',
+};
+
+const TAG_DEFS = {
+  // gt-companion: "Strong price move - price up significantly with demand support"
+  breakout: p => p.avgPrice > 0 && p.currentPrice > p.avgPrice * 1.3,
+  // gt-companion: "Demand spiking - 1d demand well above 7d average, supply declining"
+  // h[0]=heute (unvollständig), h[1]=gestern (vollständig) → gestern vs. Basis h[2..]
+  surge: p => {
+    const h = STATE.matDetails[p.matId]?.recentHistory || [];
+    if (h.length < 4) return false;
+    const avgBase = h.slice(2).reduce((s, d) => s + d.qtySold, 0) / (h.length - 2);
+    return avgBase > 0 && h[1].qtySold > avgBase * 1.5 && _supplyDeclining(p.matId);
+  },
+  // gt-companion: "Running out - very low effective supply and still declining"
+  squeeze: p => _effectiveDays(p.matId) < 0.25 && _supplyDeclining(p.matId),
+  // Top-1-Order > 60 % des Gesamtangebots
+  wall: p => {
+    const orders = STATE.matDetails[p.matId]?.orders || [];
+    if (!orders.length) return false;
+    const total = orders.reduce((s, o) => s + o.qty, 0);
+    return total > 0 && orders[0].qty / total > 0.6;
+  },
+  // 1 Verkäufer kontrolliert > 70 % des Angebots
+  monopoly: p => {
+    const orders = STATE.matDetails[p.matId]?.orders || [];
+    if (!orders.length) return false;
+    const total = orders.reduce((s, o) => s + o.qty, 0);
+    if (total <= 0) return false;
+    const bySeller = {};
+    orders.forEach(o => { bySeller[o.cId] = (bySeller[o.cId] || 0) + o.qty; });
+    return Math.max(...Object.values(bySeller)) / total > 0.7;
+  },
+  // Gegenstück zu breakout: Preis > 30 % unter Durchschnitt (Unterbietung)
+  dumping: p => p.avgPrice > 0 && p.currentPrice > 0 && p.currentPrice < p.avgPrice * 0.7,
+  // Gegenstück zu surge: gestern < 50 % der Basis h[2..] (h[0] ist unvollständiger Tag)
+  fading: p => {
+    const h = STATE.matDetails[p.matId]?.recentHistory || [];
+    if (h.length < 4) return false;
+    const avgBase = h.slice(2).reduce((s, d) => s + d.qtySold, 0) / (h.length - 2);
+    return avgBase > 0 && h[1].qtySold < avgBase * 0.5;
+  },
+  // Gegenstück zu squeeze: > 10 Tage Angebot + wächst
+  flooding: p => {
+    if (_effectiveDays(p.matId) <= 10) return false;
+    const h = STATE.matDetails[p.matId]?.recentHistory || [];
+    if (h.length < 2) return false;
+    return h[0].qtyRemaining > h[h.length - 1].qtyRemaining;
+  },
+  // Kurzzeit-Signale — nur lokal getrackte currentPrice-Snapshots (kein API-Merge)
+  spike: p => {
+    if (!STATE.localTrackingStart || p.currentPrice <= 0) return false;
+    const entries = STATE.priceHistory[p.matId];
+    if (!entries) return false;
+    const cutoff = Math.max(Date.now() - 23 * 3600 * 1000, STATE.localTrackingStart);
+    const inWindow = entries.filter(e => e[0] >= cutoff);
+    if (inWindow.length < 3) return false;
+    const avg = inWindow.reduce((s, e) => s + e[1], 0) / inWindow.length;
+    return p.currentPrice > avg * 1.08;
+  },
+  dip: p => {
+    if (!STATE.localTrackingStart || p.currentPrice <= 0) return false;
+    const entries = STATE.priceHistory[p.matId];
+    if (!entries) return false;
+    const cutoff = Math.max(Date.now() - 23 * 3600 * 1000, STATE.localTrackingStart);
+    const inWindow = entries.filter(e => e[0] >= cutoff);
+    if (inWindow.length < 3) return false;
+    const avg = inWindow.reduce((s, e) => s + e[1], 0) / inWindow.length;
+    return p.currentPrice < avg * 0.92;
+  },
+  // Hohe Preisschwankungen (Stddev > 15 % des Mittelwerts über 7 Tage)
+  volatile: p => {
+    const h = STATE.matDetails[p.matId]?.recentHistory || [];
+    const prices = h.map(d => d.avgPrice).filter(v => v > 0);
+    if (prices.length < 4) return false;
+    const mean = prices.reduce((s, v) => s + v, 0) / prices.length;
+    if (mean <= 0) return false;
+    const variance = prices.reduce((s, v) => s + (v - mean) ** 2, 0) / prices.length;
+    return Math.sqrt(variance) / mean > 0.15;
+  },
+};
+
+function getTagsForMaterial(p) {
+  if (!STATE.apiHistoryLoaded) return [];
+  return Object.entries(TAG_DEFS).filter(([, fn]) => fn(p)).map(([tag]) => tag);
+}
+
+function getPriceTrend(matId) {
+  if (!STATE.apiHistoryLoaded) return null;
+  const h = STATE.matDetails[matId]?.recentHistory || [];
+  if (h.length < 2) return null;
+  const last = h[h.length - 1].avgPrice;
+  if (last <= 0) return null;
+  const delta = h[0].avgPrice - last;
+  if (Math.abs(delta) < last * 0.02) return '→';
+  return delta > 0 ? '↑' : '↓';
 }
 
 function renderTable() {
@@ -1543,15 +2606,18 @@ function renderTable() {
     const refPrice = (STATE.alarmMode === 'hist' && histAvg !== null) ? histAvg : p.avgPrice;
     const hasRef = refPrice > 0;
     const dev = (hasRef && hasCur) ? ((p.currentPrice - refPrice) / refPrice) * 100 : null;
-    return { ...p, deviation: dev, histAvg };
+    const sellFlag = isSell(p.matId);
+    const am = sellFlag
+      ? (STATE.stockData[p.matId] ?? STATE.wishlistAmounts[p.matId] ?? null)
+      : (STATE.wishlistAmounts[p.matId] ?? null);
+    const total = (am != null && p.currentPrice > 0) ? am * p.currentPrice : null;
+    const reserve = STATE.reserveData[p.matId] ?? null;
+    return { ...p, deviation: dev, histAvg, am, total, reserve, sparkHistory: getSparkData(p.matId) };
   });
 
   // filter wishlist
   if (STATE.mode === 'wishlist') {
-    console.log('[GT Monitor] Filtering prices by wishlistMatIds:', [...STATE.wishlistMatIds]);
-    console.log('[GT Monitor] Available matIds in prices:', items.map(i => i.matId));
     items = items.filter(p => STATE.wishlistMatIds.has(p.matId));
-    console.log('[GT Monitor] After filter:', items.length, 'items');
   }
 
   // evaluate alarms on full dataset before search narrows it
@@ -1559,12 +2625,15 @@ function renderTable() {
   const newAlarms = [];
   for (const p of items) {
     if (p.deviation === null) continue;
-    const isAlert = p.deviation <= threshold;
+    const sell = isSell(p.matId);
+    // Buy: Alarm wenn Preis TIEF (Abweichung <= -Schwellenwert)
+    // Sell: Alarm wenn Preis HOCH (Abweichung >= +Schwellenwert)
+    const isAlert = sell ? p.deviation >= STATE.deviationThreshold : p.deviation <= threshold;
     const refPrice = (STATE.alarmMode === 'hist' && p.histAvg !== null) ? p.histAvg : p.avgPrice;
     const refLabel = STATE.alarmMode === 'hist' ? 'Hist. Ø' : 'Ø';
     if (isAlert && !STATE.alerted.has(p.matId)) {
       STATE.alerted.add(p.matId);
-      newAlarms.push({ name: p.matName, deviation: p.deviation, current: p.currentPrice, ref: refPrice, refLabel });
+      newAlarms.push({ name: p.matName, deviation: p.deviation, current: p.currentPrice, ref: refPrice, refLabel, sell });
     }
     if (!isAlert && STATE.alerted.has(p.matId)) STATE.alerted.delete(p.matId);
   }
@@ -1587,16 +2656,31 @@ function renderTable() {
         if (a.histAvg === null) return 1;
         if (b.histAvg === null) return -1;
         return dir * (a.histAvg - b.histAvg);
+      case 'total':
+        if (a.total === null && b.total === null) return 0;
+        if (a.total === null) return 1;
+        if (b.total === null) return -1;
+        return dir * (a.total - b.total);
+      case 'reserve':
+        if (a.reserve === null && b.reserve === null) return 0;
+        if (a.reserve === null) return 1;
+        if (b.reserve === null) return -1;
+        return dir * (a.reserve.days - b.reserve.days);
       case 'deviation':
         if (a.deviation === null && b.deviation === null) return 0;
         if (a.deviation === null) return 1;
         if (b.deviation === null) return -1;
-        return dir * (a.deviation - b.deviation);
+        // Sell-Items: hohe Abweichung = gut → effektiv negieren für einheitliche "beste zuerst"-Sortierung
+        { const aEff = isSell(a.matId) ? -a.deviation : a.deviation;
+          const bEff = isSell(b.matId) ? -b.deviation : b.deviation;
+          return dir * (aEff - bEff); }
       default:
         if (a.deviation === null && b.deviation === null) return 0;
         if (a.deviation === null) return 1;
         if (b.deviation === null) return -1;
-        return a.deviation - b.deviation;
+        { const aEff = isSell(a.matId) ? -a.deviation : a.deviation;
+          const bEff = isSell(b.matId) ? -b.deviation : b.deviation;
+          return aEff - bEff; }
     }
   });
 
@@ -1613,39 +2697,175 @@ function renderTable() {
 
   noData.style.display = 'none';
 
-  tbody.innerHTML = items.map(p => {
-    const histCell = p.histAvg !== null ? formatNum(Math.round(p.histAvg)) : '—';
+  const tfoot = document.getElementById('priceTableFoot');
 
+  const renderRow = p => {
+    const sell = isSell(p.matId);
+    const histCell = p.histAvg !== null ? formatNum(p.histAvg) : '—';
+    const tags = getTagsForMaterial(p);
+    const trend = getPriceTrend(p.matId);
+    const trendClass = trend === '↑' ? 'trend-up' : trend === '↓' ? 'trend-down' : 'trend-flat';
+    const trendTitles = { '↑': 'Preis gestiegen (7 Tage)', '↓': 'Preis gesunken (7 Tage)', '→': 'Preis stabil ±2 % (7 Tage)' };
+    const trendPrefix = trend ? `<span class="${trendClass}" title="${trendTitles[trend]}">${trend}</span>` : '';
+    const tagHtml = STATE.apiHistoryLoaded
+      ? trendPrefix + tags.map(t => `<span class="tag ${t}" title="${TAG_TOOLTIPS[t] || t}">${t}</span>`).join('')
+      : '';
+    const amCell = sell
+      ? `<td class="col-wishlist" style="color:var(--success)">${p.am ?? '—'}</td>`
+      : `<td class="col-wishlist">${p.am ?? '—'}</td>`;
+    const totalCell = sell
+      ? `<td class="col-wishlist" style="color:var(--success)">${p.total != null ? '+' + formatNum(p.total) : '—'}</td>`
+      : `<td class="col-wishlist">${p.total != null ? formatNum(p.total) : '—'}</td>`;
+    const reserveCell = renderReserveCell(p.reserve);
+    const toggleBtn = `<button class="sell-toggle${sell ? ' sell-active' : ''}" onclick="toggleSellFlag(${p.matId})" title="${sell ? 'Verkaufen – zu Kaufen wechseln' : 'Kaufen – zu Verkaufen wechseln'}">${sell ? '💰' : '🛒'}</button>`;
     if (p.deviation === null) {
-      return `<tr>
-        <td class="td-name">${esc(p.matName)}</td>
+      return `<tr data-matid="${p.matId}" oncontextmenu="event.preventDefault();showContextMenu(${p.matId},event.clientX,event.clientY)">
+        <td class="td-name">${toggleBtn}${esc(p.matName)}</td>
         <td>${p.currentPrice === -1 ? '—' : formatNum(p.currentPrice)}</td>
+        ${amCell}${totalCell}${reserveCell}
         <td>${p.avgPrice === -1 ? '—' : formatNum(p.avgPrice)}</td>
-        <td>${histCell}</td>
+        <td class="col-hist">${histCell}</td>
         <td><span class="td-deviation neutral">n/a</span></td>
-        <td>—</td>
+        <td class="col-tags">${tagHtml}</td>
+        <td class="spark-cell" colspan="2">${renderSparkline(p.sparkHistory, sell, true)}</td>
       </tr>`;
     }
-
     const devStr = (p.deviation >= 0 ? '+' : '') + p.deviation.toFixed(2) + '%';
-    const isAlert = p.deviation <= threshold;
-    const devClass = isAlert ? 'alert' : (p.deviation >= 0 ? 'warn' : 'ok');
-
-    return `<tr class="${isAlert ? 'alarm-row' : ''}">
-      <td class="td-name">${esc(p.matName)}</td>
+    const isAlert = sell ? p.deviation >= STATE.deviationThreshold : p.deviation <= threshold;
+    const devClass = isAlert ? 'alert'
+      : sell ? (p.deviation >= 0 ? 'ok' : 'warn')
+             : (p.deviation >= 0 ? 'warn' : 'ok');
+    const sparkSvg = renderSparkline(p.sparkHistory, sell, !isAlert);
+    return `<tr class="${isAlert ? 'alarm-row' : ''}" data-matid="${p.matId}" oncontextmenu="event.preventDefault();showContextMenu(${p.matId},event.clientX,event.clientY)">
+      <td class="td-name">${toggleBtn}${esc(p.matName)}</td>
       <td>${formatNum(p.currentPrice)}</td>
+      ${amCell}${totalCell}${reserveCell}
       <td>${formatNum(p.avgPrice)}</td>
-      <td>${histCell}</td>
+      <td class="col-hist">${histCell}</td>
       <td><span class="td-deviation ${devClass}">${devStr}</span></td>
-      <td>${isAlert ? '<span class="alarm-badge">🔔 ALARM</span>' : '—'}</td>
+      <td class="col-tags">${tagHtml}</td>
+      ${isAlert
+        ? `<td class="spark-cell">${sparkSvg}</td><td><span class="alarm-badge">🔔 ALARM</span></td>`
+        : `<td class="spark-cell" colspan="2">${sparkSvg}</td>`}
     </tr>`;
-  }).join('');
+  };
+
+  // Gruppen-Trennung: bei mehreren Wishlists Trennzeilen mit Namen einfügen
+  const colCount = 8 + (STATE.showReserve ? 1 : 0) + (STATE.alarmMode === 'hist' ? 1 : 0) + (document.body.classList.contains('mode-tags') ? 1 : 0);
+  if (STATE.mode === 'wishlist' && STATE.selectedWishlistIds.size > 1) {
+    const groupHtml = [];
+    for (const wlId of [...STATE.selectedWishlistIds].sort((a, b) => a - b)) {
+      const wlItems = items.filter(p => (STATE.wishlistAmountsById[wlId] || {})[p.matId] != null);
+      if (!wlItems.length) continue;
+      const name = STATE.selectedWishlistNames[wlId] || '#' + wlId;
+      const nettoExcluded = STATE.nettoExcludedWlIds.has(wlId);
+      const nettoBtn = `<button class="netto-toggle${nettoExcluded ? '' : ' netto-active'}" onclick="toggleNettoExclusion(${wlId})" title="${nettoExcluded ? 'Von Netto-Rechnung ausgeschlossen – klicken zum Einschließen' : 'In Netto-Rechnung eingeschlossen – klicken zum Ausschließen'}">∑</button>`;
+      groupHtml.push(`<tr class="wl-group-header"><td colspan="${colCount}">⭐ ${esc(name)}${nettoBtn}</td></tr>`);
+      wlItems.forEach(p => {
+        if (isSell(p.matId)) { groupHtml.push(renderRow(p)); return; }
+        const wlAm = (STATE.wishlistAmountsById[wlId] || {})[p.matId] ?? null;
+        const wlTotal = (wlAm != null && p.currentPrice > 0) ? wlAm * p.currentPrice : null;
+        groupHtml.push(renderRow({ ...p, am: wlAm, total: wlTotal }));
+      });
+    }
+    tbody.innerHTML = groupHtml.join('');
+  } else {
+    tbody.innerHTML = items.map(renderRow).join('');
+  }
+
+  // Ghost-Rows: passende Suchergebnisse die NICHT in der aktuellen Wishlist sind
+  if (STATE.mode === 'wishlist' && query) {
+    const ghostItems = STATE.prices
+      .filter(p => p.matName.toLowerCase().includes(query))
+      .filter(p => !STATE.wishlistMatIds.has(p.matId));
+    if (ghostItems.length > 0) {
+      const reserveColEmpty = STATE.showReserve ? '<td class="col-reserve">—</td>' : '';
+      const wlOptions = STATE.allWishlists
+        .map(w => `<option value="${w.id}">${esc(w.name)}</option>`)
+        .join('');
+      tbody.innerHTML += ghostItems.map(p => {
+        const sell = isGhostSell(p.matId);
+        const toggleBtn = `<button class="sell-toggle${sell ? ' sell-active' : ''}" onclick="toggleGhostSell(${p.matId})" title="${sell ? 'Auf Kaufen wechseln' : 'Auf Verkaufen wechseln'}">${sell ? '💰' : '🛒'}</button>`;
+        const addSelect = `<select class="wl-add-select" onchange="handleGhostAdd(this,${p.matId})" title="Zur Wishlist hinzufügen">
+          <option value="">+ Hinzufügen…</option>
+          ${wlOptions}
+          <option value="new">── Neue Liste ──</option>
+        </select>`;
+        return `<tr class="ghost-row" data-matid="${p.matId}">
+          <td class="td-name">${toggleBtn}${esc(p.matName)}</td>
+          <td>${p.currentPrice > 0 ? formatNum(p.currentPrice) : '—'}</td>
+          <td class="col-wishlist">—</td>
+          <td class="col-wishlist">—</td>
+          ${reserveColEmpty}
+          <td>${p.avgPrice > 0 ? formatNum(p.avgPrice) : '—'}</td>
+          <td class="col-hist">—</td>
+          <td><span class="td-deviation neutral">—</span></td>
+          <td class="col-tags">—</td>
+          <td class="spark-cell" colspan="2">${addSelect}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  const sparkCache = new Map(items.map(p => [p.matId, p.sparkHistory]));
+  document.querySelectorAll('#priceTableBody .sparkline').forEach(svg => {
+    const matId = parseInt(svg.closest('tr').dataset.matid);
+    const history = sparkCache.get(matId);
+    if (history) attachSparkTooltip(svg, history);
+  });
+
+  // Summenzeile für Wishlist-Modus
+  if (STATE.mode === 'wishlist') {
+    // Netto: only count wishlists not excluded; use per-wishlist amounts to avoid double-counting
+    const nettoWlIds = [...STATE.selectedWishlistIds].filter(id => !STATE.nettoExcludedWlIds.has(id));
+    const nettoAmounts = {};
+    for (const wlId of nettoWlIds) {
+      for (const [mid, am] of Object.entries(STATE.wishlistAmountsById[wlId] || {})) {
+        nettoAmounts[mid] = (nettoAmounts[mid] || 0) + am;
+      }
+    }
+    const priceMap = Object.fromEntries(STATE.prices.map(p => [p.matId, p.currentPrice]));
+    let buyTotal = 0, sellTotal = 0;
+    for (const [mid, am] of Object.entries(nettoAmounts)) {
+      const price = priceMap[Number(mid)] ?? 0;
+      if (price <= 0) continue;
+      if (isSell(Number(mid))) { sellTotal += am * price; } else { buyTotal += am * price; }
+    }
+    const netTotal  = sellTotal - buyTotal;  // positiv = Gewinn, negativ = Ausgabe
+    const totalCols = 10;
+    const trailCols = totalCols - (STATE.showReserve ? 6 : 5);
+    const hasSell = sellTotal > 0;
+    const netSign  = netTotal >= 0 ? '+' : '-';
+    const netColor = netTotal >= 0 ? 'var(--success)' : 'var(--danger)';
+    const netFormatted = `<span style="font-weight:600;color:${netColor}">${netSign}${formatNum(Math.abs(netTotal))}</span>`;
+    const dim = 'color:var(--text-dim);font-size:11px;';
+    const kapitalHtml = STATE.companyCash !== null
+      ? `<span style="${dim}">Kapital</span><br><span style="font-weight:600;">${formatNum(STATE.companyCash)}</span>`
+      : '';
+    const breakdown = hasSell
+      ? `<span style="display:inline-flex;flex-direction:column;font-size:11px;line-height:1.5;margin-left:12px;vertical-align:middle;">
+           <span style="color:var(--success);">+${formatNum(sellTotal)} Verkauf</span>
+           <span style="color:var(--danger);">-${formatNum(buyTotal)} Einkauf</span>
+         </span>`
+      : '';
+    const nettoHtml = `<span style="${dim}">Netto-Rechnung</span><br>${netFormatted}${breakdown}`;
+    tfoot.innerHTML = `<tr>
+      <td colspan="2" style="text-align:right;">${kapitalHtml}</td>
+      <td class="col-wishlist"></td>
+      <td class="col-wishlist" style="white-space:nowrap;">${nettoHtml}</td>
+      ${STATE.showReserve ? '<td class="col-reserve"></td>' : ''}
+      <td colspan="${trailCols}"></td>
+    </tr>`;
+  } else {
+    tfoot.innerHTML = '';
+  }
 
   // fire alarms: ≤4 individual toasts, >4 one summary sorted by deviation
   if (newAlarms.length > 0 && newAlarms.length <= 4) {
     playAlarmSound();
     newAlarms.forEach(a => {
-      toast(`🔔 ${a.name}: ${a.deviation.toFixed(2)}% unter ${a.refLabel} (${formatNum(a.current)} vs ${formatNum(Math.round(a.ref))})`, 'alarm');
+      const rel = a.sell ? 'über' : 'unter';
+      toast(`🔔 ${a.name}: ${a.deviation.toFixed(2)}% ${rel} ${a.refLabel} (${formatNum(a.current)} vs ${formatNum(Math.round(a.ref))})`, 'alarm');
     });
   } else if (newAlarms.length > 4) {
     newAlarms.sort((a, b) => a.deviation - b.deviation);
@@ -1708,6 +2928,74 @@ function toast(msg, type = 'info', raw = false) {
   setTimeout(() => { if (div.parentElement) removeToast(div); }, type === 'alarm' ? 8000 : 5000);
 }
 
+// ─── SPARKLINE ───
+function renderSparkline(history, sell, wide) {
+  if (!history || history.length < 2) return '<span class="spark-empty">—</span>';
+  const display = wide ? history : history.slice(-96);
+  if (display.length < 2) return '<span class="spark-empty">—</span>';
+
+  const W = 100, H = 22;
+  const allLo  = display.map(h => h.min);
+  const allHi  = display.map(h => h.max);
+  const allAvg = display.map(h => h.avg);
+  const globalMin = Math.min(...allLo);
+  const globalMax = Math.max(...allHi);
+  const range = globalMax - globalMin || 1;
+  const toY = v => H - ((v - globalMin) / range) * H;
+  const toX = i => (i / (display.length - 1)) * W;
+
+  // Band polygon between min and max (only where min !== max)
+  const hasBand = display.some(h => h.min !== h.max);
+  let bandPolygon = '';
+  if (hasBand) {
+    const topPts  = display.map((h, i) => `${toX(i).toFixed(1)},${toY(h.max).toFixed(1)}`).join(' ');
+    const botPts  = display.map((h, i) => `${toX(i).toFixed(1)},${toY(h.min).toFixed(1)}`).reverse().join(' ');
+    bandPolygon = `<polygon points="${topPts} ${botPts}" fill="currentColor" opacity="0.12" vector-effect="non-scaling-stroke"/>`;
+  }
+
+  const points = allAvg.map((v, i) => `${toX(i).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
+  const rising = allAvg[allAvg.length - 1] >= allAvg[0];
+  const color = (sell ? rising : !rising) ? 'var(--success)' : 'var(--danger)';
+
+  const maxLabel = Math.round(globalMax / 100);
+  const minLabel = Math.round(globalMin / 100);
+  const ageDiff = Date.now() - display[0].ts;
+  const ageH = Math.floor(ageDiff / 3600000);
+  const firstLabel = ageH >= 24 ? `${Math.floor(ageH / 24)}d` : ageH >= 1 ? `${ageH}h` : '<1h';
+  const minText = minLabel !== maxLabel ? `<span class="spark-min">${minLabel}</span>` : '';
+
+  return `<div class="spark-wrap">
+    <svg class="sparkline" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="color:${color}">
+      ${bandPolygon}
+      <polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+    </svg>
+    <span class="spark-max">${maxLabel}</span>
+    ${minText}
+    <span class="spark-time">${firstLabel}</span>
+  </div>`;
+}
+
+function attachSparkTooltip(svgEl, history) {
+  const tip = document.getElementById('spark-tooltip');
+  svgEl.addEventListener('mouseenter', () => {
+    const displayed = history.slice(-20);
+    tip.innerHTML = displayed.map(h => {
+      const d = new Date(h.ts);
+      const lbl = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      const range = (h.min !== h.max) ? ` <span style="color:var(--text-dim);font-size:10px;">(${Math.round(h.min/100)}–${Math.round(h.max/100)})</span>` : '';
+      return `${lbl}: ${formatNum(h.avg)}${range}`;
+    }).join('<br>');
+    tip.style.display = 'block';
+  });
+  svgEl.addEventListener('mousemove', (e) => {
+    tip.style.left = (e.pageX + 10) + 'px';
+    tip.style.top  = (e.pageY - 30) + 'px';
+  });
+  svgEl.addEventListener('mouseleave', () => {
+    tip.style.display = 'none';
+  });
+}
+
 // ─── UTILS ───
 function esc(s) {
   const d = document.createElement('div');
@@ -1727,9 +3015,121 @@ function updateLastFetchLabel() {
   el.textContent = sec < 60 ? 'vor ' + sec + 's' : 'vor ' + Math.floor(sec / 60) + 'm ' + (sec % 60) + 's';
 }
 
+// ─── API COMPATIBILITY CHECK ───
+function simpleHash(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = (h * 0x01000193) >>> 0;
+  }
+  return h.toString(16);
+}
+
+const WATCHED_ENDPOINTS = [
+  '/public/wishlists',
+  '/public/wishlist/{wishlistId}',
+  '/public/exchange/mat-prices',
+  '/public/exchange/mat-details',
+  '/public/company/bases',
+  '/public/company/warehouses',
+  '/public/company',
+];
+
+const CRITICAL_FIELDS = {
+  PWishlistModel:               ['id', 'title', 'mats'],
+  PMaterialAmountModel:         ['id', 'amount'],
+  PExchangePricesResponseModel: ['prices'],
+  PExchangeMaterialPriceModel:  ['matId', 'matName', 'currentPrice', 'avgPrice'],
+};
+
+function extractWatchedSpec(swagger) {
+  const paths = swagger.paths || {};
+  const schemas = (swagger.components || {}).schemas || {};
+  const watched = {};
+  for (const ep of WATCHED_ENDPOINTS) {
+    if (paths[ep]) {
+      watched[ep] = { get: { exists: !!paths[ep].get } };
+    }
+  }
+  const fields = {};
+  for (const [model, keys] of Object.entries(CRITICAL_FIELDS)) {
+    const props = (schemas[model] || {}).properties || {};
+    fields[model] = keys.reduce((acc, k) => { acc[k] = k in props; return acc; }, {});
+  }
+  return { watched, fields };
+}
+
+function detectBreakingChanges(oldSpec, newSwagger) {
+  if (!oldSpec?.watched || !oldSpec?.fields || typeof newSwagger?.paths !== 'object') return [];
+  const warnings = [];
+  const newPaths = newSwagger.paths || {};
+  const newSchemas = (newSwagger.components || {}).schemas || {};
+
+  for (const ep of WATCHED_ENDPOINTS) {
+    if (oldSpec.watched[ep] && !newPaths[ep]) {
+      warnings.push(`Endpoint entfernt: ${ep}`);
+    } else if (oldSpec.watched[ep]?.get?.exists && !newPaths[ep]?.get) {
+      warnings.push(`GET ${ep} nicht mehr verfügbar`);
+    }
+  }
+  for (const [model, fields] of Object.entries(CRITICAL_FIELDS)) {
+    const newProps = ((newSchemas[model] || {}).properties) || {};
+    for (const field of fields) {
+      if (oldSpec.fields[model]?.[field] && !(field in newProps)) {
+        warnings.push(`Feld entfernt: ${model}.${field}`);
+      }
+    }
+  }
+  return warnings;
+}
+
+async function checkApiSpec() {
+  const MS_PER_DAY = 86_400_000;
+  const stored = localStorage.getItem('gt_swagger_spec');
+  let oldData = null;
+  try { oldData = stored ? JSON.parse(stored) : null; } catch { localStorage.removeItem('gt_swagger_spec'); }
+  if (oldData && Date.now() - oldData.ts < MS_PER_DAY) return; // already checked today
+
+  let swagger;
+  try {
+    const res = await fetch('https://api.g2.galactictycoons.com/swagger/v1/swagger.json');
+    if (!res.ok) return;
+    swagger = await res.json();
+  } catch { return; } // network error — fail silently
+
+  const hashInput = JSON.stringify({ paths: swagger.paths, schemas: (swagger.components || {}).schemas });
+  const newHash = simpleHash(hashInput);
+  const newSpec = extractWatchedSpec(swagger);
+
+  if (!oldData) {
+    // First run — save snapshot silently
+    try { localStorage.setItem('gt_swagger_spec', JSON.stringify({ hash: newHash, ts: Date.now(), watchedPaths: newSpec })); } catch { /* QuotaExceededError — skip */ }
+    return;
+  }
+
+  if (newHash === oldData.hash) {
+    try { localStorage.setItem('gt_swagger_spec', JSON.stringify({ ...oldData, ts: Date.now() })); } catch { /* QuotaExceededError — skip */ }
+    return;
+  }
+
+  const warnings = detectBreakingChanges(oldData.watchedPaths, swagger);
+  try { localStorage.setItem('gt_swagger_spec', JSON.stringify({ hash: newHash, ts: Date.now(), watchedPaths: newSpec })); } catch { /* QuotaExceededError — skip */ }
+
+  if (warnings.length > 0) {
+    const list = document.getElementById('apiChangeBannerList');
+    list.innerHTML = warnings.map(w => `<li>${esc(w)}</li>`).join('');
+    document.getElementById('apiChangeBanner').classList.add('visible');
+  } else {
+    toast('API-Schema hat sich geändert – bitte auf neue Felder prüfen.', 'warn');
+  }
+}
+
 // ─── INIT ───
 loadHistory();
 loadSettings();
+loadSellFlags();
+loadNettoExclusions();
+checkApiSpec();
 // ─── KEYBOARD SHORTCUTS ───
 document.addEventListener('keydown', e => {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -1769,6 +3169,10 @@ document.addEventListener('keydown', e => {
       // Alarm-Sound stummschalten / wieder aktivieren
       toggleMute();
       break;
+    case 'b': case 'B':
+      // Reserve-Zeit-Spalte ein-/ausblenden (nur Wishlist-Modus)
+      if (STATE.mode === 'wishlist') toggleReserve();
+      break;
     case '?':
       // Shortcut-Übersicht ein-/ausblenden
       toggleCheatSheet();
@@ -1784,7 +3188,17 @@ function toggleMute() {
 
 function toggleCheatSheet() {
   const el = document.getElementById('cheatSheet');
-  el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+  const isOpening = el.style.display === 'none';
+  el.style.display = isOpening ? 'flex' : 'none';
+
+  if (el._closeOnOutside) { el.removeEventListener('click', el._closeOnOutside); el._closeOnOutside = null; }
+  if (isOpening) {
+    // Schließen bei Klick außerhalb der Box
+    el._closeOnOutside = (e) => {
+      if (e.target === el) { el.style.display = 'none'; el.removeEventListener('click', el._closeOnOutside); el._closeOnOutside = null; }
+    };
+    el.addEventListener('click', el._closeOnOutside);
+  }
 }
 
 function closeAllOverlays() {
@@ -1801,8 +3215,29 @@ function closeAllOverlays() {
       <tr><td><kbd>R</kbd></td><td>Preise jetzt abrufen</td></tr>
       <tr><td><kbd>F</kbd></td><td>Material suchen</td></tr>
       <tr><td><kbd>M</kbd></td><td>Sound stummschalten</td></tr>
+      <tr><td><kbd>B</kbd></td><td>Reserve-Zeit (Wishlist)</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>Overlay schließen</td></tr>
       <tr><td><kbd>?</kbd></td><td>Diese Übersicht</td></tr>
+    </table>
+    <div class="cheat-sheet-title" style="margin-top:16px;">Symbole</div>
+    <table class="cheat-table">
+      <tr><td>🛒</td><td>Kaufen — Alarm bei niedrigem Preis</td></tr>
+      <tr><td>💰</td><td>Verkaufen — Alarm bei hohem Preis</td></tr>
+    </table>
+    <div class="cheat-sheet-title" style="margin-top:16px;">Tags &amp; Trend</div>
+    <table class="cheat-table">
+      <tr><td><span class="tag breakout">breakout</span></td><td>Preis &gt; 1,3× Ø</td></tr>
+      <tr><td><span class="tag surge">surge</span></td><td>Nachfrage-Spike + Angebot sinkt</td></tr>
+      <tr><td><span class="tag squeeze">squeeze</span></td><td>Angebot &lt; 0,25 Tage + sinkend</td></tr>
+      <tr><td><span class="tag wall">wall</span></td><td>1 Order &gt; 60 % Angebot</td></tr>
+      <tr><td><span class="tag monopoly">monopoly</span></td><td>1 Verkäufer &gt; 70 % Angebot</td></tr>
+      <tr><td><span class="tag dumping">dumping</span></td><td>Preis &gt; 30 % unter Durchschnitt</td></tr>
+      <tr><td><span class="tag fading">fading</span></td><td>Nachfrage sinkt (&lt; 50 % des 7d-Schnitts)</td></tr>
+      <tr><td><span class="tag flooding">flooding</span></td><td>Angebotsflut (&gt; 10 Tage Vorrat, wächst)</td></tr>
+      <tr><td><span class="tag volatile">volatile</span></td><td>Preis schwankt &gt; 15 % (7 Tage)</td></tr>
+      <tr><td><span class="tag spike">spike</span></td><td>Preis &gt; 15 % über 23h-Schnitt</td></tr>
+      <tr><td><span class="tag dip">dip</span></td><td>Preis &gt; 15 % unter 23h-Schnitt</td></tr>
+      <tr><td style="color:var(--text-dim)">↑ ↓ →</td><td>Preis-Trend (7 Tage) — in der Tags-Spalte</td></tr>
     </table>
     <button class="btn-sm" onclick="toggleCheatSheet()" style="margin-top:14px;">Schließen</button>
   </div>
