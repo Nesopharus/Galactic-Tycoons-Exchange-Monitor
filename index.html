@@ -1170,50 +1170,89 @@ const COSTS = {
   '/swagger/v1/swagger.json':        0,
 };
 
-let costLog = []; // { time: Date, points: number }
+class RollingWindowLimiter {
+  constructor(maxPoints, windowMs) {
+    this.maxPoints = maxPoints;
+    this.windowMs = windowMs;
+    try {
+      this.log = JSON.parse(localStorage.getItem('gt_rate_limit_log') || '[]');
+    } catch(e) { this.log = []; }
+    this._clean();
+  }
 
-function trackCost(endpoint) {
-  const pts = COSTS[endpoint] || 0;
-  costLog.push({ time: Date.now(), points: pts });
-  cleanCostLog();
+  _save() {
+    try {
+      localStorage.setItem('gt_rate_limit_log', JSON.stringify(this.log));
+    } catch(e) {}
+  }
+
+  _clean() {
+    const now = Date.now();
+    const cutoff = now - this.windowMs;
+    const oldLen = this.log.length;
+    this.log = this.log.filter(e => e.ts > cutoff);
+    if (this.log.length !== oldLen) this._save();
+  }
+
+  canSpend(points) {
+    this._clean();
+    const used = this.log.reduce((sum, e) => sum + e.cost, 0);
+    return used + points <= this.maxPoints;
+  }
+
+  spend(points) {
+    if (!this.canSpend(points)) return false;
+    this.log.push({ ts: Date.now(), cost: points });
+    this._save();
+    return true;
+  }
+
+  getUsed() {
+    this._clean();
+    return this.log.reduce((sum, e) => sum + e.cost, 0);
+  }
+
+  getBreakdown() {
+    this._clean();
+    const counts = {};
+    this.log.forEach(e => { counts[e.cost] = (counts[e.cost] || 0) + 1; });
+    const parts = [];
+    if (counts[5]) parts.push(counts[5] + '× Preise');
+    if (counts[7]) parts.push(counts[7] + '× Wishlists');
+    if (counts[3]) parts.push(counts[3] + '× Wishlist');
+    return parts.join(' · ');
+  }
+}
+
+const rateLimiter = new RollingWindowLimiter(500, 10 * 60 * 1000);
+
+function trackCost(endpointKey) {
+  const pts = COSTS[endpointKey] || 0;
+  rateLimiter.spend(pts);
   updateCostUI();
 }
-
-function cleanCostLog() {
-  const cutoff = Date.now() - 10 * 60 * 1000;
-  costLog = costLog.filter(c => c.time >= cutoff);
-}
-
-function getCurrentCost() {
-  cleanCostLog();
-  return costLog.reduce((s, c) => s + c.points, 0);
+function getCurrentCost() { return rateLimiter.getUsed(); }
+function wouldExceedLimit(endpoint) {
+  const pts = COSTS[endpoint] || 0;
+  return !rateLimiter.canSpend(pts);
 }
 
 function updateCostUI() {
-  const total = getCurrentCost();
+  const total = rateLimiter.getUsed();
   const pct = Math.min(total / 500 * 100, 100);
   const fill = document.getElementById('costBarFill');
-  fill.style.width = pct + '%';
-  fill.className = 'cost-bar-fill' + (pct > 80 ? ' danger' : pct > 60 ? ' warn' : '');
-  document.getElementById('costText').textContent = total + ' / 500 Pkt.';
-
-  // breakdown
-  const counts = {};
-  costLog.forEach(c => { counts[c.points] = (counts[c.points] || 0) + 1; });
-  const parts = [];
-  if (counts[5]) parts.push(counts[5] + '× Preise');
-  if (counts[7]) parts.push(counts[7] + '× Wishlists');
-  if (counts[3]) parts.push(counts[3] + '× Wishlist');
-  document.getElementById('costBreakdown').textContent = parts.join(' · ');
+  if (fill) {
+    fill.style.width = pct + '%';
+    fill.className = 'cost-bar-fill' + (pct > 80 ? ' danger' : pct > 60 ? ' warn' : '');
+  }
+  const txt = document.getElementById('costText');
+  if (txt) txt.textContent = total + ' / 500 Pkt.';
+  const breakdown = document.getElementById('costBreakdown');
+  if (breakdown) breakdown.textContent = rateLimiter.getBreakdown();
 }
 
 // update cost display every 5s to expire old entries
 setInterval(updateCostUI, 5000);
-
-function wouldExceedLimit(endpoint) {
-  const pts = COSTS[endpoint] || 0;
-  return getCurrentCost() + pts > 500;
-}
 
 // ─── API ───
 const API_BASE = 'https://api.g2.galactictycoons.com';
