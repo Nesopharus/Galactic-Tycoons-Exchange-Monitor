@@ -1,0 +1,4519 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Galactic Tycoons Public API",
+    "description": "\r\n## Public API for Galactic Tycoons\r\n\r\nAccess game data programmatically to build tools and integrations.\r\n\r\nAll endpoints have a **cost** measured in points. Requests with an API key are allocated **500 points per 10-minute window** per user.\r\n🌐Public endpoints are accessible without an API key, but requests without an API key are limited to **200 points per 10-minute window**. It is recommended to use an API key for all requests.\r\n\r\nAPI keys can be provided either as a query parameter or as a Bearer token in the Authorization header.\r\n\r\nExample API request:\r\n\r\nhttps://api.g2.galactictycoons.com/public/company?apikey=YOUR_API_KEY\r\n\r\nFor more information, visit the [API Wiki Page](https://wiki.galactictycoons.com/api/overview).\r\n",
+    "version": "v1"
+  },
+  "paths": {
+    "/public/company/{companyId}/detail": {
+      "get": {
+        "tags": [
+          "Company"
+        ],
+        "summary": "🌐 Public | Get public information about any company",
+        "description": "**Rate Limit Cost:** 12 points  \n**Required Access Level:** 🌐Public",
+        "parameters": [
+          {
+            "name": "companyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PCompanyDetailModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PCompanyDetailModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PCompanyDetailModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/company": {
+      "get": {
+        "tags": [
+          "Company"
+        ],
+        "summary": "🔑 Limited | Get detailed information about your company",
+        "description": "**Rate Limit Cost:** 7 points  \n**Required Access Level:** 🔑Limited",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PMyCompanyModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PMyCompanyModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PMyCompanyModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/company/bases": {
+      "get": {
+        "tags": [
+          "Company"
+        ],
+        "summary": "🔑 Limited | Get detailed information about all your bases",
+        "description": "**Rate Limit Cost:** 20 points  \n**Required Access Level:** 🔑Limited",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PBaseDetailResponseModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PBaseDetailResponseModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PBaseDetailResponseModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/company/base/{baseId}": {
+      "get": {
+        "tags": [
+          "Company"
+        ],
+        "summary": "🔑 Limited | Get detailed information about a specific base",
+        "description": "**Rate Limit Cost:** 5 points  \n**Required Access Level:** 🔑Limited",
+        "parameters": [
+          {
+            "name": "baseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PBaseDetailResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PBaseDetailResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PBaseDetailResponseModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/company/warehouses": {
+      "get": {
+        "tags": [
+          "Company"
+        ],
+        "summary": "🔑 Limited | Get detailed information about all your warehouses",
+        "description": "**Rate Limit Cost:** 8 points  \n**Required Access Level:** 🔑Limited",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PWarehouseModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PWarehouseModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PWarehouseModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/company/warehouse/{warehouseId}": {
+      "get": {
+        "tags": [
+          "Company"
+        ],
+        "summary": "🔑 Limited | Get detailed information about a specific warehouse",
+        "description": "**Rate Limit Cost:** 2 points  \n**Required Access Level:** 🔑Limited",
+        "parameters": [
+          {
+            "name": "warehouseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWarehouseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWarehouseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWarehouseModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/company/exchangeorders": {
+      "get": {
+        "tags": [
+          "Company"
+        ],
+        "summary": "🔑 Limited | Get all your exchange offers",
+        "description": "**Rate Limit Cost:** 2 points  \n**Required Access Level:** 🔑Limited",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PExchangeOrderModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PExchangeOrderModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PExchangeOrderModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/company/cash-history": {
+      "get": {
+        "tags": [
+          "Company"
+        ],
+        "summary": "🔑 Limited | Get latest credits change history for your company",
+        "description": "**Rate Limit Cost:** 15 points  \n**Required Access Level:** 🔑Limited",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PCashLogModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PCashLogModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PCashLogModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/company/contracts": {
+      "get": {
+        "tags": [
+          "Company"
+        ],
+        "summary": "🔑 Limited | Get your company's trade contracts",
+        "description": "Returns pending and active trade contracts associated with your company.  \n\n**Rate Limit Cost:** 8 points  \n**Required Access Level:** 🔑Limited",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PTradeContractModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PTradeContractModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PTradeContractModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/companies/top": {
+      "get": {
+        "tags": [
+          "Company"
+        ],
+        "summary": "🌐 Public | Get paginated list of top companies by prestige rank",
+        "description": "Returns companies sorted by prestige (highest first). Use startFromRank and pageSize to paginate through the leaderboard.  \n\n**Rate Limit Cost:** 25 points  \n**Required Access Level:** 🌐Public",
+        "parameters": [
+          {
+            "name": "startFromRank",
+            "in": "query",
+            "description": "Starting rank position (1 = top company, default: 1)",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Number of companies to return (1-100, default: 25)",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PCompanyRankModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PCompanyRankModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PCompanyRankModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/exchange/mat-prices": {
+      "get": {
+        "tags": [
+          "Exchange"
+        ],
+        "summary": "🌐 Public | Get current exchange prices for all materials",
+        "description": "**Rate Limit Cost:** 5 points  \n**Required Access Level:** 🌐Public",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PExchangePricesResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PExchangePricesResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PExchangePricesResponseModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/exchange/mat-prices/{materialId}": {
+      "get": {
+        "tags": [
+          "Exchange"
+        ],
+        "summary": "🌐 Public | Get current exchange price for a specific material",
+        "description": "**Rate Limit Cost:** 1 points  \n**Required Access Level:** 🌐Public",
+        "parameters": [
+          {
+            "name": "materialId",
+            "in": "path",
+            "description": "Material ID to get price for",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PExchangeMaterialPriceModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PExchangeMaterialPriceModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PExchangeMaterialPriceModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/exchange/mat-details": {
+      "get": {
+        "tags": [
+          "Exchange"
+        ],
+        "summary": "🌐 Public | Get detailed information for all materials including orders, supply and stats",
+        "description": "**Rate Limit Cost:** 60 points  \n**Required Access Level:** 🌐Public",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PExchangeAllMatDetailsResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PExchangeAllMatDetailsResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PExchangeAllMatDetailsResponseModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/exchange/mat-details/{materialId}": {
+      "get": {
+        "tags": [
+          "Exchange"
+        ],
+        "summary": "🌐 Public | Get detailed information for a specific material including orders, supply and stats",
+        "description": "**Rate Limit Cost:** 5 points  \n**Required Access Level:** 🌐Public",
+        "parameters": [
+          {
+            "name": "materialId",
+            "in": "path",
+            "description": "Material ID to get details for",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PExchangeMatDetailsResponseModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PExchangeMatDetailsResponseModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PExchangeMatDetailsResponseModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/guild/{guildId}/detail": {
+      "get": {
+        "tags": [
+          "Guild"
+        ],
+        "summary": "🌐 Public | Get public information about any guild",
+        "description": "**Rate Limit Cost:** 5 points  \n**Required Access Level:** 🌐Public",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PGuildDetailModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PGuildDetailModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PGuildDetailModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/guild": {
+      "get": {
+        "tags": [
+          "Guild"
+        ],
+        "summary": "🔑 Limited | Get details about your guild",
+        "description": "**Rate Limit Cost:** 5 points  \n**Required Access Level:** 🔑Limited",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PMyGuildDetailModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PMyGuildDetailModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PMyGuildDetailModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/guild/donations": {
+      "get": {
+        "tags": [
+          "Guild"
+        ],
+        "summary": "🔐 Extended | Get donation history for your guild's projects",
+        "description": "Returns up to 200 most recent donations older than the specified lastId (for pagination).\nIf lastId is not provided, the most recent donations are returned.  \n\n**Rate Limit Cost:** 25 points  \n**Required Access Level:** 🔐Extended",
+        "parameters": [
+          {
+            "name": "lastId",
+            "in": "query",
+            "description": "Get donations older than this ID. Leave empty to get most recent donations.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PGuildDonationModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PGuildDonationModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PGuildDonationModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/guilds/top": {
+      "get": {
+        "tags": [
+          "Guild"
+        ],
+        "summary": "🌐 Public | Get paginated list of top guilds by prestige rank",
+        "description": "Returns guilds sorted by prestige (highest first). Use startFromRank and pageSize to paginate through the leaderboard.  \n\n**Rate Limit Cost:** 22 points  \n**Required Access Level:** 🌐Public",
+        "parameters": [
+          {
+            "name": "startFromRank",
+            "in": "query",
+            "description": "Starting rank position (1 = top guild, default: 1)",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Number of guilds to return (1-100, default: 100)",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PGuildRankModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PGuildRankModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PGuildRankModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/wishlists": {
+      "get": {
+        "tags": [
+          "Wishlist"
+        ],
+        "summary": "🔑 Limited | Get all your company's wishlists",
+        "description": "**Rate Limit Cost:** 7 points  \n**Required Access Level:** 🔑Limited",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PWishlistModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PWishlistModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PWishlistModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/wishlist/{wishlistId}": {
+      "get": {
+        "tags": [
+          "Wishlist"
+        ],
+        "summary": "🔑 Limited | Get a specific wishlist by id",
+        "description": "**Rate Limit Cost:** 3 points  \n**Required Access Level:** 🔑Limited",
+        "parameters": [
+          {
+            "name": "wishlistId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWishlistModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWishlistModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWishlistModel"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Wishlist"
+        ],
+        "summary": "🔐 Extended | Delete a wishlist",
+        "description": "Deletes an existing wishlist.  \n\n**Rate Limit Cost:** 30 points  \n**Required Access Level:** 🔐Extended",
+        "parameters": [
+          {
+            "name": "wishlistId",
+            "in": "path",
+            "description": "Wishlist ID to delete",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/public/wishlist/{wishlistId}/additems": {
+      "post": {
+        "tags": [
+          "Wishlist"
+        ],
+        "summary": "🔐 Extended | Add or subtract materials from existing wishlist",
+        "description": "Adds/subtracts the specified amounts of materials. \nIf the resulting amount is 0 or negative, the material is removed.\nPlanet wishlist is automatically created when first adding materials to a planet wishlist.\nReturns the updated wishlist.  \n\n**Rate Limit Cost:** 10 points  \n**Required Access Level:** 🔐Extended",
+        "parameters": [
+          {
+            "name": "wishlistId",
+            "in": "path",
+            "description": "Planet ID or existing custom wishlist ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PMaterialAmountModel"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PMaterialAmountModel"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PMaterialAmountModel"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWishlistModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWishlistModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWishlistModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/wishlist/create": {
+      "post": {
+        "tags": [
+          "Wishlist"
+        ],
+        "summary": "🔐 Extended | Create a new custom wishlist",
+        "description": "Creates a new custom wishlist with the specified title and items. \nCustom wishlists have IDs above 50,000,000.\nReturns the newly created wishlist.  \n\n**Rate Limit Cost:** 30 points  \n**Required Access Level:** 🔐Extended",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/PCreateWishlistRequest"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/PCreateWishlistRequest"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/PCreateWishlistRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWishlistModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWishlistModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWishlistModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/wishlist/{wishlistId}/rename": {
+      "post": {
+        "tags": [
+          "Wishlist"
+        ],
+        "summary": "🔐 Extended | Rename a wishlist",
+        "description": "Renames an existing custom wishlist (Planet wishlists cannot be renamed).\nReturns the updated wishlist.  \n\n**Rate Limit Cost:** 15 points  \n**Required Access Level:** 🔐Extended",
+        "parameters": [
+          {
+            "name": "wishlistId",
+            "in": "path",
+            "description": "Custom wishlist ID to rename",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/PRenameWishlistRequest"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/PRenameWishlistRequest"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/PRenameWishlistRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWishlistModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWishlistModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PWishlistModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActivityEnum": {
+        "enum": [
+          "0 = Undefined",
+          "1 = Online",
+          "2 = UnderOneDay",
+          "3 = UnderThreeDays",
+          "4 = Inactive"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "BuildingProjectIdEnum": {
+        "enum": [
+          "0 = Undefined",
+          "1 = GHeadquarters",
+          "2 = GAdministrationCenter",
+          "3 = GFlightCenter",
+          "4 = GWarehouse",
+          "5 = GArcade",
+          "6 = Observatory"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "BuildingSlotStatus": {
+        "enum": [
+          "0 = Undefined",
+          "1 = Empty",
+          "2 = Building",
+          "3 = Debris",
+          "4 = Premium"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "BuildingTypeIdEnum": {
+        "enum": [
+          "0 = Undefined",
+          "1 = Mine",
+          "2 = Smelter",
+          "3 = Pump",
+          "4 = ColonyBarracks",
+          "5 = GasCollector",
+          "6 = PrefabPlant",
+          "7 = Refinery",
+          "8 = FoodProcessingPlant",
+          "9 = Headquarters",
+          "10 = Farm",
+          "11 = BasicAssemblyPlant",
+          "12 = PolymerPlant",
+          "13 = ChemistryPlant",
+          "14 = Warehouse",
+          "15 = TextileMill",
+          "16 = AdvancedAssemblyPlant",
+          "17 = Ranch",
+          "18 = SurveyStation",
+          "19 = Orchard",
+          "20 = Laboratory",
+          "21 = ResidentialComplex",
+          "22 = ComfortQuarters",
+          "23 = StellarSuites",
+          "24 = SemiconductorFoundry",
+          "25 = ElectronicsFactory",
+          "26 = WeldingPlant",
+          "27 = QuarryComplex",
+          "28 = ScienceInstitute",
+          "29 = AdvancedPrefabPlant",
+          "30 = Shipyard",
+          "31 = MicroelectronicsFactory",
+          "32 = AdvancedMaterialsLab",
+          "33 = ExoticMatterLab",
+          "34 = AquaponicsFarm",
+          "35 = RoboticsFacility",
+          "36 = CulinaryStudio",
+          "37 = ApexPrefabPlant",
+          "38 = QuantumComputingCenter",
+          "39 = AdvancedGasCollector",
+          "40 = Foundry",
+          "41 = NanomaterialLab",
+          "42 = QuantumFactory"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "CashLogType": {
+        "enum": [
+          "2 = Sell",
+          "3 = Starting",
+          "4 = DailyMission",
+          "5 = Achievement",
+          "7 = ProjectDonation",
+          "10 = Mission",
+          "40 = TradeContractSell",
+          "50 = AdminAdd",
+          "100 = Buy",
+          "112 = CreateGuild",
+          "140 = TradeContractBuy"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "CompanyPerkIdEnum": {
+        "enum": [
+          "0 = None",
+          "1 = BaseWarehouses",
+          "2 = ExchangeWarehouse",
+          "3 = ShipWarehouse",
+          "4 = ProductionSpeed",
+          "5 = ShipDegradation",
+          "6 = ShipFuelSaving",
+          "7 = WorkforceConsumptionReduction",
+          "8 = OverheadReduction",
+          "9 = MissionCooldownReduction",
+          "10 = MissionReward",
+          "11 = BuildingDegradationReduction",
+          "12 = HousingSize",
+          "13 = DonationMissionPreference",
+          "14 = ExploreMissionPreference",
+          "15 = ProduceMissionPreference",
+          "16 = DeliverPackagesMissionPreference",
+          "17 = SourceAndDeliverMissionPreference",
+          "18 = SalvageMissionPreference",
+          "19 = MegaShips",
+          "20 = StrictOversight",
+          "21 = LaxOversight",
+          "22 = BigMissions",
+          "23 = AdditionalMissionChoice",
+          "24 = ContractFeeReduction",
+          "25 = AdditionalBasePermits",
+          "26 = EfficientOversight",
+          "27 = ProductionSpeedPerUnusedPermit",
+          "28 = MaximumMissionsLimit"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "ContractStatusEnum": {
+        "enum": [
+          "0 = Pending",
+          "1 = Active",
+          "2 = Completed",
+          "3 = Cancelled"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "ContractType": {
+        "enum": [
+          "1 = BuyMaterial",
+          "2 = SellMaterial"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "FlightType": {
+        "enum": [
+          "0 = None",
+          "1 = Normal",
+          "2 = Emergency",
+          "3 = Cancelled"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "GuildMemberRankEnum": {
+        "enum": [
+          "0 = None",
+          "1 = RequestedToJoin",
+          "2 = Invited",
+          "3 = Member",
+          "4 = Officer",
+          "5 = Leader"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "MaterialIdEnum": {
+        "enum": [
+          "0 = Undefined",
+          "1 = IronOre",
+          "2 = IronBar",
+          "3 = Concrete",
+          "4 = Grain",
+          "5 = CopperOre",
+          "6 = CopperBar",
+          "7 = Oxygen",
+          "8 = Silica",
+          "9 = Milk",
+          "10 = Ale",
+          "11 = Water",
+          "12 = BasicRations",
+          "13 = FineRations",
+          "14 = LaboratorySuit",
+          "15 = BasicExosuit",
+          "16 = DrinkingWater",
+          "17 = BasicTools",
+          "18 = AdvancedTools",
+          "19 = WeldingKit2",
+          "20 = Robot",
+          "21 = Coffee",
+          "22 = Bioxene",
+          "23 = Tesserite",
+          "24 = Hydrogen",
+          "25 = Polyethylene",
+          "26 = BasicConstructionKit",
+          "27 = ConstructionTools",
+          "28 = Fruits",
+          "29 = Vegetables",
+          "30 = Neoplast",
+          "31 = Carbon",
+          "32 = Nitrogen",
+          "33 = Glass",
+          "34 = Limestone",
+          "35 = Steel",
+          "36 = Fertilizer",
+          "37 = Cow",
+          "38 = Meat",
+          "39 = Cotton",
+          "40 = UraniumOre",
+          "41 = Flux",
+          "42 = AluminiumOre",
+          "43 = Aluminium",
+          "44 = Workwear",
+          "45 = TitaniumOre",
+          "46 = Titanium",
+          "47 = Furniture",
+          "48 = Wood",
+          "49 = Leather",
+          "50 = Fabric",
+          "51 = CoffeeBeans",
+          "52 = ConstructionVehicle",
+          "53 = Rubber",
+          "54 = CombustionEngine",
+          "55 = Motor",
+          "56 = Battery",
+          "57 = Gasoline",
+          "58 = Lubricant",
+          "59 = ElectronicCircuit",
+          "60 = Lithium",
+          "61 = SulfuricAcid",
+          "62 = CopperWiring",
+          "63 = Electronics",
+          "64 = ResearchData",
+          "65 = AdvancedResearchData",
+          "66 = OfficeSupplies",
+          "67 = AeridiumOre",
+          "68 = Pipes",
+          "69 = Argon",
+          "70 = Kryon",
+          "71 = Coolant",
+          "72 = Epoxy",
+          "73 = FissionFuel",
+          "74 = Kevlar",
+          "75 = PlatinumOre",
+          "76 = Platinum",
+          "77 = Graphene",
+          "78 = CarbonNanotubes",
+          "79 = Aerogel",
+          "80 = Superconductors",
+          "81 = RadiationShielding",
+          "82 = LifeSupportSystem",
+          "83 = ReinforcedGlass",
+          "84 = ColorCompound",
+          "85 = SpectraModulator",
+          "86 = MiningVehicle",
+          "87 = Drill",
+          "88 = Chicken",
+          "89 = InsulationPanels",
+          "90 = PressureSealantKit",
+          "91 = StructuralElements",
+          "92 = BasicPrefabKit",
+          "93 = BasicAmenities",
+          "94 = AdvancedConstructionKit",
+          "95 = ApexStructuralElements",
+          "96 = AdvancedPrefabKit",
+          "97 = AdvancedAmenities",
+          "98 = ReinforcedTruss",
+          "99 = CompositeTruss",
+          "100 = AdvancedDrill",
+          "101 = HydrogenGenerator",
+          "102 = ControlConsole",
+          "103 = ShipInteriorKit",
+          "104 = BasicHullPlate",
+          "105 = CargoBaySegment",
+          "106 = FuelTankSegment",
+          "107 = BasicPump",
+          "108 = WeldingKit",
+          "109 = BasicFTLEmitter",
+          "110 = HydrogenFuelCell",
+          "111 = HeatShielding",
+          "112 = AdvancedCircuitBoard",
+          "113 = ShipRepairKit",
+          "114 = QuadraniumHullPlate",
+          "115 = FTLFieldController",
+          "116 = SensorArray",
+          "117 = CoolingSystem",
+          "118 = BasicShipBridge",
+          "119 = VRHeadset",
+          "120 = CompositeShielding",
+          "121 = NanoweaveShielding",
+          "122 = Durablend",
+          "123 = NeoplastSheet",
+          "124 = Transistor",
+          "125 = Chip",
+          "126 = SiliconWafer",
+          "127 = ApexResearchData",
+          "128 = Honeycaps",
+          "129 = Sugar",
+          "130 = Pie",
+          "131 = Eggs",
+          "132 = ModernPrefabKit",
+          "133 = FissionReactor",
+          "134 = AdvancedFTLEmitter",
+          "135 = Aeridium",
+          "136 = TiridiumAlloy",
+          "137 = TiridiumHullPlate",
+          "138 = AICore",
+          "139 = AdvancedShipBridge",
+          "140 = Mainframe",
+          "141 = Nanopolyne",
+          "142 = Nanoweave",
+          "143 = Drone",
+          "144 = ApexPrefabKit",
+          "145 = Cohesilite",
+          "146 = OperatingSystem",
+          "147 = AI",
+          "148 = AITrainingData",
+          "149 = Antimatter",
+          "150 = AntimatterReactor",
+          "151 = AntimatterContainment",
+          "152 = HyperCoil",
+          "153 = GourmetRations",
+          "154 = ExoticSpices",
+          "155 = Lobster",
+          "156 = Herbs",
+          "157 = Rejuvaline",
+          "158 = Vitaqua",
+          "159 = Quadranium",
+          "160 = SuperiorFTLEmitter",
+          "161 = IndustrialMachinery",
+          "162 = Biopolyne",
+          "163 = Nanobots",
+          "164 = QuantumResearchData",
+          "165 = FiltrationSystem",
+          "166 = T4ShipBridge",
+          "167 = NeuralInterface",
+          "168 = T3RepairKit",
+          "169 = APU",
+          "170 = Starglass",
+          "171 = T4ShipElements",
+          "172 = Graphenium",
+          "173 = QuantumMainframe",
+          "174 = FieldCooling",
+          "175 = NutrientBlend",
+          "176 = Pack_Medicine",
+          "177 = Pack_Food",
+          "178 = Pack_ShipParts",
+          "179 = Pack_Defense",
+          "180 = Pack_Habitats",
+          "181 = Pack_Scientific",
+          "182 = Pack_Gifts"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "PBaseConsumptionMaterialModel": {
+        "type": "object",
+        "properties": {
+          "matId": {
+            "enum": [
+              "0 = Undefined",
+              "1 = IronOre",
+              "2 = IronBar",
+              "3 = Concrete",
+              "4 = Grain",
+              "5 = CopperOre",
+              "6 = CopperBar",
+              "7 = Oxygen",
+              "8 = Silica",
+              "9 = Milk",
+              "10 = Ale",
+              "11 = Water",
+              "12 = BasicRations",
+              "13 = FineRations",
+              "14 = LaboratorySuit",
+              "15 = BasicExosuit",
+              "16 = DrinkingWater",
+              "17 = BasicTools",
+              "18 = AdvancedTools",
+              "19 = WeldingKit2",
+              "20 = Robot",
+              "21 = Coffee",
+              "22 = Bioxene",
+              "23 = Tesserite",
+              "24 = Hydrogen",
+              "25 = Polyethylene",
+              "26 = BasicConstructionKit",
+              "27 = ConstructionTools",
+              "28 = Fruits",
+              "29 = Vegetables",
+              "30 = Neoplast",
+              "31 = Carbon",
+              "32 = Nitrogen",
+              "33 = Glass",
+              "34 = Limestone",
+              "35 = Steel",
+              "36 = Fertilizer",
+              "37 = Cow",
+              "38 = Meat",
+              "39 = Cotton",
+              "40 = UraniumOre",
+              "41 = Flux",
+              "42 = AluminiumOre",
+              "43 = Aluminium",
+              "44 = Workwear",
+              "45 = TitaniumOre",
+              "46 = Titanium",
+              "47 = Furniture",
+              "48 = Wood",
+              "49 = Leather",
+              "50 = Fabric",
+              "51 = CoffeeBeans",
+              "52 = ConstructionVehicle",
+              "53 = Rubber",
+              "54 = CombustionEngine",
+              "55 = Motor",
+              "56 = Battery",
+              "57 = Gasoline",
+              "58 = Lubricant",
+              "59 = ElectronicCircuit",
+              "60 = Lithium",
+              "61 = SulfuricAcid",
+              "62 = CopperWiring",
+              "63 = Electronics",
+              "64 = ResearchData",
+              "65 = AdvancedResearchData",
+              "66 = OfficeSupplies",
+              "67 = AeridiumOre",
+              "68 = Pipes",
+              "69 = Argon",
+              "70 = Kryon",
+              "71 = Coolant",
+              "72 = Epoxy",
+              "73 = FissionFuel",
+              "74 = Kevlar",
+              "75 = PlatinumOre",
+              "76 = Platinum",
+              "77 = Graphene",
+              "78 = CarbonNanotubes",
+              "79 = Aerogel",
+              "80 = Superconductors",
+              "81 = RadiationShielding",
+              "82 = LifeSupportSystem",
+              "83 = ReinforcedGlass",
+              "84 = ColorCompound",
+              "85 = SpectraModulator",
+              "86 = MiningVehicle",
+              "87 = Drill",
+              "88 = Chicken",
+              "89 = InsulationPanels",
+              "90 = PressureSealantKit",
+              "91 = StructuralElements",
+              "92 = BasicPrefabKit",
+              "93 = BasicAmenities",
+              "94 = AdvancedConstructionKit",
+              "95 = ApexStructuralElements",
+              "96 = AdvancedPrefabKit",
+              "97 = AdvancedAmenities",
+              "98 = ReinforcedTruss",
+              "99 = CompositeTruss",
+              "100 = AdvancedDrill",
+              "101 = HydrogenGenerator",
+              "102 = ControlConsole",
+              "103 = ShipInteriorKit",
+              "104 = BasicHullPlate",
+              "105 = CargoBaySegment",
+              "106 = FuelTankSegment",
+              "107 = BasicPump",
+              "108 = WeldingKit",
+              "109 = BasicFTLEmitter",
+              "110 = HydrogenFuelCell",
+              "111 = HeatShielding",
+              "112 = AdvancedCircuitBoard",
+              "113 = ShipRepairKit",
+              "114 = QuadraniumHullPlate",
+              "115 = FTLFieldController",
+              "116 = SensorArray",
+              "117 = CoolingSystem",
+              "118 = BasicShipBridge",
+              "119 = VRHeadset",
+              "120 = CompositeShielding",
+              "121 = NanoweaveShielding",
+              "122 = Durablend",
+              "123 = NeoplastSheet",
+              "124 = Transistor",
+              "125 = Chip",
+              "126 = SiliconWafer",
+              "127 = ApexResearchData",
+              "128 = Honeycaps",
+              "129 = Sugar",
+              "130 = Pie",
+              "131 = Eggs",
+              "132 = ModernPrefabKit",
+              "133 = FissionReactor",
+              "134 = AdvancedFTLEmitter",
+              "135 = Aeridium",
+              "136 = TiridiumAlloy",
+              "137 = TiridiumHullPlate",
+              "138 = AICore",
+              "139 = AdvancedShipBridge",
+              "140 = Mainframe",
+              "141 = Nanopolyne",
+              "142 = Nanoweave",
+              "143 = Drone",
+              "144 = ApexPrefabKit",
+              "145 = Cohesilite",
+              "146 = OperatingSystem",
+              "147 = AI",
+              "148 = AITrainingData",
+              "149 = Antimatter",
+              "150 = AntimatterReactor",
+              "151 = AntimatterContainment",
+              "152 = HyperCoil",
+              "153 = GourmetRations",
+              "154 = ExoticSpices",
+              "155 = Lobster",
+              "156 = Herbs",
+              "157 = Rejuvaline",
+              "158 = Vitaqua",
+              "159 = Quadranium",
+              "160 = SuperiorFTLEmitter",
+              "161 = IndustrialMachinery",
+              "162 = Biopolyne",
+              "163 = Nanobots",
+              "164 = QuantumResearchData",
+              "165 = FiltrationSystem",
+              "166 = T4ShipBridge",
+              "167 = NeuralInterface",
+              "168 = T3RepairKit",
+              "169 = APU",
+              "170 = Starglass",
+              "171 = T4ShipElements",
+              "172 = Graphenium",
+              "173 = QuantumMainframe",
+              "174 = FieldCooling",
+              "175 = NutrientBlend",
+              "176 = Pack_Medicine",
+              "177 = Pack_Food",
+              "178 = Pack_ShipParts",
+              "179 = Pack_Defense",
+              "180 = Pack_Habitats",
+              "181 = Pack_Scientific",
+              "182 = Pack_Gifts"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaterialIdEnum"
+              }
+            ],
+            "description": "Material ID",
+            "format": "int32",
+            "default": 1
+          },
+          "isEating": {
+            "type": "boolean",
+            "description": "Is currently fulfilled",
+            "default": true
+          },
+          "luDate": {
+            "type": "string",
+            "description": "Last updated date",
+            "format": "date-time"
+          },
+          "buffer": {
+            "type": "number",
+            "description": "Extra amount eaten last update date",
+            "format": "float",
+            "default": 0.57
+          },
+          "rate": {
+            "type": "number",
+            "description": "Amount consumed per day",
+            "format": "float",
+            "default": 65
+          }
+        },
+        "additionalProperties": false
+      },
+      "PBaseDetailResponseModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "default": "Base 1"
+          },
+          "planetId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warehouseId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "buildingSlots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PBuildingSlotModel"
+            }
+          },
+          "productionOrders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PProductionOrder"
+            }
+          },
+          "workforce": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PBaseWorkforceModel"
+              }
+            ]
+          },
+          "warehouse": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PWarehouseModel"
+              }
+            ]
+          },
+          "exp": {
+            "type": "integer",
+            "description": "How many slot expansions have been added to this base",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PBasePreviewModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Base ID",
+            "format": "int32"
+          },
+          "planetId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "warehouseId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "default": "Base 1"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PBaseWorkforceModel": {
+        "type": "object",
+        "properties": {
+          "baseId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "workersNeeded": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "Workforce needed per type",
+            "default": [
+              180,
+              0,
+              0,
+              0
+            ]
+          },
+          "workersHousing": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "Workforce housing per type",
+            "default": [
+              200,
+              0,
+              0,
+              0
+            ]
+          },
+          "workersCount": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "Working Workforce per type",
+            "default": [
+              180,
+              0,
+              0,
+              0
+            ]
+          },
+          "consumptionMaterials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PBaseConsumptionMaterialModel"
+            }
+          },
+          "workersSatisfaction": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "float"
+            },
+            "description": "Workforce satisfaction per type (0-1)",
+            "default": [
+              0.7,
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "PBuildingModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "type": {
+            "enum": [
+              "0 = Undefined",
+              "1 = Mine",
+              "2 = Smelter",
+              "3 = Pump",
+              "4 = ColonyBarracks",
+              "5 = GasCollector",
+              "6 = PrefabPlant",
+              "7 = Refinery",
+              "8 = FoodProcessingPlant",
+              "9 = Headquarters",
+              "10 = Farm",
+              "11 = BasicAssemblyPlant",
+              "12 = PolymerPlant",
+              "13 = ChemistryPlant",
+              "14 = Warehouse",
+              "15 = TextileMill",
+              "16 = AdvancedAssemblyPlant",
+              "17 = Ranch",
+              "18 = SurveyStation",
+              "19 = Orchard",
+              "20 = Laboratory",
+              "21 = ResidentialComplex",
+              "22 = ComfortQuarters",
+              "23 = StellarSuites",
+              "24 = SemiconductorFoundry",
+              "25 = ElectronicsFactory",
+              "26 = WeldingPlant",
+              "27 = QuarryComplex",
+              "28 = ScienceInstitute",
+              "29 = AdvancedPrefabPlant",
+              "30 = Shipyard",
+              "31 = MicroelectronicsFactory",
+              "32 = AdvancedMaterialsLab",
+              "33 = ExoticMatterLab",
+              "34 = AquaponicsFarm",
+              "35 = RoboticsFacility",
+              "36 = CulinaryStudio",
+              "37 = ApexPrefabPlant",
+              "38 = QuantumComputingCenter",
+              "39 = AdvancedGasCollector",
+              "40 = Foundry",
+              "41 = NanomaterialLab",
+              "42 = QuantumFactory"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BuildingTypeIdEnum"
+              }
+            ],
+            "description": "Building Type",
+            "format": "int32",
+            "default": 1
+          },
+          "level": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cond": {
+            "type": "number",
+            "description": "Condition",
+            "format": "float",
+            "default": 0.75
+          },
+          "task": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PProductionTask"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PBuildingProjectModel": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "0 = Undefined",
+              "1 = GHeadquarters",
+              "2 = GAdministrationCenter",
+              "3 = GFlightCenter",
+              "4 = GWarehouse",
+              "5 = GArcade",
+              "6 = Observatory"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BuildingProjectIdEnum"
+              }
+            ],
+            "description": "Project type",
+            "format": "int32",
+            "default": 1
+          },
+          "level": {
+            "type": "integer",
+            "description": "Current project level",
+            "format": "int32",
+            "default": 5
+          },
+          "materials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PMaterialAmountModel"
+            },
+            "description": "Materials stored in the project (includes both for construction and consumption)",
+            "nullable": true
+          },
+          "wp": {
+            "type": "integer",
+            "description": "Working percentage * 100 (8500 = 85%)",
+            "format": "int32",
+            "default": 8500
+          }
+        },
+        "additionalProperties": false
+      },
+      "PBuildingProjectPreviewModel": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "0 = Undefined",
+              "1 = GHeadquarters",
+              "2 = GAdministrationCenter",
+              "3 = GFlightCenter",
+              "4 = GWarehouse",
+              "5 = GArcade",
+              "6 = Observatory"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BuildingProjectIdEnum"
+              }
+            ],
+            "description": "Project type",
+            "format": "int32",
+            "default": 1
+          },
+          "level": {
+            "type": "integer",
+            "description": "Current project level",
+            "format": "int32",
+            "default": 5
+          }
+        },
+        "additionalProperties": false
+      },
+      "PBuildingSlotModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Building slot ID",
+            "format": "int32",
+            "default": 1
+          },
+          "status": {
+            "enum": [
+              "0 = Undefined",
+              "1 = Empty",
+              "2 = Building",
+              "3 = Debris",
+              "4 = Premium"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BuildingSlotStatus"
+              }
+            ],
+            "format": "int32",
+            "default": 1
+          },
+          "building": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PBuildingModel"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PCashLogModel": {
+        "type": "object",
+        "properties": {
+          "exOrderId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "type": {
+            "enum": [
+              "2 = Sell",
+              "3 = Starting",
+              "4 = DailyMission",
+              "5 = Achievement",
+              "7 = ProjectDonation",
+              "10 = Mission",
+              "40 = TradeContractSell",
+              "50 = AdminAdd",
+              "100 = Buy",
+              "112 = CreateGuild",
+              "140 = TradeContractBuy"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CashLogType"
+              }
+            ],
+            "format": "int32"
+          },
+          "otherCompany": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PCompanyPreviewModel"
+              }
+            ],
+            "description": "Other Company involved in the transaction",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Quantity of items traded",
+            "format": "int32",
+            "default": 20
+          },
+          "unitPrice": {
+            "type": "integer",
+            "description": "Cash change per unit in cents; Value is always positive; Types 100>= are negative cash changes",
+            "format": "int64",
+            "default": 5000
+          },
+          "matId": {
+            "enum": [
+              "0 = Undefined",
+              "1 = IronOre",
+              "2 = IronBar",
+              "3 = Concrete",
+              "4 = Grain",
+              "5 = CopperOre",
+              "6 = CopperBar",
+              "7 = Oxygen",
+              "8 = Silica",
+              "9 = Milk",
+              "10 = Ale",
+              "11 = Water",
+              "12 = BasicRations",
+              "13 = FineRations",
+              "14 = LaboratorySuit",
+              "15 = BasicExosuit",
+              "16 = DrinkingWater",
+              "17 = BasicTools",
+              "18 = AdvancedTools",
+              "19 = WeldingKit2",
+              "20 = Robot",
+              "21 = Coffee",
+              "22 = Bioxene",
+              "23 = Tesserite",
+              "24 = Hydrogen",
+              "25 = Polyethylene",
+              "26 = BasicConstructionKit",
+              "27 = ConstructionTools",
+              "28 = Fruits",
+              "29 = Vegetables",
+              "30 = Neoplast",
+              "31 = Carbon",
+              "32 = Nitrogen",
+              "33 = Glass",
+              "34 = Limestone",
+              "35 = Steel",
+              "36 = Fertilizer",
+              "37 = Cow",
+              "38 = Meat",
+              "39 = Cotton",
+              "40 = UraniumOre",
+              "41 = Flux",
+              "42 = AluminiumOre",
+              "43 = Aluminium",
+              "44 = Workwear",
+              "45 = TitaniumOre",
+              "46 = Titanium",
+              "47 = Furniture",
+              "48 = Wood",
+              "49 = Leather",
+              "50 = Fabric",
+              "51 = CoffeeBeans",
+              "52 = ConstructionVehicle",
+              "53 = Rubber",
+              "54 = CombustionEngine",
+              "55 = Motor",
+              "56 = Battery",
+              "57 = Gasoline",
+              "58 = Lubricant",
+              "59 = ElectronicCircuit",
+              "60 = Lithium",
+              "61 = SulfuricAcid",
+              "62 = CopperWiring",
+              "63 = Electronics",
+              "64 = ResearchData",
+              "65 = AdvancedResearchData",
+              "66 = OfficeSupplies",
+              "67 = AeridiumOre",
+              "68 = Pipes",
+              "69 = Argon",
+              "70 = Kryon",
+              "71 = Coolant",
+              "72 = Epoxy",
+              "73 = FissionFuel",
+              "74 = Kevlar",
+              "75 = PlatinumOre",
+              "76 = Platinum",
+              "77 = Graphene",
+              "78 = CarbonNanotubes",
+              "79 = Aerogel",
+              "80 = Superconductors",
+              "81 = RadiationShielding",
+              "82 = LifeSupportSystem",
+              "83 = ReinforcedGlass",
+              "84 = ColorCompound",
+              "85 = SpectraModulator",
+              "86 = MiningVehicle",
+              "87 = Drill",
+              "88 = Chicken",
+              "89 = InsulationPanels",
+              "90 = PressureSealantKit",
+              "91 = StructuralElements",
+              "92 = BasicPrefabKit",
+              "93 = BasicAmenities",
+              "94 = AdvancedConstructionKit",
+              "95 = ApexStructuralElements",
+              "96 = AdvancedPrefabKit",
+              "97 = AdvancedAmenities",
+              "98 = ReinforcedTruss",
+              "99 = CompositeTruss",
+              "100 = AdvancedDrill",
+              "101 = HydrogenGenerator",
+              "102 = ControlConsole",
+              "103 = ShipInteriorKit",
+              "104 = BasicHullPlate",
+              "105 = CargoBaySegment",
+              "106 = FuelTankSegment",
+              "107 = BasicPump",
+              "108 = WeldingKit",
+              "109 = BasicFTLEmitter",
+              "110 = HydrogenFuelCell",
+              "111 = HeatShielding",
+              "112 = AdvancedCircuitBoard",
+              "113 = ShipRepairKit",
+              "114 = QuadraniumHullPlate",
+              "115 = FTLFieldController",
+              "116 = SensorArray",
+              "117 = CoolingSystem",
+              "118 = BasicShipBridge",
+              "119 = VRHeadset",
+              "120 = CompositeShielding",
+              "121 = NanoweaveShielding",
+              "122 = Durablend",
+              "123 = NeoplastSheet",
+              "124 = Transistor",
+              "125 = Chip",
+              "126 = SiliconWafer",
+              "127 = ApexResearchData",
+              "128 = Honeycaps",
+              "129 = Sugar",
+              "130 = Pie",
+              "131 = Eggs",
+              "132 = ModernPrefabKit",
+              "133 = FissionReactor",
+              "134 = AdvancedFTLEmitter",
+              "135 = Aeridium",
+              "136 = TiridiumAlloy",
+              "137 = TiridiumHullPlate",
+              "138 = AICore",
+              "139 = AdvancedShipBridge",
+              "140 = Mainframe",
+              "141 = Nanopolyne",
+              "142 = Nanoweave",
+              "143 = Drone",
+              "144 = ApexPrefabKit",
+              "145 = Cohesilite",
+              "146 = OperatingSystem",
+              "147 = AI",
+              "148 = AITrainingData",
+              "149 = Antimatter",
+              "150 = AntimatterReactor",
+              "151 = AntimatterContainment",
+              "152 = HyperCoil",
+              "153 = GourmetRations",
+              "154 = ExoticSpices",
+              "155 = Lobster",
+              "156 = Herbs",
+              "157 = Rejuvaline",
+              "158 = Vitaqua",
+              "159 = Quadranium",
+              "160 = SuperiorFTLEmitter",
+              "161 = IndustrialMachinery",
+              "162 = Biopolyne",
+              "163 = Nanobots",
+              "164 = QuantumResearchData",
+              "165 = FiltrationSystem",
+              "166 = T4ShipBridge",
+              "167 = NeuralInterface",
+              "168 = T3RepairKit",
+              "169 = APU",
+              "170 = Starglass",
+              "171 = T4ShipElements",
+              "172 = Graphenium",
+              "173 = QuantumMainframe",
+              "174 = FieldCooling",
+              "175 = NutrientBlend",
+              "176 = Pack_Medicine",
+              "177 = Pack_Food",
+              "178 = Pack_ShipParts",
+              "179 = Pack_Defense",
+              "180 = Pack_Habitats",
+              "181 = Pack_Scientific",
+              "182 = Pack_Gifts"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaterialIdEnum"
+              }
+            ],
+            "format": "int32"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PCompanyDetailModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "default": "Galactic Industries"
+          },
+          "rank": {
+            "type": "integer",
+            "description": "Company rank in prestige leaderboard",
+            "format": "int32",
+            "default": 42
+          },
+          "pr": {
+            "type": "integer",
+            "description": "Company prestige",
+            "format": "int32",
+            "default": 5000
+          },
+          "a": {
+            "enum": [
+              "0 = Undefined",
+              "1 = Online",
+              "2 = UnderOneDay",
+              "3 = UnderThreeDays",
+              "4 = Inactive"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActivityEnum"
+              }
+            ],
+            "description": "Current activity status",
+            "format": "int32",
+            "default": 1
+          },
+          "description": {
+            "type": "string",
+            "description": "Company description",
+            "default": "Company description"
+          },
+          "value": {
+            "type": "integer",
+            "description": "Total value of the company in credits",
+            "format": "int64",
+            "default": 12567890
+          },
+          "wf": {
+            "type": "integer",
+            "description": "Total workforce count (all workforce in all bases combined)",
+            "format": "int32",
+            "default": 1500
+          },
+          "fDate": {
+            "type": "string",
+            "description": "Date when the company was founded",
+            "format": "date-time"
+          },
+          "lastSeen": {
+            "type": "string",
+            "description": "Date when this company was last seen online; Returns current date for online companies",
+            "format": "date-time"
+          },
+          "ic": {
+            "type": "string",
+            "description": "Company logo as base64 string (custom format)",
+            "default": "logo_base64_string"
+          },
+          "gId": {
+            "type": "integer",
+            "description": "Guild ID, 0 if not in a guild",
+            "format": "int32",
+            "default": 135
+          },
+          "gTag": {
+            "type": "string",
+            "description": "Guild tag (Empty string if not in a guild)",
+            "default": "TAG"
+          },
+          "gRank": {
+            "enum": [
+              "0 = None",
+              "1 = RequestedToJoin",
+              "2 = Invited",
+              "3 = Member",
+              "4 = Officer",
+              "5 = Leader"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuildMemberRankEnum"
+              }
+            ],
+            "description": "Rank within the guild",
+            "format": "int32",
+            "default": 3
+          },
+          "bases": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "List of planet IDs where the company has bases"
+          },
+          "exOrders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PExchangeOrderModel"
+            },
+            "description": "Active exchange orders"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PCompanyPerkModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "enum": [
+              "0 = None",
+              "1 = BaseWarehouses",
+              "2 = ExchangeWarehouse",
+              "3 = ShipWarehouse",
+              "4 = ProductionSpeed",
+              "5 = ShipDegradation",
+              "6 = ShipFuelSaving",
+              "7 = WorkforceConsumptionReduction",
+              "8 = OverheadReduction",
+              "9 = MissionCooldownReduction",
+              "10 = MissionReward",
+              "11 = BuildingDegradationReduction",
+              "12 = HousingSize",
+              "13 = DonationMissionPreference",
+              "14 = ExploreMissionPreference",
+              "15 = ProduceMissionPreference",
+              "16 = DeliverPackagesMissionPreference",
+              "17 = SourceAndDeliverMissionPreference",
+              "18 = SalvageMissionPreference",
+              "19 = MegaShips",
+              "20 = StrictOversight",
+              "21 = LaxOversight",
+              "22 = BigMissions",
+              "23 = AdditionalMissionChoice",
+              "24 = ContractFeeReduction",
+              "25 = AdditionalBasePermits",
+              "26 = EfficientOversight",
+              "27 = ProductionSpeedPerUnusedPermit",
+              "28 = MaximumMissionsLimit"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyPerkIdEnum"
+              }
+            ],
+            "description": "Perk enum ID",
+            "format": "int32",
+            "default": 4
+          },
+          "lvl": {
+            "type": "integer",
+            "description": "Allocated Perk level",
+            "format": "int32",
+            "default": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "PCompanyPreviewModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "default": "Galactic Industries"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PCompanyRankModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Company ID",
+            "format": "int32",
+            "default": 1337
+          },
+          "name": {
+            "type": "string",
+            "description": "Company name",
+            "default": "Galactic Industries"
+          },
+          "rank": {
+            "type": "integer",
+            "description": "Company rank in prestige leaderboard",
+            "format": "int32",
+            "default": 42
+          },
+          "ic": {
+            "type": "string",
+            "description": "Company logo as base64 string (custom format)",
+            "default": "logo_base64_string"
+          },
+          "gId": {
+            "type": "integer",
+            "description": "Guild ID (0 if not in a guild)",
+            "format": "int32",
+            "default": 135
+          },
+          "gTag": {
+            "type": "string",
+            "description": "Guild tag (Empty string if not in a guild)",
+            "default": "TAG"
+          },
+          "lastSeen": {
+            "type": "string",
+            "description": "Date when this company was last seen online; Returns current date for online companies",
+            "format": "date-time"
+          },
+          "fDate": {
+            "type": "string",
+            "description": "Date when the company was founded",
+            "format": "date-time"
+          },
+          "pr": {
+            "type": "integer",
+            "description": "Company prestige",
+            "format": "int32",
+            "default": 5000
+          },
+          "value": {
+            "type": "integer",
+            "description": "Total company value in credits",
+            "format": "int64",
+            "default": 12567890
+          },
+          "wf": {
+            "type": "integer",
+            "description": "Total workforce count (all workforce in all bases combined)",
+            "format": "int32",
+            "default": 1500
+          },
+          "basesC": {
+            "type": "integer",
+            "description": "Number of bases owned - Deprecated field, use bases array length instead",
+            "format": "int32",
+            "default": 3,
+            "deprecated": true
+          },
+          "bases": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "List of planet IDs where the company has bases"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PCreateWishlistRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Wishlist title (max 40 characters)",
+            "default": "Wishlist"
+          },
+          "mats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PMaterialAmountModel"
+            },
+            "description": "Initial materials for the wishlist",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PExchangeAllMatDetailsResponseModel": {
+        "type": "object",
+        "properties": {
+          "materials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PExchangeMatDetailsResponseModel"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "PExchangeMatDetailsResponseModel": {
+        "type": "object",
+        "properties": {
+          "matId": {
+            "type": "integer",
+            "description": "Material ID",
+            "format": "int32",
+            "default": 1
+          },
+          "matName": {
+            "type": "string",
+            "description": "Material Name",
+            "default": "Iron Ore"
+          },
+          "currentPrice": {
+            "type": "integer",
+            "description": "Current lowest price on exchange in cents (-1 if no orders available)",
+            "format": "int32",
+            "default": 1500
+          },
+          "avgPrice": {
+            "type": "integer",
+            "description": "Average price from recent trades in cents (-1 if no trade history)",
+            "format": "int32",
+            "default": 1546
+          },
+          "totalQtyAvailable": {
+            "type": "integer",
+            "description": "Total quantity available for sale (excluding Fed orders)",
+            "format": "int32",
+            "default": 40000
+          },
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PExchangeOrderPublicModel"
+            },
+            "description": "Active sell orders sorted by price (cheapest first, includes Fed orders)"
+          },
+          "avgQtySoldDaily": {
+            "type": "number",
+            "description": "Average quantity sold per day (excluding Fed purchases from players)",
+            "format": "double"
+          },
+          "priceHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PExchangePriceHistoryModel"
+            },
+            "description": "Price history for the last 30 days (index 0 = today)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PExchangeMaterialPriceModel": {
+        "type": "object",
+        "properties": {
+          "matId": {
+            "type": "integer",
+            "description": "Material ID",
+            "format": "int32",
+            "default": 1
+          },
+          "matName": {
+            "type": "string",
+            "description": "Material Name",
+            "default": "Iron Ore"
+          },
+          "currentPrice": {
+            "type": "integer",
+            "description": "Current lowest price on exchange in cents (-1 if no orders available)",
+            "format": "int32",
+            "default": 1500
+          },
+          "avgPrice": {
+            "type": "integer",
+            "description": "Average price from recent trades in cents (-1 if no trade history)",
+            "format": "int32",
+            "default": 1546
+          }
+        },
+        "additionalProperties": false
+      },
+      "PExchangeOrderModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Order ID",
+            "format": "int32"
+          },
+          "cId": {
+            "type": "integer",
+            "description": "Company ID of the owner",
+            "format": "int32",
+            "default": 1337
+          },
+          "matId": {
+            "enum": [
+              "0 = Undefined",
+              "1 = IronOre",
+              "2 = IronBar",
+              "3 = Concrete",
+              "4 = Grain",
+              "5 = CopperOre",
+              "6 = CopperBar",
+              "7 = Oxygen",
+              "8 = Silica",
+              "9 = Milk",
+              "10 = Ale",
+              "11 = Water",
+              "12 = BasicRations",
+              "13 = FineRations",
+              "14 = LaboratorySuit",
+              "15 = BasicExosuit",
+              "16 = DrinkingWater",
+              "17 = BasicTools",
+              "18 = AdvancedTools",
+              "19 = WeldingKit2",
+              "20 = Robot",
+              "21 = Coffee",
+              "22 = Bioxene",
+              "23 = Tesserite",
+              "24 = Hydrogen",
+              "25 = Polyethylene",
+              "26 = BasicConstructionKit",
+              "27 = ConstructionTools",
+              "28 = Fruits",
+              "29 = Vegetables",
+              "30 = Neoplast",
+              "31 = Carbon",
+              "32 = Nitrogen",
+              "33 = Glass",
+              "34 = Limestone",
+              "35 = Steel",
+              "36 = Fertilizer",
+              "37 = Cow",
+              "38 = Meat",
+              "39 = Cotton",
+              "40 = UraniumOre",
+              "41 = Flux",
+              "42 = AluminiumOre",
+              "43 = Aluminium",
+              "44 = Workwear",
+              "45 = TitaniumOre",
+              "46 = Titanium",
+              "47 = Furniture",
+              "48 = Wood",
+              "49 = Leather",
+              "50 = Fabric",
+              "51 = CoffeeBeans",
+              "52 = ConstructionVehicle",
+              "53 = Rubber",
+              "54 = CombustionEngine",
+              "55 = Motor",
+              "56 = Battery",
+              "57 = Gasoline",
+              "58 = Lubricant",
+              "59 = ElectronicCircuit",
+              "60 = Lithium",
+              "61 = SulfuricAcid",
+              "62 = CopperWiring",
+              "63 = Electronics",
+              "64 = ResearchData",
+              "65 = AdvancedResearchData",
+              "66 = OfficeSupplies",
+              "67 = AeridiumOre",
+              "68 = Pipes",
+              "69 = Argon",
+              "70 = Kryon",
+              "71 = Coolant",
+              "72 = Epoxy",
+              "73 = FissionFuel",
+              "74 = Kevlar",
+              "75 = PlatinumOre",
+              "76 = Platinum",
+              "77 = Graphene",
+              "78 = CarbonNanotubes",
+              "79 = Aerogel",
+              "80 = Superconductors",
+              "81 = RadiationShielding",
+              "82 = LifeSupportSystem",
+              "83 = ReinforcedGlass",
+              "84 = ColorCompound",
+              "85 = SpectraModulator",
+              "86 = MiningVehicle",
+              "87 = Drill",
+              "88 = Chicken",
+              "89 = InsulationPanels",
+              "90 = PressureSealantKit",
+              "91 = StructuralElements",
+              "92 = BasicPrefabKit",
+              "93 = BasicAmenities",
+              "94 = AdvancedConstructionKit",
+              "95 = ApexStructuralElements",
+              "96 = AdvancedPrefabKit",
+              "97 = AdvancedAmenities",
+              "98 = ReinforcedTruss",
+              "99 = CompositeTruss",
+              "100 = AdvancedDrill",
+              "101 = HydrogenGenerator",
+              "102 = ControlConsole",
+              "103 = ShipInteriorKit",
+              "104 = BasicHullPlate",
+              "105 = CargoBaySegment",
+              "106 = FuelTankSegment",
+              "107 = BasicPump",
+              "108 = WeldingKit",
+              "109 = BasicFTLEmitter",
+              "110 = HydrogenFuelCell",
+              "111 = HeatShielding",
+              "112 = AdvancedCircuitBoard",
+              "113 = ShipRepairKit",
+              "114 = QuadraniumHullPlate",
+              "115 = FTLFieldController",
+              "116 = SensorArray",
+              "117 = CoolingSystem",
+              "118 = BasicShipBridge",
+              "119 = VRHeadset",
+              "120 = CompositeShielding",
+              "121 = NanoweaveShielding",
+              "122 = Durablend",
+              "123 = NeoplastSheet",
+              "124 = Transistor",
+              "125 = Chip",
+              "126 = SiliconWafer",
+              "127 = ApexResearchData",
+              "128 = Honeycaps",
+              "129 = Sugar",
+              "130 = Pie",
+              "131 = Eggs",
+              "132 = ModernPrefabKit",
+              "133 = FissionReactor",
+              "134 = AdvancedFTLEmitter",
+              "135 = Aeridium",
+              "136 = TiridiumAlloy",
+              "137 = TiridiumHullPlate",
+              "138 = AICore",
+              "139 = AdvancedShipBridge",
+              "140 = Mainframe",
+              "141 = Nanopolyne",
+              "142 = Nanoweave",
+              "143 = Drone",
+              "144 = ApexPrefabKit",
+              "145 = Cohesilite",
+              "146 = OperatingSystem",
+              "147 = AI",
+              "148 = AITrainingData",
+              "149 = Antimatter",
+              "150 = AntimatterReactor",
+              "151 = AntimatterContainment",
+              "152 = HyperCoil",
+              "153 = GourmetRations",
+              "154 = ExoticSpices",
+              "155 = Lobster",
+              "156 = Herbs",
+              "157 = Rejuvaline",
+              "158 = Vitaqua",
+              "159 = Quadranium",
+              "160 = SuperiorFTLEmitter",
+              "161 = IndustrialMachinery",
+              "162 = Biopolyne",
+              "163 = Nanobots",
+              "164 = QuantumResearchData",
+              "165 = FiltrationSystem",
+              "166 = T4ShipBridge",
+              "167 = NeuralInterface",
+              "168 = T3RepairKit",
+              "169 = APU",
+              "170 = Starglass",
+              "171 = T4ShipElements",
+              "172 = Graphenium",
+              "173 = QuantumMainframe",
+              "174 = FieldCooling",
+              "175 = NutrientBlend",
+              "176 = Pack_Medicine",
+              "177 = Pack_Food",
+              "178 = Pack_ShipParts",
+              "179 = Pack_Defense",
+              "180 = Pack_Habitats",
+              "181 = Pack_Scientific",
+              "182 = Pack_Gifts"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaterialIdEnum"
+              }
+            ],
+            "description": "Material ID",
+            "format": "int32",
+            "default": 1
+          },
+          "qty": {
+            "type": "integer",
+            "description": "Remaining quantity in the order",
+            "format": "int32",
+            "default": 450
+          },
+          "qtyTot": {
+            "type": "integer",
+            "description": "Total quantity originally posted in the order",
+            "format": "int32",
+            "default": 500
+          },
+          "unitPrice": {
+            "type": "integer",
+            "description": "Price per unit in cents",
+            "format": "int32",
+            "default": 50000
+          },
+          "uId": {
+            "type": "integer",
+            "description": "User ID (company ID) of the owner - Deprecated, use cId instead)",
+            "format": "int32",
+            "deprecated": true
+          },
+          "qRem": {
+            "type": "integer",
+            "description": "Remaining quantity - Deprecated, use qty instead",
+            "format": "int32",
+            "default": 450,
+            "deprecated": true
+          },
+          "price": {
+            "type": "integer",
+            "description": "Price per unit in cents - Deprecated, use unitPrice instead",
+            "format": "int32",
+            "default": 50000,
+            "deprecated": true
+          },
+          "qTot": {
+            "type": "integer",
+            "description": "Total quantity - Deprecated, use qtyTot instead",
+            "format": "int32",
+            "default": 500,
+            "deprecated": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PExchangeOrderPublicModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Order ID",
+            "format": "int32",
+            "default": 12345
+          },
+          "cId": {
+            "type": "integer",
+            "description": "Company ID",
+            "format": "int32",
+            "default": 1337
+          },
+          "cName": {
+            "type": "string",
+            "description": "Company name",
+            "default": "Galactic Industries"
+          },
+          "unitPrice": {
+            "type": "integer",
+            "description": "Price per unit in cents",
+            "format": "int32",
+            "default": 50000
+          },
+          "qty": {
+            "type": "integer",
+            "description": "Remaining quantity in the order",
+            "format": "int32",
+            "default": 450
+          }
+        },
+        "additionalProperties": false
+      },
+      "PExchangePriceHistoryModel": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "avgPrice": {
+            "type": "integer",
+            "description": "Average traded price for this day in cents (excludes contracts)",
+            "format": "int32",
+            "default": 51500
+          },
+          "qtySold": {
+            "type": "integer",
+            "description": "Quantity sold this day (excluding Fed purchases)",
+            "format": "int32",
+            "default": 1250
+          },
+          "qtyRemaining": {
+            "type": "integer",
+            "description": "Quantity remaining at end of day (excluding Fed orders)",
+            "format": "int32",
+            "default": 3500
+          },
+          "qtyC": {
+            "type": "integer",
+            "description": "Quantity traded via contracts on this day",
+            "format": "int32",
+            "default": "100"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PExchangePricesResponseModel": {
+        "type": "object",
+        "properties": {
+          "prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PExchangeMaterialPriceModel"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "PGuildDetailModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "default": "Galactic Alliance"
+          },
+          "tag": {
+            "type": "string",
+            "description": "Guild tag (2-3 characters)",
+            "default": "GAL"
+          },
+          "description": {
+            "type": "string",
+            "description": "Guild description",
+            "default": "A powerful alliance of traders"
+          },
+          "fDate": {
+            "type": "string",
+            "description": "Date when the guild was founded",
+            "format": "date-time"
+          },
+          "pr": {
+            "type": "integer",
+            "description": "Guild prestige",
+            "format": "int32",
+            "default": 50000
+          },
+          "rank": {
+            "type": "integer",
+            "description": "Guild rank in prestige leaderboard",
+            "format": "int32",
+            "default": 5
+          },
+          "isRec": {
+            "type": "boolean",
+            "description": "Whether the guild is recruiting",
+            "default": true
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PGuildMemberModel"
+            },
+            "description": "List of guild members"
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PBuildingProjectPreviewModel"
+            },
+            "description": "Guild building projects"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PGuildDonationModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Donation ID for pagination",
+            "format": "int32"
+          },
+          "type": {
+            "enum": [
+              "0 = Undefined",
+              "1 = GHeadquarters",
+              "2 = GAdministrationCenter",
+              "3 = GFlightCenter",
+              "4 = GWarehouse",
+              "5 = GArcade",
+              "6 = Observatory"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BuildingProjectIdEnum"
+              }
+            ],
+            "description": "Project type that received the donation",
+            "format": "int32",
+            "default": 1
+          },
+          "date": {
+            "type": "string",
+            "description": "DateTime when the donation was made",
+            "format": "date-time"
+          },
+          "company": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PCompanyPreviewModel"
+              }
+            ],
+            "description": "Company that made the donation"
+          },
+          "mats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PMaterialAmountModel"
+            },
+            "description": "Materials donated"
+          },
+          "pr": {
+            "type": "integer",
+            "description": "Prestige gained from this donation",
+            "format": "int32",
+            "default": 150
+          }
+        },
+        "additionalProperties": false
+      },
+      "PGuildInvitedModel": {
+        "type": "object",
+        "properties": {
+          "cId": {
+            "type": "integer",
+            "description": "Company ID",
+            "format": "int32",
+            "default": 1337
+          },
+          "name": {
+            "type": "string",
+            "description": "Company name",
+            "default": "Space Corp"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PGuildMemberModel": {
+        "type": "object",
+        "properties": {
+          "cId": {
+            "type": "integer",
+            "description": "Company ID",
+            "format": "int32",
+            "default": 1337
+          },
+          "name": {
+            "type": "string",
+            "description": "Company name",
+            "default": "Space Corp"
+          },
+          "gRank": {
+            "enum": [
+              "0 = None",
+              "1 = RequestedToJoin",
+              "2 = Invited",
+              "3 = Member",
+              "4 = Officer",
+              "5 = Leader"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuildMemberRankEnum"
+              }
+            ],
+            "description": "Rank within the guild (Leader = 5/Officer = 4/Member = 3)",
+            "format": "int32",
+            "default": 3
+          },
+          "value": {
+            "type": "integer",
+            "description": "Total value of the company in credits",
+            "format": "int64",
+            "default": 12567890
+          },
+          "pr": {
+            "type": "integer",
+            "description": "Company prestige",
+            "format": "int32",
+            "default": 5000
+          },
+          "lastSeen": {
+            "type": "string",
+            "description": "Date when this company was last seen online; Returns current date for online companies",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PGuildRankModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Guild ID",
+            "format": "int32",
+            "default": 135
+          },
+          "name": {
+            "type": "string",
+            "description": "Guild name",
+            "default": "Galactic Alliance"
+          },
+          "tag": {
+            "type": "string",
+            "description": "Guild tag",
+            "default": "GAL"
+          },
+          "rank": {
+            "type": "integer",
+            "description": "Guild rank in prestige leaderboard",
+            "format": "int32",
+            "default": 5
+          },
+          "pr": {
+            "type": "integer",
+            "description": "Guild prestige",
+            "format": "int32",
+            "default": 50000
+          },
+          "hq": {
+            "type": "integer",
+            "description": "Headquarters level",
+            "format": "int32",
+            "default": 3
+          },
+          "membersC": {
+            "type": "integer",
+            "description": "Number of guild members",
+            "format": "int32",
+            "default": 15
+          },
+          "fDate": {
+            "type": "string",
+            "description": "Date when the guild was founded",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PMaterialAmountModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "enum": [
+              "0 = Undefined",
+              "1 = IronOre",
+              "2 = IronBar",
+              "3 = Concrete",
+              "4 = Grain",
+              "5 = CopperOre",
+              "6 = CopperBar",
+              "7 = Oxygen",
+              "8 = Silica",
+              "9 = Milk",
+              "10 = Ale",
+              "11 = Water",
+              "12 = BasicRations",
+              "13 = FineRations",
+              "14 = LaboratorySuit",
+              "15 = BasicExosuit",
+              "16 = DrinkingWater",
+              "17 = BasicTools",
+              "18 = AdvancedTools",
+              "19 = WeldingKit2",
+              "20 = Robot",
+              "21 = Coffee",
+              "22 = Bioxene",
+              "23 = Tesserite",
+              "24 = Hydrogen",
+              "25 = Polyethylene",
+              "26 = BasicConstructionKit",
+              "27 = ConstructionTools",
+              "28 = Fruits",
+              "29 = Vegetables",
+              "30 = Neoplast",
+              "31 = Carbon",
+              "32 = Nitrogen",
+              "33 = Glass",
+              "34 = Limestone",
+              "35 = Steel",
+              "36 = Fertilizer",
+              "37 = Cow",
+              "38 = Meat",
+              "39 = Cotton",
+              "40 = UraniumOre",
+              "41 = Flux",
+              "42 = AluminiumOre",
+              "43 = Aluminium",
+              "44 = Workwear",
+              "45 = TitaniumOre",
+              "46 = Titanium",
+              "47 = Furniture",
+              "48 = Wood",
+              "49 = Leather",
+              "50 = Fabric",
+              "51 = CoffeeBeans",
+              "52 = ConstructionVehicle",
+              "53 = Rubber",
+              "54 = CombustionEngine",
+              "55 = Motor",
+              "56 = Battery",
+              "57 = Gasoline",
+              "58 = Lubricant",
+              "59 = ElectronicCircuit",
+              "60 = Lithium",
+              "61 = SulfuricAcid",
+              "62 = CopperWiring",
+              "63 = Electronics",
+              "64 = ResearchData",
+              "65 = AdvancedResearchData",
+              "66 = OfficeSupplies",
+              "67 = AeridiumOre",
+              "68 = Pipes",
+              "69 = Argon",
+              "70 = Kryon",
+              "71 = Coolant",
+              "72 = Epoxy",
+              "73 = FissionFuel",
+              "74 = Kevlar",
+              "75 = PlatinumOre",
+              "76 = Platinum",
+              "77 = Graphene",
+              "78 = CarbonNanotubes",
+              "79 = Aerogel",
+              "80 = Superconductors",
+              "81 = RadiationShielding",
+              "82 = LifeSupportSystem",
+              "83 = ReinforcedGlass",
+              "84 = ColorCompound",
+              "85 = SpectraModulator",
+              "86 = MiningVehicle",
+              "87 = Drill",
+              "88 = Chicken",
+              "89 = InsulationPanels",
+              "90 = PressureSealantKit",
+              "91 = StructuralElements",
+              "92 = BasicPrefabKit",
+              "93 = BasicAmenities",
+              "94 = AdvancedConstructionKit",
+              "95 = ApexStructuralElements",
+              "96 = AdvancedPrefabKit",
+              "97 = AdvancedAmenities",
+              "98 = ReinforcedTruss",
+              "99 = CompositeTruss",
+              "100 = AdvancedDrill",
+              "101 = HydrogenGenerator",
+              "102 = ControlConsole",
+              "103 = ShipInteriorKit",
+              "104 = BasicHullPlate",
+              "105 = CargoBaySegment",
+              "106 = FuelTankSegment",
+              "107 = BasicPump",
+              "108 = WeldingKit",
+              "109 = BasicFTLEmitter",
+              "110 = HydrogenFuelCell",
+              "111 = HeatShielding",
+              "112 = AdvancedCircuitBoard",
+              "113 = ShipRepairKit",
+              "114 = QuadraniumHullPlate",
+              "115 = FTLFieldController",
+              "116 = SensorArray",
+              "117 = CoolingSystem",
+              "118 = BasicShipBridge",
+              "119 = VRHeadset",
+              "120 = CompositeShielding",
+              "121 = NanoweaveShielding",
+              "122 = Durablend",
+              "123 = NeoplastSheet",
+              "124 = Transistor",
+              "125 = Chip",
+              "126 = SiliconWafer",
+              "127 = ApexResearchData",
+              "128 = Honeycaps",
+              "129 = Sugar",
+              "130 = Pie",
+              "131 = Eggs",
+              "132 = ModernPrefabKit",
+              "133 = FissionReactor",
+              "134 = AdvancedFTLEmitter",
+              "135 = Aeridium",
+              "136 = TiridiumAlloy",
+              "137 = TiridiumHullPlate",
+              "138 = AICore",
+              "139 = AdvancedShipBridge",
+              "140 = Mainframe",
+              "141 = Nanopolyne",
+              "142 = Nanoweave",
+              "143 = Drone",
+              "144 = ApexPrefabKit",
+              "145 = Cohesilite",
+              "146 = OperatingSystem",
+              "147 = AI",
+              "148 = AITrainingData",
+              "149 = Antimatter",
+              "150 = AntimatterReactor",
+              "151 = AntimatterContainment",
+              "152 = HyperCoil",
+              "153 = GourmetRations",
+              "154 = ExoticSpices",
+              "155 = Lobster",
+              "156 = Herbs",
+              "157 = Rejuvaline",
+              "158 = Vitaqua",
+              "159 = Quadranium",
+              "160 = SuperiorFTLEmitter",
+              "161 = IndustrialMachinery",
+              "162 = Biopolyne",
+              "163 = Nanobots",
+              "164 = QuantumResearchData",
+              "165 = FiltrationSystem",
+              "166 = T4ShipBridge",
+              "167 = NeuralInterface",
+              "168 = T3RepairKit",
+              "169 = APU",
+              "170 = Starglass",
+              "171 = T4ShipElements",
+              "172 = Graphenium",
+              "173 = QuantumMainframe",
+              "174 = FieldCooling",
+              "175 = NutrientBlend",
+              "176 = Pack_Medicine",
+              "177 = Pack_Food",
+              "178 = Pack_ShipParts",
+              "179 = Pack_Defense",
+              "180 = Pack_Habitats",
+              "181 = Pack_Scientific",
+              "182 = Pack_Gifts"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaterialIdEnum"
+              }
+            ],
+            "description": "ID of the material",
+            "format": "int32",
+            "default": 1
+          },
+          "am": {
+            "type": "integer",
+            "description": "Amount",
+            "format": "int32",
+            "default": 10
+          }
+        },
+        "additionalProperties": false
+      },
+      "PMyCompanyModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "My Company ID",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "bases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PBasePreviewModel"
+            }
+          },
+          "ships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PShipModel"
+            }
+          },
+          "exWhId": {
+            "type": "integer",
+            "description": "Exchange Warehouse ID",
+            "format": "int32",
+            "default": 6541
+          },
+          "cash": {
+            "type": "integer",
+            "description": "Company cash balance in cents",
+            "format": "int64",
+            "default": 5000000
+          },
+          "pr": {
+            "type": "integer",
+            "description": "Company prestige",
+            "format": "int32",
+            "default": 5000
+          },
+          "rank": {
+            "type": "integer",
+            "description": "Rank of the company in prestige leaderboard",
+            "format": "int32",
+            "default": 122
+          },
+          "stars": {
+            "type": "integer",
+            "format": "int32",
+            "default": 100
+          },
+          "technologies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PTechnologyModel"
+            }
+          },
+          "perks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PCompanyPerkModel"
+            },
+            "description": "Allocated perks; null if no perks",
+            "nullable": true
+          },
+          "poSlots": {
+            "type": "integer",
+            "description": "Number of unlocked production order slots",
+            "format": "int32",
+            "default": 4
+          },
+          "shipSlots": {
+            "type": "integer",
+            "description": "Number of unlocked ship slots",
+            "format": "int32",
+            "default": 2
+          },
+          "fDate": {
+            "type": "string",
+            "description": "Date when the company was founded",
+            "format": "date-time"
+          },
+          "gId": {
+            "type": "integer",
+            "description": "Guild ID, 0 if not in a guild",
+            "format": "int32",
+            "default": 135
+          },
+          "gRank": {
+            "enum": [
+              "0 = None",
+              "1 = RequestedToJoin",
+              "2 = Invited",
+              "3 = Member",
+              "4 = Officer",
+              "5 = Leader"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GuildMemberRankEnum"
+              }
+            ],
+            "description": "Rank within the guild",
+            "format": "int32",
+            "default": 3
+          },
+          "value": {
+            "type": "integer",
+            "description": "Total value of the company in credits",
+            "format": "int64",
+            "default": 12567890
+          },
+          "online": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PMyGuildDetailModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "default": "Galactic Alliance"
+          },
+          "tag": {
+            "type": "string",
+            "description": "Guild tag (2-3 characters)",
+            "default": "GAL"
+          },
+          "description": {
+            "type": "string",
+            "description": "Guild description",
+            "default": "A powerful alliance of traders"
+          },
+          "board": {
+            "type": "string",
+            "description": "Guild board (members only)"
+          },
+          "fDate": {
+            "type": "string",
+            "description": "Date when the guild was founded",
+            "format": "date-time"
+          },
+          "pr": {
+            "type": "integer",
+            "description": "Guild prestige",
+            "format": "int32",
+            "default": 50000
+          },
+          "rank": {
+            "type": "integer",
+            "description": "Guild rank in prestige leaderboard",
+            "format": "int32",
+            "default": 5
+          },
+          "isRec": {
+            "type": "boolean",
+            "description": "Whether the guild is recruiting",
+            "default": true
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PGuildMemberModel"
+            },
+            "description": "List of guild members"
+          },
+          "invited": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PGuildInvitedModel"
+            },
+            "description": "Companies invited to join the guild"
+          },
+          "requestedJoins": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PGuildInvitedModel"
+            },
+            "description": "Companies that requested to join the guild"
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PBuildingProjectModel"
+            },
+            "description": "Guild building projects (full details for members)"
+          },
+          "pConsMp": {
+            "type": "number",
+            "description": "Multiplier for projects consumption amount",
+            "format": "float"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PProductionOrder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rId": {
+            "type": "integer",
+            "description": "Recipe ID",
+            "format": "int32",
+            "default": 3
+          },
+          "amt": {
+            "type": "integer",
+            "description": "How many times to produce the recipe; 65535 = infinite production order",
+            "format": "int32",
+            "default": 1000
+          }
+        },
+        "additionalProperties": false
+      },
+      "PProductionTask": {
+        "type": "object",
+        "properties": {
+          "bId": {
+            "type": "integer",
+            "description": "Building Id",
+            "format": "int32",
+            "default": 5778
+          },
+          "rId": {
+            "type": "integer",
+            "description": "Recipe Id",
+            "format": "int32",
+            "default": 12
+          },
+          "recipeId": {
+            "type": "integer",
+            "description": "Recipe Id - Old field, use rId",
+            "format": "int32",
+            "default": 12,
+            "deprecated": true
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Date when production started",
+            "format": "date-time"
+          },
+          "updD": {
+            "type": "string",
+            "description": "Date when production was last updated",
+            "format": "date-time"
+          },
+          "comD": {
+            "type": "string",
+            "description": "Expected completion Date",
+            "format": "date-time"
+          },
+          "updPart": {
+            "type": "number",
+            "description": "Part of the task completed at last update",
+            "format": "float",
+            "default": 0.5
+          },
+          "mul": {
+            "type": "integer",
+            "description": "Amount multiplier (both input and output, level 2 building produces 2x)",
+            "format": "int32",
+            "default": 2
+          }
+        },
+        "additionalProperties": false
+      },
+      "PRenameWishlistRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "New wishlist title (max 40 characters)",
+            "default": "New Name"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PShipBlueprintModel": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "default": "Ship 1"
+          },
+          "reactorType": {
+            "enum": [
+              "0 = Undefined",
+              "1 = HydrogenGenerator",
+              "2 = Fission",
+              "3 = Antimatter"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShipReactorType"
+              }
+            ],
+            "format": "int32",
+            "default": 1
+          },
+          "emitterType": {
+            "enum": [
+              "0 = Undefined",
+              "1 = Basic",
+              "2 = AdvancedShortRange",
+              "3 = AdvancedEfficient",
+              "4 = AdvancedLongRange",
+              "5 = SuperiorShortRange",
+              "6 = SuperiorEfficient",
+              "7 = SuperiorLongRange"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShipFTLType"
+              }
+            ],
+            "format": "int32",
+            "default": 1
+          },
+          "emittersCount": {
+            "type": "integer",
+            "format": "int32",
+            "default": 2
+          },
+          "hullType": {
+            "enum": [
+              "0 = Undefined",
+              "1 = Basic",
+              "2 = Lightweight",
+              "3 = AdvancedLightweight"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShipHullType"
+              }
+            ],
+            "format": "int32",
+            "default": 1
+          },
+          "cargoCapacity": {
+            "type": "integer",
+            "format": "int32",
+            "default": 500
+          },
+          "tankType": {
+            "enum": [
+              "0 = Undefined",
+              "1 = Small",
+              "2 = Medium",
+              "3 = Large"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShipTankSizeType"
+              }
+            ],
+            "format": "int32",
+            "default": 2
+          },
+          "heatShielding": {
+            "enum": [
+              "0 = Undefined",
+              "1 = None",
+              "2 = Light",
+              "3 = Heavy"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShipHeatShieldingType"
+              }
+            ],
+            "format": "int32",
+            "default": 1
+          },
+          "radiationShielding": {
+            "enum": [
+              "0 = Undefined",
+              "1 = None",
+              "2 = Light",
+              "3 = Heavy"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShipRadiationShieldingType"
+              }
+            ],
+            "format": "int32",
+            "default": 1
+          },
+          "autoUnloadUnlocked": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "PShipFlightModel": {
+        "type": "object",
+        "properties": {
+          "destPId": {
+            "type": "integer",
+            "description": "Destination Planet ID",
+            "format": "int32",
+            "default": 136
+          },
+          "sDate": {
+            "type": "string",
+            "description": "Date when the flight started",
+            "format": "date-time"
+          },
+          "aDate": {
+            "type": "string",
+            "description": "Date when the flight ends (arrival)",
+            "format": "date-time"
+          },
+          "startFuel": {
+            "type": "number",
+            "description": "Fuel at the start of the flight",
+            "format": "float",
+            "default": 55.9
+          },
+          "arrivalFuel": {
+            "type": "number",
+            "description": "Fuel at the end of the flight",
+            "format": "float",
+            "default": 54.2
+          },
+          "type": {
+            "enum": [
+              "0 = None",
+              "1 = Normal",
+              "2 = Emergency",
+              "3 = Cancelled"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FlightType"
+              }
+            ],
+            "format": "int32",
+            "default": 1
+          },
+          "aUnload": {
+            "type": "boolean",
+            "description": "Auto unload on arrival",
+            "default": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "PShipModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cId": {
+            "type": "integer",
+            "description": "Company ID",
+            "format": "int32",
+            "default": 1337
+          },
+          "warehouseId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "default": "Ship 1"
+          },
+          "blueprint": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PShipBlueprintModel"
+              }
+            ]
+          },
+          "fuel": {
+            "type": "number",
+            "format": "float"
+          },
+          "condition": {
+            "type": "number",
+            "description": "Condition of the ship (0-1)",
+            "format": "float",
+            "default": 0.85
+          },
+          "pId": {
+            "type": "integer",
+            "description": "Planet ID where the ship is currently located OR is traveling from",
+            "format": "int32",
+            "default": 135
+          },
+          "flight": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PShipFlightModel"
+              }
+            ],
+            "description": "Current flight information, null if stationary",
+            "nullable": true
+          },
+          "fuelCapacity": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PTechnologyModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "enum": [
+              "0 = Undefined",
+              "1 = Construction",
+              "2 = Manufacturing",
+              "3 = Agriculture",
+              "4 = ResourceExtraction",
+              "5 = Metallurgy",
+              "6 = Chemistry",
+              "7 = Electronics",
+              "8 = FoodProduction",
+              "10 = Science"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SpecializationEnum"
+              }
+            ],
+            "format": "int32",
+            "default": 3
+          },
+          "level": {
+            "type": "integer",
+            "format": "int32",
+            "default": 2
+          }
+        },
+        "additionalProperties": false
+      },
+      "PTradeContractModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Contract ID",
+            "format": "int32"
+          },
+          "company": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PCompanyPreviewModel"
+              }
+            ],
+            "description": "Company that created the contract"
+          },
+          "otherCompany": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PCompanyPreviewModel"
+              }
+            ],
+            "description": "Company that received the contract"
+          },
+          "type": {
+            "enum": [
+              "1 = BuyMaterial",
+              "2 = SellMaterial"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContractType"
+              }
+            ],
+            "format": "int32",
+            "default": 1
+          },
+          "status": {
+            "enum": [
+              "0 = Pending",
+              "1 = Active",
+              "2 = Completed",
+              "3 = Cancelled"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContractStatusEnum"
+              }
+            ],
+            "description": "Contract status (Pending = 0, Active = 1, Completed = 2, Cancelled = 3)",
+            "format": "int32",
+            "default": 1
+          },
+          "pId": {
+            "type": "integer",
+            "description": "Planet ID where the contract is executed",
+            "format": "int32",
+            "default": 1
+          },
+          "matId": {
+            "enum": [
+              "0 = Undefined",
+              "1 = IronOre",
+              "2 = IronBar",
+              "3 = Concrete",
+              "4 = Grain",
+              "5 = CopperOre",
+              "6 = CopperBar",
+              "7 = Oxygen",
+              "8 = Silica",
+              "9 = Milk",
+              "10 = Ale",
+              "11 = Water",
+              "12 = BasicRations",
+              "13 = FineRations",
+              "14 = LaboratorySuit",
+              "15 = BasicExosuit",
+              "16 = DrinkingWater",
+              "17 = BasicTools",
+              "18 = AdvancedTools",
+              "19 = WeldingKit2",
+              "20 = Robot",
+              "21 = Coffee",
+              "22 = Bioxene",
+              "23 = Tesserite",
+              "24 = Hydrogen",
+              "25 = Polyethylene",
+              "26 = BasicConstructionKit",
+              "27 = ConstructionTools",
+              "28 = Fruits",
+              "29 = Vegetables",
+              "30 = Neoplast",
+              "31 = Carbon",
+              "32 = Nitrogen",
+              "33 = Glass",
+              "34 = Limestone",
+              "35 = Steel",
+              "36 = Fertilizer",
+              "37 = Cow",
+              "38 = Meat",
+              "39 = Cotton",
+              "40 = UraniumOre",
+              "41 = Flux",
+              "42 = AluminiumOre",
+              "43 = Aluminium",
+              "44 = Workwear",
+              "45 = TitaniumOre",
+              "46 = Titanium",
+              "47 = Furniture",
+              "48 = Wood",
+              "49 = Leather",
+              "50 = Fabric",
+              "51 = CoffeeBeans",
+              "52 = ConstructionVehicle",
+              "53 = Rubber",
+              "54 = CombustionEngine",
+              "55 = Motor",
+              "56 = Battery",
+              "57 = Gasoline",
+              "58 = Lubricant",
+              "59 = ElectronicCircuit",
+              "60 = Lithium",
+              "61 = SulfuricAcid",
+              "62 = CopperWiring",
+              "63 = Electronics",
+              "64 = ResearchData",
+              "65 = AdvancedResearchData",
+              "66 = OfficeSupplies",
+              "67 = AeridiumOre",
+              "68 = Pipes",
+              "69 = Argon",
+              "70 = Kryon",
+              "71 = Coolant",
+              "72 = Epoxy",
+              "73 = FissionFuel",
+              "74 = Kevlar",
+              "75 = PlatinumOre",
+              "76 = Platinum",
+              "77 = Graphene",
+              "78 = CarbonNanotubes",
+              "79 = Aerogel",
+              "80 = Superconductors",
+              "81 = RadiationShielding",
+              "82 = LifeSupportSystem",
+              "83 = ReinforcedGlass",
+              "84 = ColorCompound",
+              "85 = SpectraModulator",
+              "86 = MiningVehicle",
+              "87 = Drill",
+              "88 = Chicken",
+              "89 = InsulationPanels",
+              "90 = PressureSealantKit",
+              "91 = StructuralElements",
+              "92 = BasicPrefabKit",
+              "93 = BasicAmenities",
+              "94 = AdvancedConstructionKit",
+              "95 = ApexStructuralElements",
+              "96 = AdvancedPrefabKit",
+              "97 = AdvancedAmenities",
+              "98 = ReinforcedTruss",
+              "99 = CompositeTruss",
+              "100 = AdvancedDrill",
+              "101 = HydrogenGenerator",
+              "102 = ControlConsole",
+              "103 = ShipInteriorKit",
+              "104 = BasicHullPlate",
+              "105 = CargoBaySegment",
+              "106 = FuelTankSegment",
+              "107 = BasicPump",
+              "108 = WeldingKit",
+              "109 = BasicFTLEmitter",
+              "110 = HydrogenFuelCell",
+              "111 = HeatShielding",
+              "112 = AdvancedCircuitBoard",
+              "113 = ShipRepairKit",
+              "114 = QuadraniumHullPlate",
+              "115 = FTLFieldController",
+              "116 = SensorArray",
+              "117 = CoolingSystem",
+              "118 = BasicShipBridge",
+              "119 = VRHeadset",
+              "120 = CompositeShielding",
+              "121 = NanoweaveShielding",
+              "122 = Durablend",
+              "123 = NeoplastSheet",
+              "124 = Transistor",
+              "125 = Chip",
+              "126 = SiliconWafer",
+              "127 = ApexResearchData",
+              "128 = Honeycaps",
+              "129 = Sugar",
+              "130 = Pie",
+              "131 = Eggs",
+              "132 = ModernPrefabKit",
+              "133 = FissionReactor",
+              "134 = AdvancedFTLEmitter",
+              "135 = Aeridium",
+              "136 = TiridiumAlloy",
+              "137 = TiridiumHullPlate",
+              "138 = AICore",
+              "139 = AdvancedShipBridge",
+              "140 = Mainframe",
+              "141 = Nanopolyne",
+              "142 = Nanoweave",
+              "143 = Drone",
+              "144 = ApexPrefabKit",
+              "145 = Cohesilite",
+              "146 = OperatingSystem",
+              "147 = AI",
+              "148 = AITrainingData",
+              "149 = Antimatter",
+              "150 = AntimatterReactor",
+              "151 = AntimatterContainment",
+              "152 = HyperCoil",
+              "153 = GourmetRations",
+              "154 = ExoticSpices",
+              "155 = Lobster",
+              "156 = Herbs",
+              "157 = Rejuvaline",
+              "158 = Vitaqua",
+              "159 = Quadranium",
+              "160 = SuperiorFTLEmitter",
+              "161 = IndustrialMachinery",
+              "162 = Biopolyne",
+              "163 = Nanobots",
+              "164 = QuantumResearchData",
+              "165 = FiltrationSystem",
+              "166 = T4ShipBridge",
+              "167 = NeuralInterface",
+              "168 = T3RepairKit",
+              "169 = APU",
+              "170 = Starglass",
+              "171 = T4ShipElements",
+              "172 = Graphenium",
+              "173 = QuantumMainframe",
+              "174 = FieldCooling",
+              "175 = NutrientBlend",
+              "176 = Pack_Medicine",
+              "177 = Pack_Food",
+              "178 = Pack_ShipParts",
+              "179 = Pack_Defense",
+              "180 = Pack_Habitats",
+              "181 = Pack_Scientific",
+              "182 = Pack_Gifts"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MaterialIdEnum"
+              }
+            ],
+            "description": "Material ID being traded",
+            "format": "int32",
+            "default": 2
+          },
+          "qty": {
+            "type": "integer",
+            "description": "Quantity to be traded",
+            "format": "int32",
+            "default": 1000
+          },
+          "unitPrice": {
+            "type": "integer",
+            "description": "Price per unit in cents (includes fees)",
+            "format": "int32",
+            "default": 15000
+          },
+          "unitFee": {
+            "type": "integer",
+            "description": "Fee per unit in cents (included in UnitPrice)",
+            "format": "int32",
+            "default": 250
+          },
+          "aDate": {
+            "type": "string",
+            "description": "Date when the contract was created",
+            "format": "date-time"
+          },
+          "cDate": {
+            "type": "string",
+            "description": "Date when contract was Accepted/Filled/Canceled (date of last status change)",
+            "format": "date-time",
+            "nullable": true
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PTradeContractStateModel"
+              }
+            ],
+            "description": "Current fulfillability state; null if not applicable",
+            "nullable": true
+          },
+          "fLimit": {
+            "type": "integer",
+            "description": "How many times the recurring contract can be fulfilled in a day (null if not a recurring contract)",
+            "format": "int32",
+            "nullable": true
+          },
+          "ftotal": {
+            "type": "integer",
+            "description": "How many times was this contract fulfilled in total.",
+            "format": "int32"
+          },
+          "fToday": {
+            "type": "integer",
+            "description": "How many times was the recurring contract fulfilled today (null if not a recurring contract)",
+            "format": "int32",
+            "nullable": true
+          },
+          "expires": {
+            "type": "string",
+            "description": "For recurring contracts, the date until which the contract is active.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PTradeContractStateModel": {
+        "type": "object",
+        "properties": {
+          "hasSpace": {
+            "type": "boolean",
+            "description": "Whether buyer has enough warehouse space",
+            "default": true
+          },
+          "hasMat": {
+            "type": "boolean",
+            "description": "Whether seller has enough materials",
+            "default": true
+          },
+          "hasCredits": {
+            "type": "boolean",
+            "description": "Whether buyer has enough credits",
+            "default": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PWarehouseModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "type": {
+            "enum": [
+              "0 = Unknown",
+              "1 = Base",
+              "2 = Ship",
+              "3 = Exchange"
+            ],
+            "type": "integer",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PWarehouseType"
+              }
+            ],
+            "format": "int32",
+            "default": 1
+          },
+          "holderId": {
+            "type": "integer",
+            "description": "Entity ID holding this warehouse: Base.Id when Type=1, Ship.Id when Type=2, otherwise 0",
+            "format": "int32"
+          },
+          "cap": {
+            "type": "number",
+            "description": "Warehouse capacity in tonnes",
+            "format": "float",
+            "default": 5000
+          },
+          "mats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PMaterialAmountModel"
+            },
+            "description": "Materials stored in this warehouse"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PWarehouseType": {
+        "enum": [
+          "0 = Unknown",
+          "1 = Base",
+          "2 = Ship",
+          "3 = Exchange"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "PWishlistModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "0= new wishlist, otherwise the wishlist id;\n 1-10 000 000= planet ID;\n 50 000 001+= custom wishlist",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "description": "Wishlist title, null for planet wishlists",
+            "default": "Wishlist",
+            "nullable": true
+          },
+          "mats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PMaterialAmountModel"
+            },
+            "description": "Materials in the wishlist"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ShipFTLType": {
+        "enum": [
+          "0 = Undefined",
+          "1 = Basic",
+          "2 = AdvancedShortRange",
+          "3 = AdvancedEfficient",
+          "4 = AdvancedLongRange",
+          "5 = SuperiorShortRange",
+          "6 = SuperiorEfficient",
+          "7 = SuperiorLongRange"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "ShipHeatShieldingType": {
+        "enum": [
+          "0 = Undefined",
+          "1 = None",
+          "2 = Light",
+          "3 = Heavy"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "ShipHullType": {
+        "enum": [
+          "0 = Undefined",
+          "1 = Basic",
+          "2 = Lightweight",
+          "3 = AdvancedLightweight"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "ShipRadiationShieldingType": {
+        "enum": [
+          "0 = Undefined",
+          "1 = None",
+          "2 = Light",
+          "3 = Heavy"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "ShipReactorType": {
+        "enum": [
+          "0 = Undefined",
+          "1 = HydrogenGenerator",
+          "2 = Fission",
+          "3 = Antimatter"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "ShipTankSizeType": {
+        "enum": [
+          "0 = Undefined",
+          "1 = Small",
+          "2 = Medium",
+          "3 = Large"
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "SpecializationEnum": {
+        "enum": [
+          "0 = Undefined",
+          "1 = Construction",
+          "2 = Manufacturing",
+          "3 = Agriculture",
+          "4 = ResourceExtraction",
+          "5 = Metallurgy",
+          "6 = Chemistry",
+          "7 = Electronics",
+          "8 = FoodProduction",
+          "10 = Science"
+        ],
+        "type": "integer",
+        "format": "int32"
+      }
+    },
+    "securitySchemes": {
+      "ApiKey": {
+        "type": "apiKey",
+        "description": "Enter your API key",
+        "name": "apikey",
+        "in": "query"
+      },
+      "Bearer": {
+        "type": "http",
+        "description": "Enter your API key as a bearer token",
+        "scheme": "bearer",
+        "bearerFormat": "API Key"
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKey": [ ]
+    },
+    {
+      "Bearer": [ ]
+    }
+  ]
+}
