@@ -784,36 +784,86 @@
   .cheat-sheet-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.75);
     z-index: 2000;
     display: flex;
     align-items: center;
     justify-content: center;
+    backdrop-filter: blur(4px);
   }
   .cheat-sheet-box {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
-    min-width: 260px;
+    background: #0a0f1a;
+    border: 1px solid #1a2a4a;
+    border-radius: 8px;
+    padding: 20px;
+    min-width: 320px;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
   }
-  .cheat-sheet-title {
-    font-size: 15px;
+  .cheat-sheet-section {
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .cheat-sheet-section:last-child { border-bottom: none; }
+  
+  .cheat-sheet-summary {
+    list-style: none;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
     font-weight: 600;
-    color: var(--text-bright);
-    margin-bottom: 16px;
+    color: #00e896;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    outline: none;
+    transition: color 0.2s;
   }
-  .cheat-table { width: 100%; border-collapse: collapse; }
-  .cheat-table td { padding: 5px 8px; font-size: 13px; color: var(--text); }
-  .cheat-table td:first-child { width: 50px; }
+  .cheat-sheet-summary:hover { color: #5b8af5; }
+  .cheat-sheet-summary::-webkit-details-marker { display: none; }
+  
+  .cheat-sheet-summary::before {
+    content: '[+]';
+    color: #4a6080;
+    font-size: 10px;
+    width: 20px;
+  }
+  details[open] .cheat-sheet-summary::before {
+    content: '[-]';
+  }
+  
+  .cheat-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-bottom: 12px;
+    margin-left: 20px;
+    width: calc(100% - 20px);
+  }
+  .cheat-table td { 
+    padding: 4px 8px; 
+    font-size: 12px; 
+    color: #8aaad8; 
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .cheat-table td:first-child { 
+    width: 60px; 
+    font-weight: bold;
+    color: #5b8af5;
+  }
   kbd {
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 2px 7px;
-    font-size: 12px;
-    color: var(--text-bright);
-    font-family: monospace;
+    background: #162236;
+    border: 1px solid #2a4a7a;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 10px;
+    color: #00e896;
+    font-family: 'JetBrains Mono', monospace;
+    box-shadow: 0 2px 0 #0e1a2e;
   }
 
   /* ─── RATE LIMIT BANNER ─── */
@@ -1012,6 +1062,422 @@
     .header-controls { gap: 5px; }
     .btn-sm { padding: 6px 8px; }
   }
+
+  /* ─── OPPORTUNITY BANNER ─── */
+  .opportunity-banner {
+    background: linear-gradient(135deg, #090d1a 0%, #060a14 100%);
+    border: 1px solid #1a2a4a;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+  .opportunity-banner::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 3px,
+      rgba(0,200,120,0.012) 3px, rgba(0,200,120,0.012) 4px
+    );
+    pointer-events: none;
+  }
+  .opportunity-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 14px;
+    border-bottom: 1px solid #1a2a4a;
+    background: rgba(0,0,0,0.35);
+  }
+  .opportunity-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .opportunity-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #00e896;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    font-weight: 600;
+  }
+  .opportunity-live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #00e896;
+    box-shadow: 0 0 6px #00e896;
+    animation: opp-pulse 2s ease-in-out infinite;
+  }
+  @keyframes opp-pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .opportunity-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .opportunity-controls select {
+    background: #080c18;
+    border: 1px solid #1a2a4a;
+    color: #5070a0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .opportunity-controls select:hover { border-color: #2a4a7a; color: #7090c0; }
+  .opportunity-cards {
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px;
+    position: relative;
+    z-index: 1;
+  }
+  .opportunity-card {
+    flex: 1;
+    background: rgba(5, 12, 28, 0.8);
+    border: 1px solid #162236;
+    border-radius: 6px;
+    padding: 10px 12px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    min-width: 0;
+  }
+  .opportunity-card:hover {
+    border-color: #00e896;
+    box-shadow: 0 0 20px rgba(0, 232, 150, 0.12);
+  }
+  .opp-top-strip {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .opp-top-strip.rank-1 { background: linear-gradient(90deg, transparent, #00e896 40%, #00e896 60%, transparent); }
+  .opp-top-strip.rank-2 { background: linear-gradient(90deg, transparent, #5b8af5 40%, #5b8af5 60%, transparent); }
+  .opp-top-strip.rank-3 { background: linear-gradient(90deg, transparent, #f5a623 40%, #f5a623 60%, transparent); }
+  .opp-rank-badge {
+    position: absolute;
+    top: 7px; right: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #1e2d4a;
+    letter-spacing: 0.5px;
+  }
+  .opp-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #8aaad8;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 24px;
+  }
+  .opp-metric {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 2px;
+    letter-spacing: -0.5px;
+  }
+  .opp-metric.opp-green { color: #00e896; text-shadow: 0 0 12px rgba(0,232,150,0.4); }
+  .opp-metric.opp-blue  { color: #5b8af5; text-shadow: 0 0 12px rgba(91,138,245,0.4); }
+  .opp-metric.opp-warn  { color: #f5a623; text-shadow: 0 0 12px rgba(245,166,35,0.4); }
+  .opp-metric.opp-dim   { color: #4a6080; }
+  .opp-metric-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #5a7898;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .opp-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 10px;
+    margin-top: 6px;
+    border-top: 1px solid #0e1a2e;
+    padding-top: 6px;
+  }
+  .opp-stat { display: flex; flex-direction: column; }
+  .opp-stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: #4a6080;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .opp-stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #7090c8;
+  }
+  .opp-owned-badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: rgba(0,232,150,0.08);
+    border: 1px solid rgba(0,232,150,0.2);
+    color: #00e896;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+  .opp-no-data {
+    flex: 1;
+    text-align: center;
+    padding: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #4a6080;
+  }
+  .opportunity-banner-toggle {
+    background: none;
+    border: 1px solid #1a2a4a;
+    color: #4a6a9a;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .opportunity-banner-toggle:hover { border-color: #00e896; color: #00e896; }
+
+  /* ─── SMART MODE: 2-COLUMN CARD WITH BAR CHART ─── */
+  .opportunity-card.has-breakdown {
+    padding: 0;
+    overflow: hidden;
+  }
+  .opp-card-inner {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    padding: 10px 10px 10px 12px;
+    gap: 10px;
+  }
+  .opp-card-left {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .opp-card-left .opp-name { padding-right: 0; }
+  .opp-card-left .opp-metric { font-size: 22px; }
+  /* Chart area — takes up right portion */
+  .opp-chart-area {
+    width: 96px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid rgba(255,255,255,0.05);
+    padding-left: 10px;
+  }
+  .opp-chart-rank {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #3a5878;
+    text-align: right;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+  .opp-chart-bars {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    gap: 7px;
+    position: relative;
+    /* subtle grid lines */
+  }
+  .opp-chart-bars::before,
+  .opp-chart-bars::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    border-top: 1px solid rgba(255,255,255,0.035);
+    pointer-events: none;
+  }
+  .opp-chart-bars::before { top: 0; }
+  .opp-chart-bars::after  { top: 50%; }
+  .opp-chart-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    gap: 3px;
+  }
+  .opp-chart-cval {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: #6888b8;
+    white-space: nowrap;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .opp-chart-track {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: flex-end; /* bar grows from bottom */
+    background: rgba(255,255,255,0.03);
+    border-radius: 3px 3px 0 0;
+    overflow: hidden;
+  }
+  .opp-chart-fill {
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    transition: height 0.65s cubic-bezier(0.34, 1.3, 0.64, 1);
+    min-height: 2px;
+  }
+  .opp-chart-fill.roi {
+    background: linear-gradient(180deg, #00e896 0%, #006040 100%);
+    box-shadow: 0 -3px 10px rgba(0,232,150,0.35);
+  }
+  .opp-chart-fill.dmd {
+    background: linear-gradient(180deg, #5b8af5 0%, #1a2870 100%);
+    box-shadow: 0 -3px 10px rgba(91,138,245,0.35);
+  }
+  .opp-chart-fill.tch-good {
+    background: linear-gradient(180deg, #00e896 0%, #003a28 100%);
+    box-shadow: 0 -3px 8px rgba(0,232,150,0.2);
+  }
+  .opp-chart-fill.tch-ok {
+    background: linear-gradient(180deg, #5b8af5 0%, #0f1a50 100%);
+    box-shadow: 0 -3px 8px rgba(91,138,245,0.2);
+  }
+  .opp-chart-fill.tch-high {
+    background: linear-gradient(180deg, #f5a623 0%, #5a2a00 100%);
+    box-shadow: 0 -3px 8px rgba(245,166,35,0.3);
+  }
+  .opp-chart-fill.avg {
+    background: linear-gradient(180deg, #f5a623 0%, #5a3000 100%);
+    box-shadow: 0 -3px 8px rgba(245,166,35,0.25);
+    opacity: 0.7;
+  }
+  .opp-chart-fill.cur {
+    background: linear-gradient(180deg, #00e896 0%, #005530 100%);
+    box-shadow: 0 -3px 10px rgba(0,232,150,0.4);
+  }
+  .opp-chart-fill.earn {
+    background: linear-gradient(180deg, #00e896 0%, #003a25 100%);
+    box-shadow: 0 -3px 10px rgba(0,232,150,0.35);
+  }
+  .opp-chart-fill.cost {
+    background: linear-gradient(180deg, #f5a623 0%, #4a2000 100%);
+    box-shadow: 0 -3px 8px rgba(245,166,35,0.3);
+    opacity: 0.75;
+  }
+  .opp-chart-fill.bldg {
+    background: linear-gradient(180deg, #a78bfa 0%, #3a1a70 100%);
+    box-shadow: 0 -3px 8px rgba(167,139,250,0.3);
+  }
+  .opp-chart-fill.takt {
+    background: linear-gradient(180deg, #5b8af5 0%, #0f1a60 100%);
+    box-shadow: 0 -3px 8px rgba(91,138,245,0.3);
+  }
+  .opp-chart-clbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px;
+    color: #4a6888;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    flex-shrink: 0;
+  }
+
+  /* ─── HOT / EXTREME CARD ANIMATIONS ─── */
+  @keyframes opp-hot-pulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(0,232,150,0.08); border-color: #162230; }
+    50%       { box-shadow: 0 0 18px rgba(0,232,150,0.28); border-color: #009960; }
+  }
+  @keyframes opp-extreme-pulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(245,166,35,0.2); border-color: #4a2e00; }
+    50%       { box-shadow: 0 0 24px rgba(255,200,60,0.45); border-color: #c87800; }
+  }
+  .opportunity-card.opp-hot {
+    animation: opp-hot-pulse 3.5s ease-in-out infinite;
+  }
+  .opportunity-card.opp-extreme {
+    animation: opp-extreme-pulse 3s ease-in-out infinite;
+  }
+  .opportunity-card.opp-extreme .opp-metric {
+    color: #ffb020 !important;
+    text-shadow: 0 0 10px rgba(255,180,32,0.45) !important;
+  }
+  .opportunity-card.opp-extreme .opp-top-strip {
+    background: linear-gradient(90deg, transparent, #c87800 30%, #ffa020 50%, #c87800 70%, transparent) !important;
+    height: 2px;
+  }
+  .opp-extreme-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px;
+    padding: 1px 4px;
+    border-radius: 2px;
+    background: rgba(255,180,32,0.07);
+    border: 1px solid rgba(255,180,32,0.2);
+    color: #c87800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 4px;
+  }
+  /* ─── VOLATILITY BADGE ─── */
+  .opp-vol-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    margin-top: 5px;
+  }
+  .opp-vol-label { color: #3a5070; text-transform: uppercase; letter-spacing: 0.5px; }
+  .opp-vol-bar {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+  }
+  .opp-vol-seg {
+    width: 4px;
+    border-radius: 1px;
+    opacity: 0.35;
+  }
+  .opp-vol-seg.active { opacity: 1; }
+  .opp-vol-seg.s1 { height: 5px; }
+  .opp-vol-seg.s2 { height: 8px; }
+  .opp-vol-seg.s3 { height: 11px; }
+  .opp-vol-text { font-size: 8px; letter-spacing: 0.3px; }
+  .opp-vol-stable .opp-vol-seg.active { background: #00a060; }
+  .opp-vol-stable .opp-vol-text { color: #007040; }
+  .opp-vol-mod    .opp-vol-seg.active { background: #c87800; }
+  .opp-vol-mod    .opp-vol-text { color: #a06000; }
+  .opp-vol-high   .opp-vol-seg.active { background: #d04040; }
+  .opp-vol-high   .opp-vol-text { color: #a03030; }
+
+  /* ─── OPPORTUNITY BANNER — MOBILE ─── */
+  @media (max-width: 600px) {
+    .opportunity-header { flex-wrap: wrap; gap: 6px; }
+    .opportunity-controls { flex-wrap: wrap; gap: 5px; }
+    .opportunity-controls select { font-size: 11px; max-width: 160px; }
+    .opportunity-cards { flex-direction: column; gap: 8px; }
+    .opp-metric { font-size: 20px; }
+    .opp-stats { grid-template-columns: 1fr 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -1204,6 +1670,33 @@
       </div>
     </div>
 
+    <!-- OPPORTUNITY BANNER -->
+    <div id="opportunityBanner" class="opportunity-banner">
+      <div class="opportunity-header">
+        <div class="opportunity-header-left">
+          <div class="opportunity-live-dot"></div>
+          <span class="opportunity-title">⚡ Markt-Chancen</span>
+        </div>
+        <div class="opportunity-controls">
+          <select id="opportunitySort" onchange="renderOpportunityBanner()">
+            <option value="smart">⭐ Smart Score (ROI × Nachfrage)</option>
+            <option value="roi">Top 3 ROI (Marktweit)</option>
+            <option value="profit_bld">Top 3 Profit ($/Tag/Gebäude)</option>
+            <option value="profit_owned">Top 3 Mein Profit ($/Tag Gesamt)</option>
+            <option value="discount">Top 3 Rohstoff-Deals (vs. Ø)</option>
+          </select>
+          <select id="buildingFilter" onchange="renderOpportunityBanner()">
+            <option value="all">Alle Gebäude</option>
+            <option value="owned">Nur meine Gebäude</option>
+          </select>
+          <button class="opportunity-banner-toggle" id="oppBannerToggle" onclick="toggleOpportunityBanner()" title="Banner ein-/ausklappen">▲</button>
+        </div>
+      </div>
+      <div id="opportunityCards" class="opportunity-cards">
+        <div class="opp-no-data">Warte auf Marktdaten…</div>
+      </div>
+    </div>
+
     <div class="card" style="padding:0; overflow-x:auto;">
       <table class="monitor-table">
         <thead>
@@ -1269,6 +1762,10 @@ const STATE = {
   companyCash: null,       // Aktuelles Vermögen in Cent
   showReserve: false,      // Reserve-Zeit-Spalte ein-/ausgeblendet
   gameData: null,          // gecachte gamedata.json (Rezepte, Buildings)
+  ownedBuildings: {},       // { building.type: count } — aus fetchBaseData oder fetchOwnedBuildings
+  ownedBuildingsLoaded: false, // true sobald Bases-API einmal abgerufen wurde
+  showOpportunityBanner: true,
+  lastOpportunityAlert: 0, // ms-Timestamp — Cooldown für Extreme-Chance-Alarm
   baseTimer: null,
   prices: [],
   running: false,
@@ -1985,6 +2482,11 @@ function showContextMenu(matId, x, y) {
     html += `</div>`;
   }
 
+  // Produktions-Details
+  html += `<div class="ctx-section">
+    <div class="ctx-item" onclick="showProductionDetails(${matId});hideContextMenu()">📊 Produktions-Details</div>
+  </div>`;
+
   const menu = document.getElementById('contextMenu');
   menu.innerHTML = html;
   menu.style.display = 'block';
@@ -2281,6 +2783,7 @@ async function fetchPrices() {
     storeSnapshot();
     try { localStorage.setItem('gt_last_prices', JSON.stringify({ ts: Date.now(), prices: STATE.prices })); } catch(_) {}
     renderTable();
+    renderOpportunityBanner();
   } catch(e) {
     if (e.message !== 'RATE_LIMITED') {
       toast('Preisabruf fehlgeschlagen: ' + e.message, 'warn');
@@ -2332,6 +2835,479 @@ async function loadGameData() {
   const r = await fetch('https://api.g2.galactictycoons.com/gamedata.json');
   STATE.gameData = await r.json();
   return STATE.gameData;
+}
+
+// Lädt Gebäude-Typen aus der Bases-API (unabhängig vom Reserve-Toggle)
+async function fetchOwnedBuildings() {
+  if (!STATE.running) return;
+  if (STATE.ownedBuildingsLoaded) return; // fetchBaseData hat das bereits erledigt
+  if (STATE.showReserve) return;          // fetchBaseData läuft sowieso
+  try {
+    const [data] = await Promise.all([apiFetch('/public/company/bases')]);
+    const baseList = Array.isArray(data) ? data : (data.bases || data.data || []);
+    const bldCount = {};
+    baseList.forEach(base => {
+      (base.buildingSlots || []).forEach(slot => {
+        const bld = slot.building;
+        if (!bld || bld.type == null) return;
+        bldCount[bld.type] = (bldCount[bld.type] || 0) + 1;
+      });
+    });
+    STATE.ownedBuildings = bldCount;
+    STATE.ownedBuildingsLoaded = true;
+    renderOpportunityBanner();
+  } catch(e) {
+    if (e.message !== 'RATE_LIMITED') toast('Gebäude-Daten: ' + e.message, 'warn');
+  }
+}
+
+// ─── OPPORTUNITY BANNER ENGINE ───
+function _oppPriceMap() {
+  const map = {};
+  STATE.prices.forEach(p => { map[p.matId] = p; });
+  return map;
+}
+
+function _oppProductionCost(matId, gd, priceMap) {
+  const recipe = (gd.recipes || []).find(r => r.output?.id === matId);
+  if (!recipe) {
+    // Rohstoff: historischer Durchschnittspreis als Baseline
+    const p = priceMap[matId];
+    return (p?.avgPrice > 0) ? p.avgPrice : null;
+  }
+  let cost = 0;
+  for (const inp of (recipe.inputs || [])) {
+    const ip = priceMap[inp.id];
+    if (!ip?.currentPrice) return null;
+    cost += ip.currentPrice * inp.am;
+  }
+  return (recipe.output.am > 0) ? cost / recipe.output.am : null;
+}
+
+function _oppProfitPerDayPerBuilding(matId, gd, priceMap) {
+  const recipe = (gd.recipes || []).find(r => r.output?.id === matId);
+  if (!recipe || !recipe.timeMinutes) return null;
+  const p = priceMap[matId];
+  if (!p?.currentPrice) return null;
+  let inputCost = 0;
+  for (const inp of (recipe.inputs || [])) {
+    const ip = priceMap[inp.id];
+    if (!ip?.currentPrice) return null;
+    inputCost += ip.currentPrice * inp.am;
+  }
+  const outputAm = recipe.output.am || 1;
+  const profitBatch = (p.currentPrice * outputAm) - inputCost;
+  const batchesPerDay = (24 * 60) / recipe.timeMinutes;
+  return profitBatch * batchesPerDay;
+}
+
+// Coefficient of variation of price over last 24h from priceHistory
+// Returns { cv, level } where level = 'stable'|'mod'|'high', or null if no data
+function _oppVolatility(matId) {
+  const entries = STATE.priceHistory[matId];
+  if (!entries || entries.length < 4) return null;
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const recent = entries.filter(e => e[0] >= cutoff).map(e => e[1]);
+  if (recent.length < 4) return null;
+  const mean = recent.reduce((s, v) => s + v, 0) / recent.length;
+  if (mean <= 0) return null;
+  const variance = recent.reduce((s, v) => s + (v - mean) ** 2, 0) / recent.length;
+  const cv = Math.sqrt(variance) / mean * 100; // coefficient of variation in %
+  const level = cv < 5 ? 'stable' : cv < 15 ? 'mod' : 'high';
+  return { cv, level };
+}
+
+// Render a small signal-strength-style volatility badge
+function _oppVolBadgeHtml(matId) {
+  const vol = _oppVolatility(matId);
+  if (!vol) return '';
+  const segs = vol.level === 'stable' ? 1 : vol.level === 'mod' ? 2 : 3;
+  const label = vol.level === 'stable' ? 'STABIL' : vol.level === 'mod' ? 'MOD' : 'VOLATIL';
+  const bars = [1,2,3].map(n =>
+    `<div class="opp-vol-seg s${n}${n <= segs ? ' active' : ''}"></div>`
+  ).join('');
+  return `<div class="opp-vol-badge opp-vol-${vol.level}">
+    <span class="opp-vol-label">VOL</span>
+    <div class="opp-vol-bar">${bars}</div>
+    <span class="opp-vol-text">${label}</span>
+  </div>`;
+}
+
+async function renderOpportunityBanner() {
+  const banner = document.getElementById('opportunityBanner');
+  const cardsEl = document.getElementById('opportunityCards');
+  if (!banner || !cardsEl) return;
+
+  if (!STATE.showOpportunityBanner) {
+    cardsEl.style.display = 'none';
+    return;
+  }
+  cardsEl.style.display = '';
+
+  if (!STATE.prices.length) {
+    cardsEl.innerHTML = '<div class="opp-no-data">Warte auf Marktdaten…</div>';
+    return;
+  }
+
+  let gd;
+  try { gd = await loadGameData(); } catch(_) {
+    cardsEl.innerHTML = '<div class="opp-no-data">Gamedata nicht verfügbar</div>';
+    return;
+  }
+
+  const sortMode = document.getElementById('opportunitySort')?.value || 'smart';
+  // "profit_owned" implicitly filters to owned buildings — hide redundant building filter
+  const bldFilterEl = document.getElementById('buildingFilter');
+  if (bldFilterEl) bldFilterEl.style.display = sortMode === 'profit_owned' ? 'none' : '';
+  const bldFilter = (sortMode === 'profit_owned') ? 'all' : (bldFilterEl?.value || 'all');
+  const priceMap = _oppPriceMap();
+
+  // Lazy-load Gebäudedaten wenn "owned" Filter oder profit_owned Sort gewählt
+  const needsOwnedBuildings = bldFilter === 'owned' || sortMode === 'profit_owned';
+  if (needsOwnedBuildings && !STATE.ownedBuildingsLoaded && STATE.running) {
+    cardsEl.innerHTML = '<div class="opp-no-data">⏳ Lade Gebäude… (20 API-Pts)</div>';
+    fetchOwnedBuildings(); // async, ruft renderOpportunityBanner() nochmal auf wenn fertig
+    return;
+  }
+
+  // Rezept-Lookup: matId → recipe
+  const recipeByOutput = {};
+  (gd.recipes || []).forEach(r => { if (r.output?.id != null) recipeByOutput[r.output.id] = r; });
+
+  // Smart Score: ROI × Nachfrage × Zugänglichkeit
+  // demandFactor: log(Verkäufe/Tag) wenn matDetails vorhanden, sonst Preis-vs-Ø als Proxy
+  // accessFactor: 1 / (1 + reqTech × 0.1) — hohes Forschungstier = kleinere Käuferschicht
+  const hasMatDetails = Object.keys(STATE.matDetails).length > 0;
+  function _oppSmartScore(matId, roi, recipe, p) {
+    if (roi === null) return null;
+    const d = STATE.matDetails[matId];
+    let demandFactor, demandLabel, demandRaw;
+    if (d && d.avgQtySoldDaily > 0) {
+      demandRaw = d.avgQtySoldDaily;
+      demandFactor = Math.log1p(demandRaw); // log-scale: 10/d≈2.4, 100/d≈4.6, 1000/d≈6.9
+      demandLabel = demandRaw >= 1000 ? (demandRaw / 1000).toFixed(1) + 'k/d'
+                  : demandRaw >= 100  ? Math.round(demandRaw) + '/d'
+                  : demandRaw.toFixed(1) + '/d';
+    } else {
+      const avgP = p.avgPrice || p.currentPrice;
+      demandFactor = avgP > 0 ? Math.max(0.3, p.currentPrice / avgP) : 1;
+      demandRaw = null;
+      demandLabel = '~' + demandFactor.toFixed(2) + 'x';
+    }
+    const reqTech = recipe?.reqTech || 0;
+    const accessFactor = 1 / (1 + reqTech * 0.1);
+    const score = roi * demandFactor * accessFactor;
+    return { score, demandFactor, demandLabel, demandRaw, accessFactor, reqTech };
+  }
+
+  let candidates;
+
+  if (sortMode === 'discount') {
+    candidates = STATE.prices
+      .filter(p => p.currentPrice > 0 && p.avgPrice > 0 && p.currentPrice < p.avgPrice)
+      .map(p => {
+        const discount = ((p.avgPrice - p.currentPrice) / p.avgPrice) * 100;
+        const recipe = recipeByOutput[p.matId];
+        return { p, recipe, discount, cost: p.avgPrice, roi: null, score: null, profitBld: null, profitOwned: null, ownedCount: 0 };
+      });
+
+    if (bldFilter === 'owned') {
+      const ownedBldIds = new Set(Object.keys(STATE.ownedBuildings).map(Number));
+      candidates = candidates.filter(c =>
+        (gd.recipes || []).some(r => ownedBldIds.has(r.producedIn) && (r.inputs || []).some(i => i.id === c.p.matId))
+      );
+    }
+    candidates.sort((a, b) => b.discount - a.discount);
+  } else {
+    candidates = STATE.prices
+      .filter(p => p.currentPrice > 0)
+      .map(p => {
+        const recipe = recipeByOutput[p.matId];
+        const cost = _oppProductionCost(p.matId, gd, priceMap);
+        const roi = (cost && cost > 0) ? ((p.currentPrice - cost) / cost) * 100 : null;
+        const sm = _oppSmartScore(p.matId, roi, recipe, p);
+        const score = sm?.score ?? null;
+        const demandFactor   = sm?.demandFactor   ?? 1;
+        const demandLabel    = sm?.demandLabel    ?? null;
+        const accessFactor   = sm?.accessFactor   ?? 1;
+        const reqTech        = sm?.reqTech        ?? (recipe?.reqTech || 0);
+        const profitBld = _oppProfitPerDayPerBuilding(p.matId, gd, priceMap);
+        const producedIn = recipe?.producedIn;
+        const ownedCount = (producedIn != null) ? (STATE.ownedBuildings[producedIn] || 0) : 0;
+        const profitOwned = (profitBld !== null && ownedCount > 0) ? profitBld * ownedCount : null;
+        return { p, recipe, cost, roi, score, demandFactor, demandLabel, accessFactor, reqTech, profitBld, profitOwned, ownedCount, producedIn, discount: null };
+      });
+
+    if (bldFilter === 'owned') candidates = candidates.filter(c => c.ownedCount > 0);
+
+    if (sortMode === 'smart')      candidates = candidates.filter(c => c.score !== null && c.recipe).sort((a, b) => b.score - a.score);
+    else if (sortMode === 'roi')   candidates = candidates.filter(c => c.roi !== null && c.recipe).sort((a, b) => b.roi - a.roi);
+    else if (sortMode === 'profit_bld')   candidates = candidates.filter(c => c.profitBld !== null).sort((a, b) => b.profitBld - a.profitBld);
+    else if (sortMode === 'profit_owned') candidates = candidates.filter(c => c.profitOwned !== null).sort((a, b) => b.profitOwned - a.profitOwned);
+  }
+
+  const top3 = candidates.slice(0, 3);
+
+  if (!top3.length) {
+    const emptyMsg = (bldFilter === 'owned' && Object.keys(STATE.ownedBuildings).length === 0)
+      ? 'Keine Gebäude gefunden — Reserve-Toggle aktivieren für vollständige Basisdaten'
+      : (sortMode === 'profit_owned' && Object.keys(STATE.ownedBuildings).length === 0)
+      ? 'Keine eigenen Gebäude — Bases-Daten noch nicht geladen'
+      : 'Keine Ergebnisse für diese Filterung';
+    cardsEl.innerHTML = `<div class="opp-no-data">${emptyMsg}</div>`;
+    return;
+  }
+
+  // Hot/Extreme: relativ (Perzentil der aktuellen Kandidaten) mit absolutem Mindest-Floor
+  // → verhindert, dass in einer Welt wo alle ROIs 400%+ sind alles "extreme" ist
+  const _metricOf = c => (sortMode === 'roi' || sortMode === 'smart') ? c.roi
+                        : sortMode === 'discount' ? c.discount
+                        : sortMode === 'profit_bld' ? c.profitBld : c.profitOwned;
+  const allMetrics = candidates.map(_metricOf).filter(v => v != null).sort((a, b) => a - b);
+  const pct = (q) => allMetrics[Math.max(0, Math.floor(allMetrics.length * q) - 1)] ?? Infinity;
+  const p80 = pct(0.80), p95 = pct(0.95);
+  // Absolute Böden: nur flaggen wenn überhaupt bedeutsam
+  const floorHot     = sortMode === 'discount' ? 10 : sortMode === 'roi' || sortMode === 'smart' ? 30 : 0;
+  const floorExtreme = sortMode === 'discount' ? 20 : sortMode === 'roi' || sortMode === 'smart' ? 60 : 0;
+
+  function _oppHotLevel(c) {
+    const v = _metricOf(c);
+    if (v == null) return '';
+    if (v >= Math.max(floorExtreme, p95)) return 'extreme';
+    if (v >= Math.max(floorHot,     p80)) return 'hot';
+    return '';
+  }
+
+  // Fire alarm for extreme top-1 opportunity (5 min cooldown)
+  const OPP_ALERT_COOLDOWN_MS = 5 * 60 * 1000;
+  const top1Level = _oppHotLevel(top3[0]);
+  if (top1Level === 'extreme' && STATE.running &&
+      Date.now() - STATE.lastOpportunityAlert > OPP_ALERT_COOLDOWN_MS) {
+    STATE.lastOpportunityAlert = Date.now();
+    const c = top3[0];
+    const label = (sortMode === 'roi' || sortMode === 'smart')
+      ? `ROI +${c.roi.toFixed(0)}%`
+      : sortMode === 'discount' ? `−${c.discount.toFixed(0)}% unter Ø`
+      : `+${formatNum(Math.round(c.profitBld ?? 0))} $/Tag`;
+    toast(`⚡ Extreme Chance: ${esc(c.p.matName)} — ${label}`, 'alarm');
+    playAlarmSound();
+  }
+
+  // Hint wenn Smart-Mode aber keine matDetails geladen
+  const smartHint = (sortMode === 'smart' && !hasMatDetails)
+    ? `<div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#2a3d5a;padding:0 14px 8px;z-index:1;position:relative">
+        ⚠ Mat-Details nicht geladen — Nachfrage-Gewichtung nutzt Preis-Proxy statt echter Verkaufszahlen
+      </div>`
+    : '';
+
+  cardsEl.innerHTML = smartHint + top3.map((c, i) => {
+    const { p, roi, score, profitBld, profitOwned, ownedCount, discount } = c;
+    const hotLevel = _oppHotLevel(c);
+    let metricVal, metricLabel, metricClass;
+
+    if (sortMode === 'smart') {
+      metricVal = roi != null ? (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%' : 'N/A';
+      metricLabel = 'ROI (gewichtet)';
+      metricClass = (roi >= 0) ? 'opp-green' : 'opp-dim';
+    } else if (sortMode === 'roi') {
+      metricVal = roi != null ? (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%' : 'N/A';
+      metricLabel = 'ROI';
+      metricClass = (roi >= 0) ? 'opp-green' : 'opp-dim';
+    } else if (sortMode === 'profit_bld') {
+      metricVal = profitBld != null ? (profitBld >= 0 ? '+' : '') + formatNum(Math.round(profitBld)) : 'N/A';
+      metricLabel = '$/Tag/Gebäude';
+      metricClass = (profitBld >= 0) ? 'opp-green' : 'opp-dim';
+    } else if (sortMode === 'profit_owned') {
+      metricVal = profitOwned != null ? (profitOwned >= 0 ? '+' : '') + formatNum(Math.round(profitOwned)) : 'N/A';
+      metricLabel = '$/Tag Gesamt';
+      metricClass = (profitOwned >= 0) ? 'opp-green' : 'opp-dim';
+    } else {
+      metricVal = discount != null ? '+' + discount.toFixed(1) + '%' : 'N/A';
+      metricLabel = 'Rabatt vs. Ø';
+      metricClass = 'opp-green';
+    }
+
+    const costStr = (c.cost != null) ? formatNum(Math.round(c.cost)) : '—';
+    const currentStr = formatNum(p.currentPrice);
+
+    let stat2Label, stat2Val;
+    if (sortMode === 'profit_bld' || sortMode === 'profit_owned') {
+      stat2Label = '$/Geb/Tag';
+      stat2Val = profitBld != null ? formatNum(Math.round(profitBld)) : '—';
+    } else if (sortMode === 'discount') {
+      stat2Label = 'Ø-Preis';
+      stat2Val = formatNum(p.avgPrice);
+    } else {
+      stat2Label = 'Prod.-Kosten';
+      stat2Val = costStr;
+    }
+
+    const ownedBadge = ownedCount > 0 ? `<div class="opp-owned-badge">⚙ ${ownedCount}× Gebäude</div>` : '';
+    const extremeLabel = hotLevel === 'extreme' ? `<div class="opp-extreme-label">⚡ EXTREME</div>` : '';
+    const cardClass = hotLevel ? ` opp-${hotLevel}` : '';
+
+    // ── Chart bars: mode-specific ──
+    let chartBars = '';
+    if (sortMode === 'smart') {
+      const maxRoi = Math.max(...top3.map(x => Math.abs(x.roi ?? 0)), 1);
+      const maxDmd = Math.max(...top3.map(x => x.demandFactor ?? 0), 0.01);
+      const roiH = Math.max(4, Math.round(((c.roi ?? 0) / maxRoi) * 100));
+      const dmdH = Math.max(4, Math.round(((c.demandFactor ?? 0) / maxDmd) * 100));
+      const tchH = Math.max(4, Math.round((c.accessFactor ?? 1) * 100));
+      const tchCls = c.reqTech === 0 ? 'tch-good' : c.reqTech <= 3 ? 'tch-ok' : 'tch-high';
+      chartBars = `
+        <div class="opp-chart-col">
+          <span class="opp-chart-cval">${(c.roi ?? 0) >= 0 ? '+' : ''}${Math.round(c.roi ?? 0)}%</span>
+          <div class="opp-chart-track"><div class="opp-chart-fill roi" style="height:${roiH}%"></div></div>
+          <span class="opp-chart-clbl">ROI</span>
+        </div>
+        <div class="opp-chart-col">
+          <span class="opp-chart-cval">${c.demandLabel ?? '~'}</span>
+          <div class="opp-chart-track"><div class="opp-chart-fill dmd" style="height:${dmdH}%"></div></div>
+          <span class="opp-chart-clbl">DMD</span>
+        </div>
+        <div class="opp-chart-col">
+          <span class="opp-chart-cval">${c.reqTech > 0 ? 'L' + c.reqTech : 'L0'}</span>
+          <div class="opp-chart-track"><div class="opp-chart-fill ${tchCls}" style="height:${tchH}%"></div></div>
+          <span class="opp-chart-clbl">TCH</span>
+        </div>`;
+    } else if (sortMode === 'roi') {
+      // Sell vs. Production Cost — gap = margin
+      const maxSell = Math.max(...top3.map(x => x.p.currentPrice), 1);
+      const sellH = Math.max(4, Math.round((p.currentPrice / maxSell) * 100));
+      const costH = Math.max(2, Math.round(((c.cost ?? 0) / maxSell) * 100));
+      chartBars = `
+        <div class="opp-chart-col">
+          <span class="opp-chart-cval">${formatNum(Math.round(c.cost ?? 0))}</span>
+          <div class="opp-chart-track"><div class="opp-chart-fill cost" style="height:${costH}%"></div></div>
+          <span class="opp-chart-clbl">COST</span>
+        </div>
+        <div class="opp-chart-col">
+          <span class="opp-chart-cval">${formatNum(p.currentPrice)}</span>
+          <div class="opp-chart-track"><div class="opp-chart-fill earn" style="height:${sellH}%"></div></div>
+          <span class="opp-chart-clbl">SELL</span>
+        </div>`;
+    } else if (sortMode === 'profit_bld') {
+      // Profit/day + Takt (Batches/day)
+      const maxProfit  = Math.max(...top3.map(x => Math.abs(x.profitBld ?? 0)), 1);
+      const batches    = c.recipe?.timeMinutes ? (24 * 60) / c.recipe.timeMinutes : 0;
+      const maxBatches = Math.max(...top3.map(x => x.recipe?.timeMinutes ? (24*60)/x.recipe.timeMinutes : 0), 0.01);
+      const profH  = Math.max(4, Math.round((Math.abs(c.profitBld ?? 0) / maxProfit) * 100));
+      const taktH  = Math.max(4, Math.round((batches / maxBatches) * 100));
+      const taktVal = batches >= 100 ? Math.round(batches) + '/d' : batches >= 1 ? batches.toFixed(1) + '/d' : (batches * 24).toFixed(1) + '/h';
+      chartBars = `
+        <div class="opp-chart-col">
+          <span class="opp-chart-cval">${formatNum(Math.round(c.profitBld ?? 0))}</span>
+          <div class="opp-chart-track"><div class="opp-chart-fill earn" style="height:${profH}%"></div></div>
+          <span class="opp-chart-clbl">EARN</span>
+        </div>
+        <div class="opp-chart-col">
+          <span class="opp-chart-cval">${taktVal}</span>
+          <div class="opp-chart-track"><div class="opp-chart-fill takt" style="height:${taktH}%"></div></div>
+          <span class="opp-chart-clbl">TAKT</span>
+        </div>`;
+    } else if (sortMode === 'profit_owned') {
+      // Total profit + Building count
+      const maxOwn = Math.max(...top3.map(x => Math.abs(x.profitOwned ?? 0)), 1);
+      const maxBld = Math.max(...top3.map(x => x.ownedCount), 1);
+      const ownH = Math.max(4, Math.round((Math.abs(c.profitOwned ?? 0) / maxOwn) * 100));
+      const bldH = Math.max(4, Math.round((c.ownedCount / maxBld) * 100));
+      chartBars = `
+        <div class="opp-chart-col">
+          <span class="opp-chart-cval">${formatNum(Math.round(c.profitOwned ?? 0))}</span>
+          <div class="opp-chart-track"><div class="opp-chart-fill earn" style="height:${ownH}%"></div></div>
+          <span class="opp-chart-clbl">EARN</span>
+        </div>
+        <div class="opp-chart-col">
+          <span class="opp-chart-cval">${c.ownedCount}×</span>
+          <div class="opp-chart-track"><div class="opp-chart-fill bldg" style="height:${bldH}%"></div></div>
+          <span class="opp-chart-clbl">BLDG</span>
+        </div>`;
+    } else if (sortMode === 'discount') {
+      // Avg price (reference) vs current price — gap = saving
+      const maxAvg = Math.max(...top3.map(x => x.p.avgPrice), 1);
+      const avgH = Math.max(8, Math.round((p.avgPrice / maxAvg) * 100));
+      const curH = Math.max(2, Math.round((p.currentPrice / maxAvg) * 100));
+      const saved = p.avgPrice - p.currentPrice;
+      chartBars = `
+        <div class="opp-chart-col">
+          <span class="opp-chart-cval">${formatNum(p.avgPrice)}</span>
+          <div class="opp-chart-track"><div class="opp-chart-fill avg" style="height:${avgH}%"></div></div>
+          <span class="opp-chart-clbl">AVG</span>
+        </div>
+        <div class="opp-chart-col">
+          <span class="opp-chart-cval">${formatNum(p.currentPrice)}</span>
+          <div class="opp-chart-track"><div class="opp-chart-fill cur" style="height:${curH}%"></div></div>
+          <span class="opp-chart-clbl">NOW</span>
+        </div>
+        <div class="opp-chart-col">
+          <span class="opp-chart-cval">-${(c.discount ?? 0).toFixed(0)}%</span>
+          <div class="opp-chart-track"><div class="opp-chart-fill earn" style="height:${Math.min(100, Math.round((c.discount ?? 0)))}%"></div></div>
+          <span class="opp-chart-clbl">SAVE</span>
+        </div>`;
+    }
+
+    const volBadge = _oppVolBadgeHtml(p.matId);
+    return `<div class="opportunity-card has-breakdown${cardClass}" oncontextmenu="event.preventDefault();showContextMenu(${p.matId},event.clientX,event.clientY)">
+      <div class="opp-top-strip rank-${i + 1}"></div>
+      <div class="opp-card-inner">
+        <div class="opp-card-left">
+          ${extremeLabel}
+          <div class="opp-name">${esc(p.matName)}</div>
+          <div class="opp-metric ${metricClass}">${metricVal}</div>
+          <div class="opp-metric-label">${metricLabel}</div>
+          <div class="opp-stats">
+            <div class="opp-stat"><span class="opp-stat-label">Kurs</span><span class="opp-stat-value">${currentStr}</span></div>
+            <div class="opp-stat"><span class="opp-stat-label">${stat2Label}</span><span class="opp-stat-value">${stat2Val}</span></div>
+          </div>
+          ${volBadge}${ownedBadge}
+        </div>
+        <div class="opp-chart-area">
+          <div class="opp-chart-rank">#0${i + 1}</div>
+          <div class="opp-chart-bars">${chartBars}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleOpportunityBanner() {
+  STATE.showOpportunityBanner = !STATE.showOpportunityBanner;
+  const btn = document.getElementById('oppBannerToggle');
+  if (btn) btn.textContent = STATE.showOpportunityBanner ? '▲' : '▼';
+  const cards = document.getElementById('opportunityCards');
+  if (cards) cards.style.display = STATE.showOpportunityBanner ? '' : 'none';
+}
+
+function showProductionDetails(matId) {
+  if (!STATE.gameData) { toast('Gamedata noch nicht geladen', 'warn'); return; }
+  const gd = STATE.gameData;
+  const p = STATE.prices.find(x => x.matId === matId);
+  if (!p) return;
+  const recipe = (gd.recipes || []).find(r => r.output?.id === matId);
+  if (!recipe) {
+    toast(`${esc(p.matName)}: Kein Rezept — Rohstoff`, 'info');
+    return;
+  }
+  const priceMap = _oppPriceMap();
+  const cost = _oppProductionCost(matId, gd, priceMap);
+  const profitBld = _oppProfitPerDayPerBuilding(matId, gd, priceMap);
+  const roi = (cost && cost > 0) ? ((p.currentPrice - cost) / cost) * 100 : null;
+  const inputLines = (recipe.inputs || []).map(inp => {
+    const ip = priceMap[inp.id];
+    const nm = ip?.matName || `#${inp.id}`;
+    return `${inp.am}× ${esc(nm)} @ ${ip ? formatNum(ip.currentPrice) : '?'}`;
+  }).join(' + ');
+  const lines = [
+    `📦 ${esc(p.matName)}`,
+    `Rezept: ${inputLines} → ${recipe.output.am}× Output`,
+    `Produktionskosten: ${cost != null ? formatNum(Math.round(cost)) : '?'}`,
+    `Aktueller Kurs: ${formatNum(p.currentPrice)}`,
+    roi != null ? `ROI: ${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%` : '',
+    profitBld != null ? `$/Tag/Gebäude: ${formatNum(Math.round(profitBld))}` : '',
+    `Takt: ${recipe.timeMinutes} Min`,
+  ].filter(Boolean).join('\n');
+  toast(lines, 'info');
 }
 
 function hasSellItems() {
@@ -2406,7 +3382,21 @@ async function fetchBaseData() {
     });
     STATE.reserveData = result;
     try { localStorage.setItem('gt_reserve_data', JSON.stringify({ ts: Date.now(), data: result })); } catch(_) {}
+
+    // Zähle ALLE Gebäude nach building.type (inkl. idle, nicht nur aktive Tasks)
+    const bldCount = {};
+    baseList.forEach(base => {
+      (base.buildingSlots || []).forEach(slot => {
+        const bld = slot.building;
+        if (!bld || bld.type == null) return;
+        bldCount[bld.type] = (bldCount[bld.type] || 0) + 1;
+      });
+    });
+    STATE.ownedBuildings = bldCount;
+    STATE.ownedBuildingsLoaded = true;
+
     if (STATE.prices.length > 0) renderTable();
+    renderOpportunityBanner();
   } catch(e) {
     if (e.message !== 'RATE_LIMITED') {
       toast('Base-Daten fehlgeschlagen: ' + e.message, 'warn');
@@ -3764,42 +4754,83 @@ function closeAllOverlays() {
 
 <div class="cheat-sheet-overlay" id="cheatSheet" style="display:none">
   <div class="cheat-sheet-box">
-    <div class="cheat-sheet-title">Keyboard Shortcuts</div>
-    <table class="cheat-table">
-      <tr><td><kbd>S</kbd></td><td>Einstellungen</td></tr>
-      <tr><td><kbd>R</kbd></td><td>Preise jetzt abrufen</td></tr>
-      <tr><td><kbd>F</kbd></td><td>Material suchen</td></tr>
-      <tr><td><kbd>M</kbd></td><td>Sound stummschalten</td></tr>
-      <tr><td><kbd>B</kbd></td><td>Reserve-Zeit (Wishlist)</td></tr>
-      <tr><td><kbd>Esc</kbd></td><td>Overlay schließen</td></tr>
-      <tr><td><kbd>?</kbd></td><td>Diese Übersicht</td></tr>
-    </table>
-    <div class="cheat-sheet-title" style="margin-top:16px;">Symbole</div>
-    <table class="cheat-table">
-      <tr><td>🛒</td><td>Kaufen — Alarm bei niedrigem Preis</td></tr>
-      <tr><td>💰</td><td>Verkaufen — Alarm bei hohem Preis</td></tr>
-    </table>
-    <div class="cheat-sheet-title" style="margin-top:16px;">API-Throttling</div>
-    <table class="cheat-table">
-      <tr><td style="color:var(--accent);font-family:monospace;font-size:12px;">2.1×</td><td>Dynamische Drosselung — Abruf-Intervalle werden verlängert weil das API-Budget zu &gt; 30 % ausgelastet ist. Steigt bis 8× bei ~96 % Auslastung.</td></tr>
-      <tr><td style="color:var(--warn);font-family:monospace;font-size:12px;">⏸ 37s</td><td>Globale Pause — Server hat Rate-Limit gemeldet (429). Alle Abrufe warten automatisch, danach 1× Neuversuch ohne App-Neustart.</td></tr>
-    </table>
-    <div class="cheat-sheet-title" style="margin-top:16px;">Tags &amp; Trend</div>
-    <table class="cheat-table">
-      <tr><td><span class="tag breakout">breakout</span></td><td>Preis &gt; 1,3× Ø</td></tr>
-      <tr><td><span class="tag surge">surge</span></td><td>Nachfrage-Spike + Angebot sinkt</td></tr>
-      <tr><td><span class="tag squeeze">squeeze</span></td><td>Angebot &lt; 0,25 Tage + sinkend</td></tr>
-      <tr><td><span class="tag wall">wall</span></td><td>1 Order &gt; 60 % Angebot</td></tr>
-      <tr><td><span class="tag monopoly">monopoly</span></td><td>1 Verkäufer &gt; 70 % Angebot</td></tr>
-      <tr><td><span class="tag dumping">dumping</span></td><td>Preis &gt; 30 % unter Durchschnitt</td></tr>
-      <tr><td><span class="tag fading">fading</span></td><td>Nachfrage sinkt (&lt; 50 % des 7d-Schnitts)</td></tr>
-      <tr><td><span class="tag flooding">flooding</span></td><td>Angebotsflut (&gt; 10 Tage Vorrat, wächst)</td></tr>
-      <tr><td><span class="tag volatile">volatile</span></td><td>Preis schwankt &gt; 15 % (7 Tage)</td></tr>
-      <tr><td><span class="tag spike">spike</span></td><td>Preis &gt; 15 % über 23h-Schnitt</td></tr>
-      <tr><td><span class="tag dip">dip</span></td><td>Preis &gt; 15 % unter 23h-Schnitt</td></tr>
-      <tr><td style="color:var(--text-dim)">↑ ↓ →</td><td>Preis-Trend (7 Tage) — in der Tags-Spalte</td></tr>
-    </table>
-    <button class="btn-sm" onclick="toggleCheatSheet()" style="margin-top:14px;">Schließen</button>
+    <!-- Section: Shortcuts (Always Open) -->
+    <details class="cheat-sheet-section" open>
+      <summary class="cheat-sheet-summary">Keyboard Shortcuts</summary>
+      <table class="cheat-table">
+        <tr><td><kbd>S</kbd></td><td>Einstellungen</td></tr>
+        <tr><td><kbd>R</kbd></td><td>Preise jetzt abrufen</td></tr>
+        <tr><td><kbd>F</kbd></td><td>Material suchen</td></tr>
+        <tr><td><kbd>M</kbd></td><td>Sound stummschalten</td></tr>
+        <tr><td><kbd>B</kbd></td><td>Reserve-Zeit (Wishlist)</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Overlay schließen</td></tr>
+        <tr><td><kbd>?</kbd></td><td>Diese Übersicht</td></tr>
+      </table>
+    </details>
+
+    <!-- Section: Symbole -->
+    <details class="cheat-sheet-section">
+      <summary class="cheat-sheet-summary">Symbole & Status</summary>
+      <table class="cheat-table">
+        <tr><td>🛒</td><td>Kaufen — Alarm bei niedrigem Preis</td></tr>
+        <tr><td>💰</td><td>Verkaufen — Alarm bei hohem Preis</td></tr>
+        <tr><td>⚙</td><td>Produktionsgebäude im Besitz</td></tr>
+        <tr><td>⚡</td><td>Extreme Markt-Chance erkannt</td></tr>
+      </table>
+    </details>
+
+    <!-- Section: API -->
+    <details class="cheat-sheet-section">
+      <summary class="cheat-sheet-summary">API-Throttling</summary>
+      <table class="cheat-table">
+        <tr><td style="color:var(--accent);">2.1×</td><td><b>Dynamische Drosselung</b> — Intervalle werden verlängert (Budget-Schutz). Max 8×.</td></tr>
+        <tr><td style="color:var(--warn);">⏸ 37s</td><td><b>Globale Pause</b> — Server-Limit (429). Automatisches Warten + Retry.</td></tr>
+      </table>
+    </details>
+
+    <!-- Section: Opportunity Banner -->
+    <details class="cheat-sheet-section">
+      <summary class="cheat-sheet-summary">⚡ Markt-Chancen Banner</summary>
+      <table class="cheat-table">
+        <tr><td>Smart</td><td>ROI × Nachfrage (log) × Zugänglichkeit — Gewichtet Rentabilität & Markttiefe.</td></tr>
+        <tr><td>ROI</td><td>Prozentualer Gewinn (Verkaufspreis − Produktionskosten).</td></tr>
+        <tr><td>$/Tag</td><td>Tagesgewinn eines Gebäudes (oder aller eigenen Gebäude).</td></tr>
+        <tr><td>Deals</td><td>Rohstoffe unter Ø-Preis — Einkaufsgelegenheit.</td></tr>
+      </table>
+    </details>
+
+    <!-- Section: Volatilität -->
+    <details class="cheat-sheet-section">
+      <summary class="cheat-sheet-summary">VOL — Volatilitäts-Indikator</summary>
+      <table class="cheat-table">
+        <tr><td style="color:#00a060;">STABIL</td><td>&lt; 5% Schwankung (24h) — Verlässliche Chance für Umstellung.</td></tr>
+        <tr><td style="color:#c87800;">MOD</td><td>5–15% Schwankung — Beobachten, Risiko vorhanden.</td></tr>
+        <tr><td style="color:#d04040;">VOLATIL</td><td>&gt; 15% Schwankung — Schnelle Marktwende möglich.</td></tr>
+      </table>
+    </details>
+
+    <!-- Section: Tags -->
+    <details class="cheat-sheet-section">
+      <summary class="cheat-sheet-summary">Markt-Tags & Trends</summary>
+      <table class="cheat-table">
+        <tr><td><span class="tag breakout">breakout</span></td><td>Preis &gt; 1,3× Ø</td></tr>
+        <tr><td><span class="tag surge">surge</span></td><td>Nachfrage-Spike + Angebot sinkt</td></tr>
+        <tr><td><span class="tag squeeze">squeeze</span></td><td>Angebot &lt; 0,25 Tage + sinkend</td></tr>
+        <tr><td><span class="tag wall">wall</span></td><td>1 Order &gt; 60 % Angebot</td></tr>
+        <tr><td><span class="tag monopoly">monopoly</span></td><td>1 Verkäufer &gt; 70 % Angebot</td></tr>
+        <tr><td><span class="tag dumping">dumping</span></td><td>Preis &gt; 30 % unter Durchschnitt</td></tr>
+        <tr><td><span class="tag fading">fading</span></td><td>Nachfrage sinkt (&lt; 50 % des 7d-Schnitts)</td></tr>
+        <tr><td><span class="tag flooding">flooding</span></td><td>Angebotsflut (&gt; 10 Tage Vorrat, wächst)</td></tr>
+        <tr><td><span class="tag volatile">volatile</span></td><td>Preis schwankt &gt; 15 % (7 Tage)</td></tr>
+        <tr><td><span class="tag spike">spike</span></td><td>Preis &gt; 15 % über 23h-Schnitt</td></tr>
+        <tr><td><span class="tag dip">dip</span></td><td>Preis &gt; 15 % unter 23h-Schnitt</td></tr>
+        <tr><td style="color:var(--text-dim)">↑ ↓ →</td><td>Preis-Trend (7 Tage) — in der Tags-Spalte</td></tr>
+      </table>
+    </details>
+
+    <div style="text-align:center; margin-top:16px;">
+      <button class="btn-sm" onclick="closeAllOverlays()">Schließen</button>
+    </div>
   </div>
 </div>
 <div class="alarm-overlay" id="alarmOverlay" style="display:none" onclick="if(event.target===this)this.style.display='none'">
