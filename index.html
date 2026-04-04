@@ -1299,9 +1299,9 @@
     flex: 1;
     display: flex;
     align-items: flex-end;
-    gap: 7px;
+    gap: 4px;
     position: relative;
-    /* subtle grid lines */
+    overflow: hidden;
   }
   .opp-chart-bars::before,
   .opp-chart-bars::after {
@@ -1315,19 +1315,24 @@
   .opp-chart-bars::after  { top: 50%; }
   .opp-chart-col {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     height: 100%;
-    gap: 3px;
+    gap: 2px;
+    overflow: hidden;
   }
   .opp-chart-cval {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 8px;
+    font-size: 7px;
     color: #6888b8;
     white-space: nowrap;
     text-align: center;
     flex-shrink: 0;
+    overflow: hidden;
+    max-width: 100%;
+    text-overflow: clip;
   }
   .opp-chart-track {
     flex: 1;
@@ -1441,10 +1446,12 @@
   .opp-vol-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 8px;
     margin-top: 5px;
+    max-width: 100%;
+    overflow: hidden;
   }
   .opp-vol-label { color: #3a5070; text-transform: uppercase; letter-spacing: 0.5px; }
   .opp-vol-bar {
@@ -1469,7 +1476,7 @@
   .opp-vol-high   .opp-vol-seg.active { background: #d04040; }
   .opp-vol-high   .opp-vol-text { color: #a03030; }
   .opp-vol-sep { color: #1e3050; margin: 0 2px; }
-  .opp-vol-trend { font-size: 8px; letter-spacing: 0.2px; font-family: 'JetBrains Mono', monospace; }
+  .opp-vol-trend { font-size: 8px; letter-spacing: 0px; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
   .opp-trend-up   { color: #00c070; }
   .opp-trend-side { color: #5070a0; }
   .opp-trend-down { color: #c04040; }
@@ -1485,6 +1492,49 @@
   .opp-chart-fill.earn-down {
     background: linear-gradient(180deg, #e05050 0%, #4a0a0a 100%);
     box-shadow: 0 -3px 8px rgba(220,80,80,0.3);
+  }
+
+  /* ─── OPPORTUNITY TOOLTIP (Make-or-Buy Reasoning) ─── */
+  #oppTooltip {
+    position: fixed;
+    z-index: 9999;
+    width: 300px;
+    background: #060a14;
+    border: 1px solid #1a2a4a;
+    border-radius: 6px;
+    padding: 10px 12px;
+    pointer-events: none;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.7);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .opp-tip-title {
+    font-size: 9px;
+    color: #00e896;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+  }
+  .opp-tip-table { width: 100%; border-collapse: collapse; }
+  .opp-tip-table tr { border-bottom: 1px solid #0d1a2e; }
+  .opp-tip-table tr:last-child { border-bottom: none; }
+  .opp-tip-table td { padding: 3px 4px; font-size: 9px; vertical-align: middle; }
+  .opp-tip-icon { width: 14px; color: #5b8af5; }
+  .opp-tip-name { color: #8aaad8; }
+  .opp-tip-cost { color: #7090c8; text-align: right; white-space: nowrap; padding-right: 6px; }
+  .opp-tip-src  { color: #3a5878; font-size: 8px; }
+  .opp-tip-warn {
+    margin-top: 6px;
+    font-size: 8px;
+    color: #c87800;
+    border-top: 1px solid #1a2a3a;
+    padding-top: 5px;
+  }
+  .opp-tip-total {
+    margin-top: 6px;
+    font-size: 9px;
+    color: #5a7898;
+    border-top: 1px solid #1a2a3a;
+    padding-top: 5px;
   }
 
   /* ─── OPPORTUNITY BANNER — MOBILE ─── */
@@ -2880,10 +2930,75 @@ async function fetchOwnedBuildings() {
 }
 
 // ─── OPPORTUNITY BANNER ENGINE ───
+let _oppTop3Cache = []; // for tooltip access outside renderOpportunityBanner
+
 function _oppPriceMap() {
   const map = {};
   STATE.prices.forEach(p => { map[p.matId] = p; });
   return map;
+}
+
+// Make-or-buy decision for one input material.
+// Returns { unitCost, icon, source, selfProduced }
+// mainBuildingType: producedIn of the top-level recipe (slot-conflict detection)
+// visited: Set of matIds already in the recursion stack (cycle guard)
+function _oppMakeOrBuy(inp, gd, priceMap, mainBuildingType, visited) {
+  const ip = priceMap[inp.id];
+  const marketPrice = ip?.currentPrice ?? null;
+  const inputRecipe = (gd.recipes || []).find(r => r.output?.id === inp.id);
+
+  if (inputRecipe && STATE.ownedBuildingsLoaded && !visited.has(inp.id)) {
+    const iBldType = inputRecipe.producedIn;
+    const owned = STATE.ownedBuildings[iBldType] || 0;
+
+    if (owned > 0 && iBldType !== mainBuildingType) {
+      // Dedicated owned building → self-produce recursively
+      const sub = _oppOptimalProductionCost(inp.id, gd, priceMap, mainBuildingType, new Set([...visited, inp.id]));
+      if (sub.cost !== null) {
+        const cheaper = sub.cost <= (marketPrice ?? Infinity);
+        return {
+          unitCost: cheaper ? sub.cost : marketPrice,
+          icon: cheaper ? '⚙' : '🛒',
+          source: cheaper
+            ? `eigen ${formatNum(Math.round(sub.cost))} < Markt ${formatNum(marketPrice ?? 0)}`
+            : `Markt ${formatNum(marketPrice ?? 0)} < eigen ${formatNum(Math.round(sub.cost))}`,
+          selfProduced: cheaper,
+        };
+      }
+    } else if (owned > 0 && iBldType === mainBuildingType) {
+      // Same building type → slot conflict, must buy
+      return { unitCost: marketPrice, icon: '⚠', source: `Gebäude-Konflikt → Markt ${formatNum(marketPrice ?? 0)}`, selfProduced: false };
+    }
+  }
+
+  // No owned building or no recipe → buy from market
+  return { unitCost: marketPrice, icon: '🛒', source: `Markt ${formatNum(marketPrice ?? 0)}`, selfProduced: false };
+}
+
+// Returns { cost (cents/unit), inputReasons[], hasConflict }
+function _oppOptimalProductionCost(matId, gd, priceMap, mainBuildingType, _visited) {
+  const visited = _visited || new Set([matId]);
+  const recipe = (gd.recipes || []).find(r => r.output?.id === matId);
+
+  if (!recipe) {
+    const p = priceMap[matId];
+    return { cost: p?.avgPrice ?? null, inputReasons: [], hasConflict: false };
+  }
+
+  let totalInputCost = 0;
+  const inputReasons = [];
+  let hasConflict = false;
+
+  for (const inp of (recipe.inputs || [])) {
+    const ip = priceMap[inp.id];
+    const mob = _oppMakeOrBuy(inp, gd, priceMap, mainBuildingType ?? recipe.producedIn, visited);
+    if (mob.unitCost === null) return { cost: null, inputReasons: [], hasConflict };
+    if (mob.icon === '⚠') hasConflict = true;
+    totalInputCost += mob.unitCost * inp.am;
+    inputReasons.push({ name: ip?.matName || `#${inp.id}`, am: inp.am, unitCost: mob.unitCost, source: mob.source, icon: mob.icon });
+  }
+
+  return { cost: totalInputCost / (recipe.output.am || 1), inputReasons, hasConflict };
 }
 
 function _oppProductionCost(matId, gd, priceMap) {
@@ -2968,11 +3083,10 @@ function _oppVolBadgeHtml(matId) {
     const arrow = vol.trend7d === 'up' ? '↗' : vol.trend7d === 'down' ? '↘' : '→';
     const cls   = vol.trend7d === 'up' ? 'opp-trend-up' : vol.trend7d === 'down' ? 'opp-trend-down' : 'opp-trend-side';
     const pct   = (vol.trend7dPct >= 0 ? '+' : '') + vol.trend7dPct.toFixed(1) + '%';
-    trendHtml = `<span class="opp-vol-trend ${cls}">${arrow} ${pct}</span>`;
+    trendHtml = `<span class="opp-vol-trend ${cls}">${arrow}${pct}</span>`;
   }
 
   return `<div class="opp-vol-badge opp-vol-${vol.level}">
-    <span class="opp-vol-label">1d</span>
     <div class="opp-vol-bar">${bars}</div>
     <span class="opp-vol-text">${lvlLabel}</span>
     ${trendHtml ? `<span class="opp-vol-sep">·</span>${trendHtml}` : ''}
@@ -3069,7 +3183,9 @@ async function renderOpportunityBanner() {
       .filter(p => p.currentPrice > 0)
       .map(p => {
         const recipe = recipeByOutput[p.matId];
-        const cost = _oppProductionCost(p.matId, gd, priceMap);
+        const optCost = recipe ? _oppOptimalProductionCost(p.matId, gd, priceMap, recipe.producedIn) : null;
+        const cost = optCost?.cost ?? _oppProductionCost(p.matId, gd, priceMap);
+        const reasoning = optCost ?? null;
         const roi = (cost && cost > 0) ? ((p.currentPrice - cost) / cost) * 100 : null;
         const sm = _oppSmartScore(p.matId, roi, recipe, p);
         const score = sm?.score ?? null;
@@ -3081,7 +3197,7 @@ async function renderOpportunityBanner() {
         const producedIn = recipe?.producedIn;
         const ownedCount = (producedIn != null) ? (STATE.ownedBuildings[producedIn] || 0) : 0;
         const profitOwned = (profitBld !== null && ownedCount > 0) ? profitBld * ownedCount : null;
-        return { p, recipe, cost, roi, score, demandFactor, demandLabel, accessFactor, reqTech, profitBld, profitOwned, ownedCount, producedIn, discount: null };
+        return { p, recipe, cost, reasoning, roi, score, demandFactor, demandLabel, accessFactor, reqTech, profitBld, profitOwned, ownedCount, producedIn, discount: null };
       });
 
     if (bldFilter === 'owned') candidates = candidates.filter(c => c.ownedCount > 0);
@@ -3093,6 +3209,7 @@ async function renderOpportunityBanner() {
   }
 
   const top3 = candidates.slice(0, 3);
+  _oppTop3Cache = top3;
 
   if (!top3.length) {
     const emptyMsg = (bldFilter === 'owned' && Object.keys(STATE.ownedBuildings).length === 0)
@@ -3298,7 +3415,7 @@ async function renderOpportunityBanner() {
     }
 
     const volBadge = _oppVolBadgeHtml(p.matId);
-    return `<div class="opportunity-card has-breakdown${cardClass}" oncontextmenu="event.preventDefault();showContextMenu(${p.matId},event.clientX,event.clientY)">
+    return `<div class="opportunity-card has-breakdown${cardClass}" oncontextmenu="event.preventDefault();showContextMenu(${p.matId},event.clientX,event.clientY)" onmouseenter="showOppTooltip(${p.matId},this)" onmouseleave="hideOppTooltip()">
       <div class="opp-top-strip rank-${i + 1}"></div>
       <div class="opp-card-inner">
         <div class="opp-card-left">
@@ -3319,6 +3436,49 @@ async function renderOpportunityBanner() {
       </div>
     </div>`;
   }).join('');
+}
+
+function showOppTooltip(matId, cardEl) {
+  const tip = document.getElementById('oppTooltip');
+  if (!tip) return;
+  const c = _oppTop3Cache.find(x => x.p.matId === matId);
+  if (!c?.reasoning?.inputReasons?.length) { tip.style.display = 'none'; return; }
+
+  const { reasoning, p, roi, cost } = c;
+  const roiStr = roi != null ? (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%' : '?';
+  let rows = reasoning.inputReasons.map(r =>
+    `<tr>
+      <td class="opp-tip-icon">${r.icon}</td>
+      <td class="opp-tip-name">${r.am}× ${esc(r.name)}</td>
+      <td class="opp-tip-cost">${formatNum(Math.round(r.unitCost))}</td>
+      <td class="opp-tip-src">${r.source}</td>
+    </tr>`
+  ).join('');
+
+  const conflictNote = reasoning.hasConflict
+    ? `<div class="opp-tip-warn">⚠ Gebäude-Konflikt: Input und Output teilen denselben Gebäudetyp — Kauf erzwungen</div>`
+    : '';
+  const loadNote = !STATE.ownedBuildingsLoaded
+    ? `<div class="opp-tip-warn">ℹ Gebäude nicht geladen — alle Inputs zu Marktpreisen</div>`
+    : '';
+
+  tip.innerHTML = `
+    <div class="opp-tip-title">${esc(p.matName)} — Make-or-Buy Analyse</div>
+    <table class="opp-tip-table"><tbody>${rows}</tbody></table>
+    ${conflictNote}${loadNote}
+    <div class="opp-tip-total">Prod.-Kosten: ${formatNum(Math.round(cost ?? 0))} · ROI: ${roiStr}</div>`;
+
+  tip.style.display = 'block';
+  const rect = cardEl.getBoundingClientRect();
+  const tipH = tip.offsetHeight || 160;
+  const below = window.innerHeight - rect.bottom;
+  tip.style.top  = (below > tipH + 12 ? rect.bottom + 6 : rect.top - tipH - 6) + 'px';
+  tip.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 310)) + 'px';
+}
+
+function hideOppTooltip() {
+  const tip = document.getElementById('oppTooltip');
+  if (tip) tip.style.display = 'none';
 }
 
 function toggleOpportunityBanner() {
@@ -4889,6 +5049,7 @@ function closeAllOverlays() {
     </div>
   </div>
 </div>
+<div id="oppTooltip" style="display:none"></div>
 <div class="alarm-overlay" id="alarmOverlay" style="display:none" onclick="if(event.target===this)this.style.display='none'">
   <div class="alarm-overlay-box" onclick="event.stopPropagation()">
     <div class="alarm-overlay-header">
