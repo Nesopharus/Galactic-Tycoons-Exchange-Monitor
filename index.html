@@ -1134,6 +1134,7 @@
   .opportunity-controls select:hover { border-color: #2a4a7a; color: #7090c0; }
   .opportunity-cards {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     padding: 10px 14px;
     position: relative;
@@ -1536,6 +1537,20 @@
     border-top: 1px solid #1a2a3a;
     padding-top: 5px;
   }
+  .opp-tip-alt-section {
+    margin-top: 6px;
+    border-top: 1px solid #1a2a3a;
+    padding-top: 5px;
+  }
+  .opp-tip-alt-row {
+    font-size: 8px;
+    color: #3a5878;
+    padding: 1px 0;
+  }
+  .opp-tip-alt-label {
+    color: #4a6888;
+    font-weight: bold;
+  }
 
   /* ─── OPPORTUNITY BANNER — MOBILE ─── */
   @media (max-width: 600px) {
@@ -1834,6 +1849,7 @@ const STATE = {
   ownedBuildingsLoaded: false, // true sobald Bases-API einmal abgerufen wurde
   showOpportunityBanner: true,
   lastOpportunityAlert: 0, // ms-Timestamp — Cooldown für Extreme-Chance-Alarm
+  lastOpportunityMatId: null, // matId des letzten Alarms (verhindert Spam bei gleicher Chance)
   baseTimer: null,
   prices: [],
   running: false,
@@ -2975,30 +2991,48 @@ function _oppMakeOrBuy(inp, gd, priceMap, mainBuildingType, visited) {
   return { unitCost: marketPrice, icon: '🛒', source: `Markt ${formatNum(marketPrice ?? 0)}`, selfProduced: false };
 }
 
-// Returns { cost (cents/unit), inputReasons[], hasConflict }
+// Returns { cost (cents/unit), inputReasons[], hasConflict, recipe, alternatives[] }
+// Evaluates all recipes for matId, selects the one with lowest unit cost as primary.
+// alternatives[]: remaining valid recipes sorted by cost, each { cost, hasConflict, recipe, inputReasons }
 function _oppOptimalProductionCost(matId, gd, priceMap, mainBuildingType, _visited) {
   const visited = _visited || new Set([matId]);
-  const recipe = (gd.recipes || []).find(r => r.output?.id === matId);
+  const recipes = (gd.recipes || []).filter(r => r.output?.id === matId);
 
-  if (!recipe) {
+  if (!recipes.length) {
     const p = priceMap[matId];
-    return { cost: p?.avgPrice ?? null, inputReasons: [], hasConflict: false };
+    return { cost: p?.avgPrice ?? null, inputReasons: [], hasConflict: false, recipe: null, alternatives: [] };
   }
 
-  let totalInputCost = 0;
-  const inputReasons = [];
-  let hasConflict = false;
+  const results = [];
+  for (const recipe of recipes) {
+    const bldType = mainBuildingType ?? recipe.producedIn;
+    let totalInputCost = 0;
+    const inputReasons = [];
+    let hasConflict = false;
+    let valid = true;
 
-  for (const inp of (recipe.inputs || [])) {
-    const ip = priceMap[inp.id];
-    const mob = _oppMakeOrBuy(inp, gd, priceMap, mainBuildingType ?? recipe.producedIn, visited);
-    if (mob.unitCost === null) return { cost: null, inputReasons: [], hasConflict };
-    if (mob.icon === '⚠') hasConflict = true;
-    totalInputCost += mob.unitCost * inp.am;
-    inputReasons.push({ name: ip?.matName || `#${inp.id}`, am: inp.am, unitCost: mob.unitCost, source: mob.source, icon: mob.icon });
+    for (const inp of (recipe.inputs || [])) {
+      const ip = priceMap[inp.id];
+      const mob = _oppMakeOrBuy(inp, gd, priceMap, bldType, visited);
+      if (mob.unitCost === null) { valid = false; break; }
+      if (mob.icon === '⚠') hasConflict = true;
+      totalInputCost += mob.unitCost * inp.am;
+      inputReasons.push({ name: ip?.matName || `#${inp.id}`, am: inp.am, unitCost: mob.unitCost, source: mob.source, icon: mob.icon });
+    }
+
+    if (valid) {
+      // cost is normalized per unit of output so recipes with different batch sizes are comparable
+      results.push({ cost: totalInputCost / (recipe.output.am || 1), inputReasons, hasConflict, recipe });
+    }
   }
 
-  return { cost: totalInputCost / (recipe.output.am || 1), inputReasons, hasConflict };
+  if (!results.length) {
+    return { cost: null, inputReasons: [], hasConflict: false, recipe: null, alternatives: [] };
+  }
+
+  results.sort((a, b) => a.cost - b.cost);
+  const [best, ...alternatives] = results;
+  return { cost: best.cost, inputReasons: best.inputReasons, hasConflict: best.hasConflict, recipe: best.recipe, alternatives };
 }
 
 function _oppProductionCost(matId, gd, priceMap) {
@@ -3152,7 +3186,7 @@ async function renderOpportunityBanner() {
       const avgP = p.avgPrice || p.currentPrice;
       demandFactor = avgP > 0 ? Math.max(0.3, p.currentPrice / avgP) : 1;
       demandRaw = null;
-      demandLabel = '~' + demandFactor.toFixed(2) + 'x';
+      demandLabel = '~' + demandFactor.toFixed(1) + 'x';
     }
     const reqTech = recipe?.reqTech || 0;
     const accessFactor = 1 / (1 + reqTech * 0.1);
@@ -3182,8 +3216,8 @@ async function renderOpportunityBanner() {
     candidates = STATE.prices
       .filter(p => p.currentPrice > 0)
       .map(p => {
-        const recipe = recipeByOutput[p.matId];
-        const optCost = recipe ? _oppOptimalProductionCost(p.matId, gd, priceMap, recipe.producedIn) : null;
+        const optCost = _oppOptimalProductionCost(p.matId, gd, priceMap);
+        const recipe = optCost?.recipe ?? recipeByOutput[p.matId];
         const cost = optCost?.cost ?? _oppProductionCost(p.matId, gd, priceMap);
         const reasoning = optCost ?? null;
         const roi = (cost && cost > 0) ? ((p.currentPrice - cost) / cost) * 100 : null;
@@ -3241,13 +3275,17 @@ async function renderOpportunityBanner() {
     return '';
   }
 
-  // Fire alarm for extreme top-1 opportunity (5 min cooldown)
-  const OPP_ALERT_COOLDOWN_MS = 5 * 60 * 1000;
-  const top1Level = _oppHotLevel(top3[0]);
-  if (top1Level === 'extreme' && STATE.running &&
-      Date.now() - STATE.lastOpportunityAlert > OPP_ALERT_COOLDOWN_MS) {
+  // Fire alarm for extreme top-1 opportunity (15 min cooldown, but only if same material)
+  const OPP_ALERT_COOLDOWN_MS = 15 * 60 * 1000;
+  const top1 = top3[0];
+  const top1Level = _oppHotLevel(top1);
+  const isSameMat = top1.p.matId === STATE.lastOpportunityMatId;
+  const cooldownActive = (Date.now() - STATE.lastOpportunityAlert) < OPP_ALERT_COOLDOWN_MS;
+
+  if (top1Level === 'extreme' && STATE.running && (!isSameMat || !cooldownActive)) {
     STATE.lastOpportunityAlert = Date.now();
-    const c = top3[0];
+    STATE.lastOpportunityMatId = top1.p.matId;
+    const c = top1;
     const label = (sortMode === 'roi' || sortMode === 'smart')
       ? `ROI +${c.roi.toFixed(0)}%`
       : sortMode === 'discount' ? `−${c.discount.toFixed(0)}% unter Ø`
@@ -3258,7 +3296,7 @@ async function renderOpportunityBanner() {
 
   // Hint wenn Smart-Mode aber keine matDetails geladen
   const smartHint = (sortMode === 'smart' && !hasMatDetails)
-    ? `<div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#2a3d5a;padding:0 14px 8px;z-index:1;position:relative">
+    ? `<div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#2a3d5a;padding:0 0 4px;z-index:1;position:relative;width:100%;flex-basis:100%">
         ⚠ Mat-Details nicht geladen — Nachfrage-Gewichtung nutzt Preis-Proxy statt echter Verkaufszahlen
       </div>`
     : '';
@@ -3462,11 +3500,20 @@ function showOppTooltip(matId, cardEl) {
     ? `<div class="opp-tip-warn">ℹ Gebäude nicht geladen — alle Inputs zu Marktpreisen</div>`
     : '';
 
+  const altSection = reasoning.alternatives?.length
+    ? `<div class="opp-tip-alt-section">${reasoning.alternatives.map(alt => {
+        const altRoi = (alt.cost > 0 && p.currentPrice > 0) ? ((p.currentPrice - alt.cost) / alt.cost) * 100 : null;
+        const altRoiStr = altRoi != null ? (altRoi >= 0 ? '+' : '') + altRoi.toFixed(1) + '%' : '?';
+        const time = alt.recipe.timeMinutes ? `${alt.recipe.timeMinutes}min` : '?min';
+        return `<div class="opp-tip-alt-row"><span class="opp-tip-alt-label">Alt ×${alt.recipe.output.am}/${time}</span> ${formatNum(Math.round(alt.cost))} (${altRoiStr})</div>`;
+      }).join('')}</div>`
+    : '';
+
   tip.innerHTML = `
     <div class="opp-tip-title">${esc(p.matName)} — Make-or-Buy Analyse</div>
     <table class="opp-tip-table"><tbody>${rows}</tbody></table>
     ${conflictNote}${loadNote}
-    <div class="opp-tip-total">Prod.-Kosten: ${formatNum(Math.round(cost ?? 0))} · ROI: ${roiStr}</div>`;
+    <div class="opp-tip-total">Prod.-Kosten: ${formatNum(Math.round(cost ?? 0))} · ROI: ${roiStr}</div>${altSection}`;
 
   tip.style.display = 'block';
   const rect = cardEl.getBoundingClientRect();
