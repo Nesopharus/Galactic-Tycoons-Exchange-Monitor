@@ -1468,6 +1468,24 @@
   .opp-vol-mod    .opp-vol-text { color: #a06000; }
   .opp-vol-high   .opp-vol-seg.active { background: #d04040; }
   .opp-vol-high   .opp-vol-text { color: #a03030; }
+  .opp-vol-sep { color: #1e3050; margin: 0 2px; }
+  .opp-vol-trend { font-size: 8px; letter-spacing: 0.2px; font-family: 'JetBrains Mono', monospace; }
+  .opp-trend-up   { color: #00c070; }
+  .opp-trend-side { color: #5070a0; }
+  .opp-trend-down { color: #c04040; }
+  /* EARN bar color variants by 7d trend */
+  .opp-chart-fill.earn-up {
+    background: linear-gradient(180deg, #00e896 0%, #003a25 100%);
+    box-shadow: 0 -3px 12px rgba(0,232,150,0.45);
+  }
+  .opp-chart-fill.earn-side {
+    background: linear-gradient(180deg, #5b8af5 0%, #0f1a60 100%);
+    box-shadow: 0 -3px 8px rgba(91,138,245,0.3);
+  }
+  .opp-chart-fill.earn-down {
+    background: linear-gradient(180deg, #e05050 0%, #4a0a0a 100%);
+    box-shadow: 0 -3px 8px rgba(220,80,80,0.3);
+  }
 
   /* ─── OPPORTUNITY BANNER — MOBILE ─── */
   @media (max-width: 600px) {
@@ -2901,35 +2919,63 @@ function _oppProfitPerDayPerBuilding(matId, gd, priceMap) {
   return profitBatch * batchesPerDay;
 }
 
-// Coefficient of variation of price over last 24h from priceHistory
-// Returns { cv, level } where level = 'stable'|'mod'|'high', or null if no data
+// 1d CV + 7d price trend for a material
+// Returns { cv, level, trend7d, trend7dPct } or null if insufficient data
 function _oppVolatility(matId) {
   const entries = STATE.priceHistory[matId];
   if (!entries || entries.length < 4) return null;
-  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-  const recent = entries.filter(e => e[0] >= cutoff).map(e => e[1]);
-  if (recent.length < 4) return null;
-  const mean = recent.reduce((s, v) => s + v, 0) / recent.length;
-  if (mean <= 0) return null;
-  const variance = recent.reduce((s, v) => s + (v - mean) ** 2, 0) / recent.length;
-  const cv = Math.sqrt(variance) / mean * 100; // coefficient of variation in %
+  const now = Date.now();
+
+  // 1d coefficient of variation
+  const cut1d = now - 24 * 60 * 60 * 1000;
+  const recent1d = entries.filter(e => e[0] >= cut1d).map(e => e[1]);
+  if (recent1d.length < 4) return null;
+  const mean1d = recent1d.reduce((s, v) => s + v, 0) / recent1d.length;
+  if (mean1d <= 0) return null;
+  const variance = recent1d.reduce((s, v) => s + (v - mean1d) ** 2, 0) / recent1d.length;
+  const cv = Math.sqrt(variance) / mean1d * 100;
   const level = cv < 5 ? 'stable' : cv < 15 ? 'mod' : 'high';
-  return { cv, level };
+
+  // 7d trend: avg of first half vs avg of second half of 7d window
+  const cut7d = now - 7 * 24 * 60 * 60 * 1000;
+  const week = entries.filter(e => e[0] >= cut7d).map(e => e[1]);
+  let trend7d = null, trend7dPct = null;
+  if (week.length >= 6) {
+    const half = Math.floor(week.length / 2);
+    const early = week.slice(0, half).reduce((s, v) => s + v, 0) / half;
+    const late  = week.slice(-half).reduce((s, v) => s + v, 0) / half;
+    if (early > 0) {
+      trend7dPct = ((late - early) / early) * 100;
+      trend7d = trend7dPct > 3 ? 'up' : trend7dPct < -3 ? 'down' : 'side';
+    }
+  }
+
+  return { cv, level, trend7d, trend7dPct };
 }
 
-// Render a small signal-strength-style volatility badge
+// Render volatility badge: 1d stability bars + 7d trend arrow
 function _oppVolBadgeHtml(matId) {
   const vol = _oppVolatility(matId);
   if (!vol) return '';
   const segs = vol.level === 'stable' ? 1 : vol.level === 'mod' ? 2 : 3;
-  const label = vol.level === 'stable' ? 'STABIL' : vol.level === 'mod' ? 'MOD' : 'VOLATIL';
+  const lvlLabel = vol.level === 'stable' ? 'STABIL' : vol.level === 'mod' ? 'MOD' : 'VOLATIL';
   const bars = [1,2,3].map(n =>
     `<div class="opp-vol-seg s${n}${n <= segs ? ' active' : ''}"></div>`
   ).join('');
+
+  let trendHtml = '';
+  if (vol.trend7d) {
+    const arrow = vol.trend7d === 'up' ? '↗' : vol.trend7d === 'down' ? '↘' : '→';
+    const cls   = vol.trend7d === 'up' ? 'opp-trend-up' : vol.trend7d === 'down' ? 'opp-trend-down' : 'opp-trend-side';
+    const pct   = (vol.trend7dPct >= 0 ? '+' : '') + vol.trend7dPct.toFixed(1) + '%';
+    trendHtml = `<span class="opp-vol-trend ${cls}">${arrow} ${pct}</span>`;
+  }
+
   return `<div class="opp-vol-badge opp-vol-${vol.level}">
-    <span class="opp-vol-label">VOL</span>
+    <span class="opp-vol-label">1d</span>
     <div class="opp-vol-bar">${bars}</div>
-    <span class="opp-vol-text">${label}</span>
+    <span class="opp-vol-text">${lvlLabel}</span>
+    ${trendHtml ? `<span class="opp-vol-sep">·</span>${trendHtml}` : ''}
   </div>`;
 }
 
@@ -3146,6 +3192,10 @@ async function renderOpportunityBanner() {
     const extremeLabel = hotLevel === 'extreme' ? `<div class="opp-extreme-label">⚡ EXTREME</div>` : '';
     const cardClass = hotLevel ? ` opp-${hotLevel}` : '';
 
+    // ── Volatility & 7d trend (computed before chartBars so earnCls is available) ──
+    const volData = _oppVolatility(p.matId);
+    const earnCls = volData?.trend7d === 'up' ? 'earn-up' : volData?.trend7d === 'down' ? 'earn-down' : volData?.trend7d === 'side' ? 'earn-side' : 'earn';
+
     // ── Chart bars: mode-specific ──
     let chartBars = '';
     if (sortMode === 'smart') {
@@ -3184,7 +3234,7 @@ async function renderOpportunityBanner() {
         </div>
         <div class="opp-chart-col">
           <span class="opp-chart-cval">${formatNum(p.currentPrice)}</span>
-          <div class="opp-chart-track"><div class="opp-chart-fill earn" style="height:${sellH}%"></div></div>
+          <div class="opp-chart-track"><div class="opp-chart-fill ${earnCls}" style="height:${sellH}%"></div></div>
           <span class="opp-chart-clbl">SELL</span>
         </div>`;
     } else if (sortMode === 'profit_bld') {
@@ -3198,7 +3248,7 @@ async function renderOpportunityBanner() {
       chartBars = `
         <div class="opp-chart-col">
           <span class="opp-chart-cval">${formatNum(Math.round(c.profitBld ?? 0))}</span>
-          <div class="opp-chart-track"><div class="opp-chart-fill earn" style="height:${profH}%"></div></div>
+          <div class="opp-chart-track"><div class="opp-chart-fill ${earnCls}" style="height:${profH}%"></div></div>
           <span class="opp-chart-clbl">EARN</span>
         </div>
         <div class="opp-chart-col">
@@ -3215,7 +3265,7 @@ async function renderOpportunityBanner() {
       chartBars = `
         <div class="opp-chart-col">
           <span class="opp-chart-cval">${formatNum(Math.round(c.profitOwned ?? 0))}</span>
-          <div class="opp-chart-track"><div class="opp-chart-fill earn" style="height:${ownH}%"></div></div>
+          <div class="opp-chart-track"><div class="opp-chart-fill ${earnCls}" style="height:${ownH}%"></div></div>
           <span class="opp-chart-clbl">EARN</span>
         </div>
         <div class="opp-chart-col">
@@ -3242,7 +3292,7 @@ async function renderOpportunityBanner() {
         </div>
         <div class="opp-chart-col">
           <span class="opp-chart-cval">-${(c.discount ?? 0).toFixed(0)}%</span>
-          <div class="opp-chart-track"><div class="opp-chart-fill earn" style="height:${Math.min(100, Math.round((c.discount ?? 0)))}%"></div></div>
+          <div class="opp-chart-track"><div class="opp-chart-fill ${earnCls}" style="height:${Math.min(100, Math.round((c.discount ?? 0)))}%"></div></div>
           <span class="opp-chart-clbl">SAVE</span>
         </div>`;
     }
@@ -4803,9 +4853,15 @@ function closeAllOverlays() {
     <details class="cheat-sheet-section">
       <summary class="cheat-sheet-summary">VOL — Volatilitäts-Indikator</summary>
       <table class="cheat-table">
-        <tr><td style="color:#00a060;">STABIL</td><td>&lt; 5% Schwankung (24h) — Verlässliche Chance für Umstellung.</td></tr>
-        <tr><td style="color:#c87800;">MOD</td><td>5–15% Schwankung — Beobachten, Risiko vorhanden.</td></tr>
-        <tr><td style="color:#d04040;">VOLATIL</td><td>&gt; 15% Schwankung — Schnelle Marktwende möglich.</td></tr>
+        <tr><td style="color:#00a060;">▌ STABIL</td><td>1d-Schwankung &lt; 5 % — Verlässliche Chance, Umstellung lohnt sich</td></tr>
+        <tr><td style="color:#c87800;">▌▌ MOD</td><td>1d-Schwankung 5–15 % — Risiko vorhanden, nochmals prüfen</td></tr>
+        <tr><td style="color:#d04040;">▌▌▌ VOLATIL</td><td>1d-Schwankung &gt; 15 % — Markt kann drehen bevor Produktion läuft</td></tr>
+        <tr><td style="color:#00c070;">↗ +x%</td><td>7d-Trend steigend — Chance könnte sich verbessern</td></tr>
+        <tr><td style="color:#5070a0;">→ ±x%</td><td>7d-Trend seitwärts — Markt stabil</td></tr>
+        <tr><td style="color:#c04040;">↘ -x%</td><td>7d-Trend fallend — Chance läuft weg, Vorsicht</td></tr>
+        <tr><td style="color:#00e896;font-family:monospace;">█ grün</td><td>EARN-Balken: 7d steigend — guter Zeitpunkt</td></tr>
+        <tr><td style="color:#5b8af5;font-family:monospace;">█ blau</td><td>EARN-Balken: 7d seitwärts — neutral</td></tr>
+        <tr><td style="color:#e05050;font-family:monospace;">█ rot</td><td>EARN-Balken: 7d fallend — Vorsicht</td></tr>
       </table>
     </details>
 
